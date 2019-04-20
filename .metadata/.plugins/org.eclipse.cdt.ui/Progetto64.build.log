@@ -1,0 +1,32 @@
+19:04:45 **** Build of configuration Debug for project Progetto64 ****
+make all 
+Building file: ../kmeans.c
+Invoking: GCC C Compiler
+gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"kmeans.d" -MT"kmeans.o" -o "kmeans.o" "../kmeans.c"
+Finished building: ../kmeans.c
+ 
+Building file: ../pqnn64c.c
+Invoking: GCC C Compiler
+gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"pqnn64c.d" -MT"pqnn64c.o" -o "pqnn64c.o" "../pqnn64c.c"
+../pqnn64c.c: In function ‘load_data’:
+../pqnn64c.c:144:26: warning: unused variable ‘i’ [-Wunused-variable]
+  int rows, cols, status, i;
+                          ^
+../pqnn64c.c:144:18: warning: variable ‘status’ set but not used [-Wunused-but-set-variable]
+  int rows, cols, status, i;
+                  ^~~~~~
+Finished building: ../pqnn64c.c
+ 
+Building target: Progetto64
+Invoking: GCC C Linker
+gcc  -o "Progetto64"  ./kmeans.o ./pqnn64c.o   
+/usr/bin/ld: ./pqnn64c.o: in function `pqnn_index':
+/run/media/lollo/DATA/Lory/MyDrive/Cyber Security/Lollo/Architettura/Progetto a.a. 201819/Progetto64/Debug/../pqnn64c.c:197: undefined reference to `pqnn64_index'
+/usr/bin/ld: ./pqnn64c.o: in function `pqnn_search':
+/run/media/lollo/DATA/Lory/MyDrive/Cyber Security/Lollo/Architettura/Progetto a.a. 201819/Progetto64/Debug/../pqnn64c.c:214: undefined reference to `pqnn64_search'
+collect2: error: ld returned 1 exit status
+make: *** [makefile:31: Progetto64] Error 1
+"make all" terminated with exit code 2. Build might be incomplete.
+
+19:04:45 Build Failed. 5 errors, 2 warnings. (took 613ms)
+

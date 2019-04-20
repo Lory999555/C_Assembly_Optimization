@@ -1,0 +1,12 @@
+19:04:44 **** Build of configuration Debug for project Progetto32 ****
+make all 
+Building file: ../pqnn32c.c
+Invoking: GCC C Compiler
+gcc  -m32 -msse ../pqnn32.o ../pqnn32c.c -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"pqnn32c.d" -MT"pqnn32c.d" -o "pqnn32c.o" "../pqnn32c.c"
+gcc: fatal error: cannot specify -o with -c, -S or -E with multiple files
+compilation terminated.
+make: *** [subdir.mk:33: pqnn32c.o] Error 1
+"make all" terminated with exit code 2. Build might be incomplete.
+
+19:04:44 Build Failed. 1 errors, 0 warnings. (took 402ms)
+

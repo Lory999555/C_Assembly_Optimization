@@ -1,0 +1,9 @@
+content_assist_disabled_computers=org.eclipse.cdt.ui.textProposalCategory\u0000org.eclipse.cdt.ui.parserProposalCategory\u0000
+eclipse.preferences.version=1
+markOccurrences=false
+matchingBracketsColor=85,87,83
+sourceHoverBackgroundColor=75,81,98
+spelling_locale_initialized=true
+spelling_user_dictionary_encoding=
+useAnnotationsPrefPage=true
+useQuickDiffPrefPage=true
