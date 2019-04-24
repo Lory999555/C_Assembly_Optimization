@@ -23,6 +23,11 @@ dmask:	db		'%f ',0
 cr:		db		10,0
 br1:	db		'( ',0
 br2:	db		')',10,0
+;------------roba messa da me-----
+imask:	db		'%d',0
+align 16
+xmmtemp: db 0.0, 0.0, 0.0, 0.0
+;------------fine roba messa da me---
 
 %macro	start	0
 		push	ebp
@@ -151,3 +156,54 @@ br2:	db		')',10,0
 		pop		edx
 		prints	br2
 %endmacro
+;------------roba messa da me-----
+
+%macro printregps 1
+		vpushax
+        movaps [xmmtemp], %1
+        printps xmmtemp, 1
+		vpopax
+%endmacro
+
+%macro printregpd 1
+		vpushax
+        movapd [xmmtemp], %1
+        printpd xmmtemp, 1
+		vpopax
+%endmacro
+
+%macro	vpush	1
+	sub	esp, 16
+	movups	[esp], %1
+%endmacro
+
+%macro	vpop	1
+	movups	%1, [esp]
+	add	esp, 16
+%endmacro
+
+%macro vpushax 0
+	vpush	xmm0
+	vpush	xmm1
+	vpush	xmm2
+	vpush	xmm3
+	vpush	xmm4
+	vpush	xmm5
+	vpush	xmm6
+	vpush	xmm7
+	
+%endmacro
+
+%macro vpopax 0
+	
+	vpop	xmm7
+	vpop	xmm6
+	vpop	xmm5
+	vpop	xmm4
+	vpop	xmm3
+	vpop	xmm2
+	vpop	xmm1
+	vpop	xmm0
+%endmacro
+
+;------------fine roba messa da me-----
