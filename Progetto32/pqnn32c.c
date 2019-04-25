@@ -235,6 +235,7 @@ void pqnn_search(params* input) {
     // -------------------------------------------------
 
 }
+<<<<<<< HEAD
 
 //print per stampare il dataset ed il query set
 void printDsQs(MATRIX ds, MATRIX qs,int n,int d,int nq){
@@ -291,6 +292,15 @@ MATRIX Uj(MATRIX qs, int j,int m,int n,int d){
 	return uj;
 }
 
+=======
+float dist(float * x,float * y, int k){
+		float distance = 0;
+		for (int j=0; j<k;j++){
+		    distance += pow(x[j] - y[j], 2);
+		}
+		return distance;
+}
+>>>>>>> 84cc0846812359bba7cfe58a36ad64a75c07d3c0
 
 int main(int argc, char** argv) {
 	
@@ -451,16 +461,40 @@ int main(int argc, char** argv) {
 	
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
+<<<<<<< HEAD
 	input->sub=input->d/input->m;
 	
+=======
+
+	/*
+	for (i=0;i<input->n;i++){
+		for(j=0;j<input->d;j++){
+			printf("ds[%d][%d]=  %f  \n",i,j,input->ds[i*input->d+j]);
+		}
+	}
+	*/
+
+>>>>>>> 84cc0846812359bba7cfe58a36ad64a75c07d3c0
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
 
+<<<<<<< HEAD
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	MATRIX tmp = Uj(input->ds,0,input->m,input->n,input->d);
 	printEq(input->ds,tmp,input->n,input->d,input->n,input->sub);
+=======
+	printf("\n QUERY SET");
+	/*
+	for (i=0;i<input->nq;i++){
+		for(j=0;j<input->d;j++){
+			printf("qs[%d][%d]=  %f  \n",i,j,input->qs[i*input->d+j]);
+		}
+	}
+	*/	
+	
+>>>>>>> 84cc0846812359bba7cfe58a36ad64a75c07d3c0
 	//
 	// Visualizza il valore dei parametri
 	//
