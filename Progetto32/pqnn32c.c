@@ -219,7 +219,13 @@ void pqnn_search(params* input) {
     // -------------------------------------------------
 
 }
-
+float dist(float * x,float * y, int k){
+		float distance = 0;
+		for (int j=0; j<k;j++){
+		    distance += pow(x[j] - y[j], 2);
+		}
+		return distance;
+}
 
 int main(int argc, char** argv) {
 	
@@ -381,24 +387,28 @@ int main(int argc, char** argv) {
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
 
-
+	/*
 	for (i=0;i<input->n;i++){
 		for(j=0;j<input->d;j++){
 			printf("ds[%d][%d]=  %f  \n",i,j,input->ds[i*input->d+j]);
 		}
 	}
-	
+	*/
+
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
 
 	printf("\n QUERY SET");
+	/*
 	for (i=0;i<input->nq;i++){
 		for(j=0;j<input->d;j++){
 			printf("qs[%d][%d]=  %f  \n",i,j,input->qs[i*input->d+j]);
 		}
 	}
+	*/	
+	
 	//
 	// Visualizza il valore dei parametri
 	//

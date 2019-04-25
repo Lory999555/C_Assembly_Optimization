@@ -98,7 +98,7 @@ int * k_means(double * * data, int n, int m, int k, double t, double * * centroi
 			double min_distance = DBL_MAX;
 			for (i = 0; i < k; i++) {
 				double distance = 0;
-				for (j = m; j-- > 0; distance += pow(data[h][j] - c[i][j], 2))
+					for (j = m; j-- > 0; distance += pow(data[h][j] - c[i][j], 2))
 					;
 				if (distance < min_distance) {
 					labels[h] = i;
