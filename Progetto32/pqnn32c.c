@@ -52,6 +52,19 @@
 
 
 typedef struct {
+/*
+	input->knn = 1;
+	input->m = 8;
+	input->k = 256;
+	input->kc = 8192;
+	input->w = 16;
+	input->eps = 0.01;
+	input->tmin = 10;
+	input->tmax = 100;
+	input->silent = 0;
+	input->display = 0;
+*/
+
 	char* filename; //
 	MATRIX ds; // data set 
 	MATRIX qs; // query set
@@ -71,6 +84,7 @@ typedef struct {
 	int symmetric; // tipo di distanza: (0=)asimmetrica ADC o (1=)simmetrica SDC
 	int silent;
 	int display;
+	int sub; //numero di dimensioni dei sotto gruppetti (d/m)
 	// nns: matrice row major order di interi a 32 bit utilizzata per memorizzare gli ANN
 	// sulla riga i-esima si trovano gli ID (a partire da 0) degli ANN della query i-esima
 	//
@@ -139,6 +153,7 @@ void dealloc_matrix(MATRIX mat) {
  *****************************************************************************
  * 
  */
+
 MATRIX load_data(char* filename, int *n, int *d) {	
 	FILE* fp;
 	int rows, cols, status, i;
@@ -184,6 +199,7 @@ extern void pqnn32_index(params* input);
 extern int* pqnn32_search(params* input);
 
 
+
 /*
  *	pqnn_index
  * 	==========
@@ -218,6 +234,61 @@ void pqnn_search(params* input) {
 	// La matrice è memorizzata per righe
     // -------------------------------------------------
 
+}
+
+//print per stampare il dataset ed il query set
+void printDsQs(MATRIX ds, MATRIX qs,int n,int d,int nq){
+	printf("n=%d------d=%d---------nq=%d\n",n,d,nq);
+	int i,j;
+	printf("-------------Data Set-------------\n");
+	for (i=0;i<n;i++){
+		for(j=0;j<d;j++){
+			printf("ds[%d][%d]=  %f  \n",i,j,ds[i*d+j]);
+		}
+	}
+	if(qs!=NULL){
+		printf("-------------Query Set-------------\n");
+		for (i=0;i<nq;i++){
+			for(j=0;j<d;j++){
+				printf("qs[%d][%d]=  %f  \n",i,j,qs[i*d+j]);
+			}
+		}
+	}
+}
+
+//print per testare il metodo Uj
+void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
+	printf("Si ipotizza che m1 sia più grande di m2 (sia d che n)");
+	int i,j;
+	for (i=0;i<m1_n;i++){
+		for(j=0;j<m1_d;j++){
+			
+			if(i < m2_n && j < m2_d )
+			printf("m1[%d][%d]=  %f  ------>   m2[%d][%d]= %f \n",i,j,m1[i*m1_d+j],i,j,m2[i*m2_d+j]);
+			else
+			{
+				printf("m1[%d][%d]=  %f  ------>   m2[%d][%d]= Null \n",i,j,m1[i*m1_d+j],i,j);
+			}
+			
+		}
+	}
+}
+
+//metodo che prende un sottogruppo (sub dimensionale) del data set
+// j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
+MATRIX Uj(MATRIX qs, int j,int m,int n,int d){
+	int i,sub=d/m;
+	int k,c;
+	MATRIX uj = alloc_matrix(n,sub);
+	for(i = 0; i < n; i++){
+		c=0;
+		for(k = sub*j; k < (j+1)*sub; k++)
+		{
+			uj[i*sub+c] = qs[i*d+k];
+			c++;
+		}
+	}
+	return uj;
 }
 
 
@@ -380,25 +451,16 @@ int main(int argc, char** argv) {
 	
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
-
-
-	for (i=0;i<input->n;i++){
-		for(j=0;j<input->d;j++){
-			printf("ds[%d][%d]=  %f  \n",i,j,input->ds[i*input->d+j]);
-		}
-	}
+	input->sub=input->d/input->m;
 	
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
 
-	printf("\n QUERY SET");
-	for (i=0;i<input->nq;i++){
-		for(j=0;j<input->d;j++){
-			printf("qs[%d][%d]=  %f  \n",i,j,input->qs[i*input->d+j]);
-		}
-	}
+	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
+	MATRIX tmp = Uj(input->ds,0,input->m,input->n,input->d);
+	printEq(input->ds,tmp,input->n,input->d,input->n,input->sub);
 	//
 	// Visualizza il valore dei parametri
 	//
