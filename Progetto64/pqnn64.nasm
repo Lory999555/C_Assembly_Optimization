@@ -28,7 +28,7 @@
 ;     nasm -f elf64 pqnn32.nasm 
 ;
 
-%include "sseutils64.nasm"
+%dnclude "sseutils64.nasm"
 
 section .data			; Sezione contenente dati inizializzati
 

@@ -14,7 +14,7 @@
  ** Parameters
  ** - array of data points (double **data)
  ** - number of data points (int n)
- ** - dimension (int m)
+ ** - dimension (int m) per noi sarà la d
  ** - desired number of clusters (int k)
  ** - error tolerance (double t)
  **   - used as the stopping criterion, i.e. when the sum of

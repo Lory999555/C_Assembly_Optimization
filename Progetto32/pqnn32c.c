@@ -31,7 +31,7 @@
 
  Per generare il file eseguibile:
 
- nasm -f elf32 pqnn32.nasm && gcc -O0 -m32 -msse pqnn32.o pqnn32c.c -o pqnn32c && ./pqnn32c
+ nasm -f ef32 pqnn32.nasm && gcc -O0 -m32 -msse pqnn32.o pqnn32c.c -o pqnn32c && ./pqnn32c
  
  oppure
  
@@ -39,13 +39,14 @@
 
 */
 
+#include <float.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <time.h>
 #include <xmmintrin.h>
-
+//#include "kmeans2.c"
 
 #define 	MATRIX		double*
 #define	    VECTOR		double*
@@ -128,11 +129,19 @@ MATRIX alloc_matrix(int rows, int cols) {
 	return (MATRIX) get_block(sizeof(double),rows*cols);
 }
 
+//riguardare bene il fatto dell'allineamento (di default è 16)
+int* alloc_vector(int index){
+	return (int*) get_block(sizeof(int),index);
+}
+
+void dealloc_vector(int* vector) {
+	free_block(vector);
+}
+
 
 void dealloc_matrix(MATRIX mat) {
 	free_block(mat);
 }
-
 
 /*
  * 
@@ -188,11 +197,216 @@ void save_ANN(char* filename, int* ANN, int nq, int knn) {
 	fp = fopen(fpath, "w");
 	for (i = 0; i < nq; i++) {
 		for (j = 0; j < knn; j++)
-			fprintf(fp, "%d ", ANN[i*knn+j]);
+			fprintf(fp, " %f  ", ANN[i*knn+j]);
 		fprintf(fp, "\n");
 	}
 	fclose(fp);
 }
+
+
+
+//metodo che stampa i centroidi e i punti associati ad esso (sotto forma di vettore di indici)
+void printCentroids(MATRIX C,int* index, int n,int d,int k){
+	int i,j,jj;
+	for (i=0;i<k;i++){
+		for(j=0;j<d;j++){
+			printf("C[%d][%d]=   %f \n",i,j,C[i*d+j]);
+		}
+		printf("il centroide num: %d è associato ai punti --> [",i);
+		for(jj=0; jj < n; jj++)
+		{
+			if (index[jj]==i) {
+				printf(".%d. ",jj);
+			}
+		}
+		printf("]\n");
+	}
+}
+//print per stampare il dataset ed il query set
+void printDsQs(MATRIX ds, MATRIX qs,int n,int d,int nq){
+	printf("n=%d------d=%d---------nq=%d\n",n,d,nq);
+	int i,j;
+	printf("-------------Data Set-------------\n");
+	for (i=0;i<n;i++){
+		for(j=0;j<d;j++){
+			printf("ds[%d][%d]=   %f   \n",i,j,ds[i*d+j]);
+		}
+	}
+	if(qs!=NULL){
+		printf("-------------Query Set-------------\n");
+		for (i=0;i<nq;i++){
+			for(j=0;j<d;j++){
+				printf("qs[%d][%d]=   %f   \n",i,j,qs[i*d+j]);
+			}
+		}
+	}
+}
+
+//print per testare il metodo Uj
+void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
+	printf("Si ipotizza che m1 sia più grande di m2 (sia d che n)");
+	int i,j;
+	for (i=0;i<m1_n;i++){
+		for(j=0;j<m1_d;j++){
+			
+			if(i < m2_n && j < m2_d )
+			printf("m1[%d][%d]=   %f   ------>   m2[%d][%d]=  %f  \n",i,j,m1[i*m1_d+j],i,j,m2[i*m2_d+j]);
+			else
+			{
+				printf("m1[%d][%d]=   %f   ------>   m2[%d][%d]= Null \n",i,j,m1[i*m1_d+j],i,j);
+			}
+			
+		}
+	}
+}
+
+//metodo che prende un sottogruppo (sub dimensionale) del data set
+// j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
+MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
+	int i,sub=d/m;
+	int k,c;
+	MATRIX uj = alloc_matrix(n,sub);
+	for(i = 0; i < n; i++){
+		c=0;
+		for(k = sub*j; k < (j+1)*sub; k++)
+		{
+			uj[i*sub+c] = ds[i*d+k];
+			c++;
+		}
+	}
+	return uj;
+}
+
+double dist(double * x,double * y, int k){
+	double distance = 0;
+	for (int i=0; i<k;i++){
+	    distance += pow(x[i] - y[i], 2);
+	}
+	return distance;
+}
+
+MATRIX randCentroid(MATRIX ds,int n,int d,int k){
+	int i,j;
+	int max=0;//rand() % (n-k);
+	printf("---------%d-----------",max);
+	MATRIX initialCentroid = alloc_matrix(k,d);
+	for(i = max; i < max+k; i++){
+		for(j = 0; j < d; j++){
+			initialCentroid[i*d+j]=ds[i*d+j];
+		}
+	}
+	return initialCentroid;
+}
+
+
+//kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
+int * k_means(double * data, int n, int d, int k, double t, double * centroids,int t_min,int t_max) {
+	
+	/* output cluster label for each data point */
+	int * labels = alloc_vector(n);
+
+	double min_distance;
+	double distance;
+	double offset;
+	int iter=0;
+	int h, i, j; /* loop counters, of course */
+	
+	/* size of each cluster */
+	int* counts = alloc_vector(k);
+	double old_error, error = DBL_MAX; /* sum of squared euclidean distance */
+	
+	MATRIX c = centroids;
+	
+	/* temp centroids */
+	MATRIX c1 = alloc_matrix(k,d);
+
+	/****
+	 ** initialization */
+	printf("initilization\n");
+	for (h = i = 0; i < k; h += n / k, i++) {
+		/* pick k points as initial centroids */
+		//printf("----h=%d-----i=%d-------\n",h,i);
+		for (j = 0; j < d;j++){
+			c[i*d+j] = data[h*d+j];
+			printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h*d+j]);
+		}
+	}
+	printf("main loop\n");
+	/****
+	 ** main loop */
+
+	do {
+		iter++;
+		/* save error from last step */
+		old_error = error, error = 0;
+		/* clear old counts and temp centroids */
+		for (i = 0; i < k;i++) {
+			counts[i] = 0;
+			for (j = 0; j < d; j++){
+				c1[i*d+j] = 0;
+			}
+		}
+		printf("identify the closest cluster in %d iteration\n",iter);
+		for (h = 0; h < n; h++) {
+			/* identify the closest cluster */
+			min_distance = DBL_MAX;
+			for (i = 0; i < k; i++) {
+				distance = 0;
+				for (j = 0; j < d ; j++){
+					distance += pow(data[h*d+j] - c[i*d+j], 2);
+				}
+				if (distance < min_distance) {
+					labels[h] = i;
+					min_distance = distance;
+				}
+			}
+			//printf("update size and temp centroid of the destination cluster for %d point\n",h);
+			/* update size and temp centroid of the destination cluster */
+			for (j = 0; j < d; j++){
+				c1[labels[h]*d+j] += data[h*d+j]; // c'era un +=
+			}
+			counts[labels[h]]++;
+			/* update standard error */
+			error += min_distance;
+		}
+		printf("Update all centroids\n");
+		for (i = 0; i < k; i++) { /* update all centroids */
+			for (j = 0; j < d; j++) {
+				if(counts[i]!=0){
+					c[i*d+j] = c1[i*d+j] / counts[i];
+					printf("SI ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+				}else
+				{
+					c[i*d+j] =c1[i*d+j];
+					printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+				}
+			}
+		}
+	}//while (fabs(error-old_error) > t); 
+	while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+
+	/****
+	 ** housekeeping */
+
+	/*for (i = 0; i < k; i++) {
+		if (!centroids) {
+			free(c[i]);
+		}
+		free(c1[i]);
+	}*/
+
+	printf("housekeeping\n");
+	
+	dealloc_matrix(c);
+	
+	dealloc_matrix(c1);
+
+	dealloc_vector(counts);
+
+	return labels;
+}
+
+
 
 
 extern void pqnn32_index(params* input);
@@ -205,7 +419,21 @@ extern int* pqnn32_search(params* input);
  * 	==========
  */
 void pqnn_index(params* input) {
-	
+
+	//printDsQs(input->ds,NULL,input->n,input->d,0);
+	if(input->exaustive == 0){
+		/*
+		era per provare il kmeans1.c
+		MATRIX Cc = randCentroid(input->ds,input->n,input->d,input->kc);
+		printDsQs(Cc,NULL,input->kc,input->d,0);
+		int* Cc_index = (int*)get_block(sizeof(int),input->n);
+		kmeans(input->d,input->ds,input->n,input->kc,Cc,Cc_index);
+		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+		*/
+		MATRIX Cc= alloc_matrix(input->kc,input->d);
+		int * Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+	}
     // -------------------------------------------------
     // Codificare qui l'algoritmo di indicizzazione
     // -------------------------------------------------
@@ -235,72 +463,7 @@ void pqnn_search(params* input) {
     // -------------------------------------------------
 
 }
-<<<<<<< HEAD
 
-//print per stampare il dataset ed il query set
-void printDsQs(MATRIX ds, MATRIX qs,int n,int d,int nq){
-	printf("n=%d------d=%d---------nq=%d\n",n,d,nq);
-	int i,j;
-	printf("-------------Data Set-------------\n");
-	for (i=0;i<n;i++){
-		for(j=0;j<d;j++){
-			printf("ds[%d][%d]=  %f  \n",i,j,ds[i*d+j]);
-		}
-	}
-	if(qs!=NULL){
-		printf("-------------Query Set-------------\n");
-		for (i=0;i<nq;i++){
-			for(j=0;j<d;j++){
-				printf("qs[%d][%d]=  %f  \n",i,j,qs[i*d+j]);
-			}
-		}
-	}
-}
-
-//print per testare il metodo Uj
-void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
-	printf("Si ipotizza che m1 sia più grande di m2 (sia d che n)");
-	int i,j;
-	for (i=0;i<m1_n;i++){
-		for(j=0;j<m1_d;j++){
-			
-			if(i < m2_n && j < m2_d )
-			printf("m1[%d][%d]=  %f  ------>   m2[%d][%d]= %f \n",i,j,m1[i*m1_d+j],i,j,m2[i*m2_d+j]);
-			else
-			{
-				printf("m1[%d][%d]=  %f  ------>   m2[%d][%d]= Null \n",i,j,m1[i*m1_d+j],i,j);
-			}
-			
-		}
-	}
-}
-
-//metodo che prende un sottogruppo (sub dimensionale) del data set
-// j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
-MATRIX Uj(MATRIX qs, int j,int m,int n,int d){
-	int i,sub=d/m;
-	int k,c;
-	MATRIX uj = alloc_matrix(n,sub);
-	for(i = 0; i < n; i++){
-		c=0;
-		for(k = sub*j; k < (j+1)*sub; k++)
-		{
-			uj[i*sub+c] = qs[i*d+k];
-			c++;
-		}
-	}
-	return uj;
-}
-
-=======
-float dist(float * x,float * y, int k){
-		float distance = 0;
-		for (int j=0; j<k;j++){
-		    distance += pow(x[j] - y[j], 2);
-		}
-		return distance;
-}
->>>>>>> 84cc0846812359bba7cfe58a36ad64a75c07d3c0
 
 int main(int argc, char** argv) {
 	
@@ -319,7 +482,8 @@ int main(int argc, char** argv) {
 	input->knn = 1;
 	input->m = 8;
 	input->k = 256;
-	input->kc = 8192;
+	//input->kc = 8192;
+	input->kc = 16;
 	input->w = 16;
 	input->eps = 0.01;
 	input->tmin = 10;
@@ -461,40 +625,20 @@ int main(int argc, char** argv) {
 	
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
-<<<<<<< HEAD
 	input->sub=input->d/input->m;
-	
-=======
 
-	/*
-	for (i=0;i<input->n;i++){
-		for(j=0;j<input->d;j++){
-			printf("ds[%d][%d]=  %f  \n",i,j,input->ds[i*input->d+j]);
-		}
-	}
-	*/
-
->>>>>>> 84cc0846812359bba7cfe58a36ad64a75c07d3c0
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
 
-<<<<<<< HEAD
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
-	MATRIX tmp = Uj(input->ds,0,input->m,input->n,input->d);
-	printEq(input->ds,tmp,input->n,input->d,input->n,input->sub);
-=======
-	printf("\n QUERY SET");
-	/*
-	for (i=0;i<input->nq;i++){
-		for(j=0;j<input->d;j++){
-			printf("qs[%d][%d]=  %f  \n",i,j,input->qs[i*input->d+j]);
-		}
-	}
-	*/	
 	
->>>>>>> 84cc0846812359bba7cfe58a36ad64a75c07d3c0
+	/*MATRIX tmp = Uj(input->ds,0,input->m,input->n,input->d);
+	printEq(input->ds,tmp,input->n,input->d,input->n,input->sub);
+	printf("\n QUERY SET");
+	*/
+
 	//
 	// Visualizza il valore dei parametri
 	//
@@ -551,12 +695,12 @@ int main(int argc, char** argv) {
  	{
  		if (!input->silent && input->display) {
  			printf("\nANN:\n");
- 			for (i = 0; i < input->nq; i++) {
+ 			/*for (i = 0; i < input->nq; i++) {
 				printf("query #%d:", i);
 				for (j = 0; j < input->knn; j++)
-					printf(" %d", input->ANN[i*input->knn+j]);
+					printf("  %f ", input->ANN[i*input->knn+j]);
 				printf("\n");
- 			}
+ 			}*/
  		}
  		save_ANN(input->filename, input->ANN, input->nq, input->knn);
 	}

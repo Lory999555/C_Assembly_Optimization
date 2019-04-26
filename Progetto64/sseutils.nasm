@@ -4,7 +4,7 @@
 ; alcune utility per l'uso di SSE
 ;
 ; Uso:
-;	%include "sseutils.nasm"
+;	%dnclude "sseutils.nasm"
 ;	(da specificare nel file sorgente NASM
 ;	prima della section .data)
 ; --------------------------------------------------
