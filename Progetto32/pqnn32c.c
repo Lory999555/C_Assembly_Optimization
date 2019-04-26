@@ -395,9 +395,8 @@ int * k_means(double * data, int n, int d, int k, double t, double * centroids,i
 		free(c1[i]);
 	}*/
 
-	printf("housekeeping\n");
 	
-	dealloc_matrix(c);
+	printf("housekeeping\n");
 	
 	dealloc_matrix(c1);
 
