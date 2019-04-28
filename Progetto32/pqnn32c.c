@@ -50,7 +50,13 @@
 
 #define 	MATRIX		double*
 #define	    VECTOR		double*
-
+/*
+typedef struct
+{
+	int y_i;
+	int Qp_i;
+} nodo;
+*/
 
 typedef struct {
 /*
@@ -270,16 +276,16 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 		c=0;
 		for(k = sub*j; k < (j+1)*sub; k++)
 		{
-			uj[i*sub+c] = ds[i*d+k];
+			uj[i*sub+c] = ds[i*d+k]; //qui c'è un problema
 			c++;
 		}
 	}
 	return uj;
 }
 
-double dist(double * x,double * y, int k){
+double dist(double * x,double * y, int d){
 	double distance = 0;
-	for (int i=0; i<k;i++){
+	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
 	return distance;
@@ -300,11 +306,12 @@ MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 
 
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
-int * k_means(double * data, int n, int d, int k, double t, double * centroids,int t_min,int t_max) {
+int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_min,int t_max) {
 	
 	/* output cluster label for each data point */
 	int * labels = alloc_vector(n);
 
+	//ste variabili sono da liberare alla fine del metodo!!!
 	double min_distance;
 	double distance;
 	double offset;
@@ -405,6 +412,37 @@ int * k_means(double * data, int n, int d, int k, double t, double * centroids,i
 	return labels;
 }
 
+MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
+	MATRIX results = alloc_matrix(n,d);
+	int i,j;
+	for (i=0;i< n;i++){
+		for(j=0;j<n;j++){
+			results[i*d+j]=ds[i*d+j]-centroids[label[i]*d+j];
+			//non testato
+		}
+	}
+}
+
+//in questo modo il primo indice è j per individuare il sottogruppo di centroidi e label.
+//centroids viene inizializzato all'interno quindi va solo passato un puntatore vuoto.
+//il primo indice indica il gruppetto il secondo invece indica la dimensione.
+int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float eps,int t_min,int t_max){
+	int j;
+	printf("\nfnoenqo");
+	int** result = (int**) get_block(sizeof(int*),m);
+	printf("\nfnoenqo------------");
+	//centroids = (double**) get_block(sizeof(MATRIX),m);
+	printf("\n%d prima del for",m);
+	for( j = 0; j < m; j++)
+	{
+		printf("\n%d dopo il for",j);
+		MATRIX tmp = Uj(ds,j,m,n,d);
+		result[j]=k_means(tmp,n,d,k,eps,centroids[j],t_min,t_max);
+	}
+	return result;
+	
+}
+
 
 
 
@@ -418,10 +456,14 @@ extern int* pqnn32_search(params* input);
  * 	==========
  */
 void pqnn_index(params* input) {
-
+	int i,j;
+	//TEST
 	//printDsQs(input->ds,NULL,input->n,input->d,0);
+
 	if(input->exaustive == 0){
-		/*
+
+
+		/* TEST 
 		era per provare il kmeans1.c
 		MATRIX Cc = randCentroid(input->ds,input->n,input->d,input->kc);
 		printDsQs(Cc,NULL,input->kc,input->d,0);
@@ -429,9 +471,61 @@ void pqnn_index(params* input) {
 		kmeans(input->d,input->ds,input->n,input->kc,Cc,Cc_index);
 		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		*/
+		printf("Quantizzazione y in qc\n");
+		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
 		MATRIX Cc= alloc_matrix(input->kc,input->d);
 		int * Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
-		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+		
+		printf("Calcolo dei residui\n");
+		//calcolo dei redisui r(y) = y - Ci
+		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+
+		printf("Quantizzazione dei residui\n");
+		//quantizzare r(y) con Qp, prima si crea il quantizzatore usando m volte k-means
+		double ** Cp;
+		int ** Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
+
+
+		printf("Creazione della Inverted List\n");
+		/*aggiungere nella inverted List una tupla corrispondente a qc(y)=Ci
+		succesivamente appendere un "oggetto" composto dal l'ID del punto y in analisi
+		e l'indice del centroide prodotto sul residuo Qp(res(y))=Cpi */
+
+		//per ora uso la maniera più stupida e creo tutto poi qui sicuramente si può ottimizzare
+		//allocazione dinamica
+		int *** IL=(int***) get_block(sizeof(int**),input->kc);
+		int* bucket=alloc_vector(input->kc);
+		for(i=0;i < input->kc;i++){
+			for(j=0;j< input->n;j++){
+				if(Cc_index[j]==i)
+					bucket[i]++;
+			}
+			IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
+		}
+
+		printf("Popolazione dell'Inverted List\n");
+		for(i=0;i<input->n;i++){
+			//posso usare bucket[i] per sapere la dim di ogni cosa e magari farmene una copia
+			//potrei caricare i valori al contrario facendo -- in modo da essere sicuro che riempo tutto
+			//per simulare la tupla vado a creare un vettore dove il primo elemento è l'iD della y e i restanti
+			//sono gli indici che compongono il product quantizzazion e quindi m.
+			int* nodo = alloc_vector(input->m+1);
+			nodo[0]=i;
+			for(int j = 1; j < input->m+1; j++)
+			{
+				nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
+				
+			}
+			
+			IL[Cc_index[i]][bucket[i]]=nodo;
+			bucket[i]--;
+		}
+		printf("Fine index\n");
+
+
+
+
 	}
     // -------------------------------------------------
     // Codificare qui l'algoritmo di indicizzazione
@@ -482,7 +576,7 @@ int main(int argc, char** argv) {
 	input->m = 8;
 	input->k = 256;
 	//input->kc = 8192;
-	input->kc = 16;
+	input->kc = 32;
 	input->w = 16;
 	input->eps = 0.01;
 	input->tmin = 10;
