@@ -256,7 +256,7 @@ void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 		for(j=0;j<m1_d;j++){
 			
 			if(i < m2_n && j < m2_d )
-			printf("m1[%d][%d]=   %f   ------>   m2[%d][%d]=  %f  \n",i,j,m1[i*m1_d+j],i,j,m2[i*m2_d+j]);
+				printf("m1[%d][%d]=   %f   ------>   m2[%d][%d]=  %f  \n",i,j,m1[i*m1_d+j],i,j,m2[i*m2_d+j]);
 			else
 			{
 				printf("m1[%d][%d]=   %f   ------>   m2[%d][%d]= Null \n",i,j,m1[i*m1_d+j],i,j);
@@ -269,13 +269,13 @@ void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 //metodo che prende un sottogruppo (sub dimensionale) del data set
 // j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
 MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
-	int i,sub=d/m;
-	int k,c;
+	int i,k,c;
+	int sub=d/m;
 	MATRIX uj = alloc_matrix(n,sub);
 	for(i = 0; i < n; i++){
 		c=0;
 		for(k = sub*j; k < (j+1)*sub; k++)
-		{
+		{	
 			uj[i*sub+c] = ds[i*d+k]; //qui c'è un problema
 			c++;
 		}
@@ -335,7 +335,7 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 		//printf("----h=%d-----i=%d-------\n",h,i);
 		for (j = 0; j < d;j++){
 			c[i*d+j] = data[h*d+j];
-			printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h*d+j]);
+			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h*d+j]);
 		}
 	}
 	printf("main loop\n");
@@ -381,11 +381,11 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 			for (j = 0; j < d; j++) {
 				if(counts[i]!=0){
 					c[i*d+j] = c1[i*d+j] / counts[i];
-					printf("SI ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+					//printf("SI ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
 				}else
 				{
 					c[i*d+j] =c1[i*d+j];
-					printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+					//printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
 				}
 			}
 		}
@@ -416,28 +416,32 @@ MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 	MATRIX results = alloc_matrix(n,d);
 	int i,j;
 	for (i=0;i< n;i++){
-		for(j=0;j<n;j++){
+		for(j=0;j<d;j++){
 			results[i*d+j]=ds[i*d+j]-centroids[label[i]*d+j];
-			//non testato
 		}
 	}
+	return results;
 }
 
 //in questo modo il primo indice è j per individuare il sottogruppo di centroidi e label.
 //centroids viene inizializzato all'interno quindi va solo passato un puntatore vuoto.
 //il primo indice indica il gruppetto il secondo invece indica la dimensione.
+//si è scelto di rimanere coerenti con le altre implementazioni, per ora tutto cioè che viene 
+//passato come parametro ci si aspetta sia già allocato mentre tutto cioè che sta dentro il metodo
+//compreso il valore di ritorno si alloca dentro il metodo.
 int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float eps,int t_min,int t_max){
 	int j;
-	printf("\nfnoenqo");
+	int sub=d/m;
 	int** result = (int**) get_block(sizeof(int*),m);
-	printf("\nfnoenqo------------");
 	//centroids = (double**) get_block(sizeof(MATRIX),m);
-	printf("\n%d prima del for",m);
 	for( j = 0; j < m; j++)
 	{
-		printf("\n%d dopo il for",j);
+		printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		MATRIX tmp = Uj(ds,j,m,n,d);
-		result[j]=k_means(tmp,n,d,k,eps,centroids[j],t_min,t_max);
+		centroids[j]=alloc_matrix(k,sub);
+		result[j]=k_means(tmp,n,sub,k,eps,centroids[j],t_min,t_max);
+		dealloc_matrix(tmp); // da testare
+
 	}
 	return result;
 	
@@ -458,6 +462,18 @@ extern int* pqnn32_search(params* input);
 void pqnn_index(params* input) {
 	int i,j;
 	//TEST
+	/*int c4=21;
+	int * c3 = &c4;
+	int ** c2 = &c3;
+	int *** c1 = &c2;
+	int**** c = &c1;
+	int k=***c;
+	/*printf("%d\n",$c);
+	printf("%d\n",$c1);
+	printf("%d\n",$c2);
+	printf("%d\n",$c3);
+	printf("%f\n",k);
+	*/
 	//printDsQs(input->ds,NULL,input->n,input->d,0);
 
 	if(input->exaustive == 0){
@@ -471,6 +487,8 @@ void pqnn_index(params* input) {
 		kmeans(input->d,input->ds,input->n,input->kc,Cc,Cc_index);
 		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		*/
+
+
 		printf("Quantizzazione y in qc\n");
 		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
 		MATRIX Cc= alloc_matrix(input->kc,input->d);
@@ -480,10 +498,11 @@ void pqnn_index(params* input) {
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci
 		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+		//printDsQs(res,NULL,input->n,input->d,0);
 
 		printf("Quantizzazione dei residui\n");
 		//quantizzare r(y) con Qp, prima si crea il quantizzatore usando m volte k-means
-		double ** Cp;
+		double ** Cp = (double**)get_block(sizeof(double*),input->m);
 		int ** Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 
 
@@ -495,16 +514,21 @@ void pqnn_index(params* input) {
 		//per ora uso la maniera più stupida e creo tutto poi qui sicuramente si può ottimizzare
 		//allocazione dinamica
 		int *** IL=(int***) get_block(sizeof(int**),input->kc);
+		
 		int* bucket=alloc_vector(input->kc);
 		for(i=0;i < input->kc;i++){
+			bucket[i]=0;
 			for(j=0;j< input->n;j++){
 				if(Cc_index[j]==i)
 					bucket[i]++;
+					
 			}
+			printf("bucket[%d]=%d\n",i,bucket[i]);
 			IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
 		}
 
 		printf("Popolazione dell'Inverted List\n");
+		int ind;
 		for(i=0;i<input->n;i++){
 			//posso usare bucket[i] per sapere la dim di ogni cosa e magari farmene una copia
 			//potrei caricare i valori al contrario facendo -- in modo da essere sicuro che riempo tutto
@@ -517,15 +541,15 @@ void pqnn_index(params* input) {
 				nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
 				
 			}
-			
-			IL[Cc_index[i]][bucket[i]]=nodo;
-			bucket[i]--;
+			ind = Cc_index[i];
+			printf("\n");
+			printf("Cc_index[%d] = %d\n",i,ind);
+			printf("bucket[%d] = %d\n",ind,bucket[ind]);
+
+			IL[ind][bucket[ind]]=nodo;
+			bucket[ind]--;
 		}
 		printf("Fine index\n");
-
-
-
-
 	}
     // -------------------------------------------------
     // Codificare qui l'algoritmo di indicizzazione
@@ -574,9 +598,9 @@ int main(int argc, char** argv) {
 	input->symmetric = 1;
 	input->knn = 1;
 	input->m = 8;
-	input->k = 256;
+	input->k = 16;
 	//input->kc = 8192;
-	input->kc = 32;
+	input->kc = 16;
 	input->w = 16;
 	input->eps = 0.01;
 	input->tmin = 10;
