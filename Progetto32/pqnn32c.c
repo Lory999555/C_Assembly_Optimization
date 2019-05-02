@@ -46,17 +46,12 @@
 #include <string.h>
 #include <time.h>
 #include <xmmintrin.h>
+#include <stdbool.h>
 //#include "kmeans2.c"
 
 #define 	MATRIX		double*
 #define	    VECTOR		double*
-/*
-typedef struct
-{
-	int y_i;
-	int Qp_i;
-} nodo;
-*/
+#define 	x_query 	input->qs
 
 typedef struct {
 /*
@@ -209,7 +204,12 @@ void save_ANN(char* filename, int* ANN, int nq, int knn) {
 	fclose(fp);
 }
 
-
+void printX(MATRIX x,int i,int d){
+	int j;
+	for(j=0;j<d;j++){
+		printf("X[%d][%d] = %f\n",i,j,x[i*d+j]);
+	}
+}
 
 //metodo che stampa i centroidi e i punti associati ad esso (sotto forma di vettore di indici)
 void printCentroids(MATRIX C,int* index, int n,int d,int k){
@@ -245,6 +245,13 @@ void printDsQs(MATRIX ds, MATRIX qs,int n,int d,int nq){
 				printf("qs[%d][%d]=   %f   \n",i,j,qs[i*d+j]);
 			}
 		}
+	}
+}
+
+void printVector(int * v,int n){
+	int i;
+	for(i=0;i<n;i++){
+		printf("v[%d] = %d\n",i,v[i]);
 	}
 }
 
@@ -441,10 +448,78 @@ int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float ep
 		centroids[j]=alloc_matrix(k,sub);
 		result[j]=k_means(tmp,n,sub,k,eps,centroids[j],t_min,t_max);
 		dealloc_matrix(tmp); // da testare
-
 	}
 	return result;
-	
+}
+
+/*x=query
+n è il numero dei centroidi del quantizzatore coarse
+d dimensione dei centroids
+w numero di centroidi "vicini" da analizzare*/
+int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
+	int i,j;
+	int * result=alloc_vector(w);
+	double * result_dist=alloc_matrix(w,1);
+	double tmp=0;
+	double max=0;
+
+	//riempo i primi w posti con i primi w centroidi e le relative distanze
+	printf("rimepo i primi w posti\n");
+	for(i = 0; i < w; i++)
+	{	
+		tmp=dist(x,&centroids[i],d);
+		result[i]=i;
+		result_dist[i]=tmp;
+		//piccola ottimizzazione, al posto di manteneeree ordinata la struttura
+		//uso un "max" se le distanze che calcolo sono più piccole allora dovrà 
+		//entrare nella struttura altrimenti no.
+		if (max < tmp) {
+			max = tmp;
+		}
+	}
+
+	int new_i;
+	double new_max;
+	bool trovato;
+	//n qui simboleggia il numero dei centroidi
+
+	printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
+	for(i=w;i<n;i++){
+		tmp=dist(x,&centroids[i],d);
+		printVector(result,w);
+		printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
+		printf("la distanza max della struttura è = %f\n",max);
+
+		if(tmp < max){
+			new_max=tmp;
+			//bisogna inserire ed aggiornare la struttura
+			for(int j = 0; j < w; j++)
+			{
+
+				//ho il dubbio che ci possano essere più punti con la stessa distanza
+				//ci può stare un controllo
+				if(!trovato && result_dist[j]==max){
+					printf("cambio centroide tolgo il centroide v[%d] = %d e metto quello %d\n",j,result[j],i);
+					result_dist[j]=tmp;
+					result[j]=i;
+					trovato=true;
+
+				}else if (result_dist[j] > new_max)
+				{
+					new_max = result_dist[j];
+				}
+				
+			}
+			max = new_max;
+			trovato=false;
+			
+		}
+
+	}
+	dealloc_matrix(result_dist);
+	return result;
+
+
 }
 
 
@@ -453,6 +528,11 @@ int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float ep
 extern void pqnn32_index(params* input);
 extern int* pqnn32_search(params* input);
 
+MATRIX Cc;
+int* Cc_index;
+double** Cp;
+int ** Cp_index;
+int *** IL;
 
 
 /*
@@ -491,8 +571,8 @@ void pqnn_index(params* input) {
 
 		printf("Quantizzazione y in qc\n");
 		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
-		MATRIX Cc= alloc_matrix(input->kc,input->d);
-		int * Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		Cc= alloc_matrix(input->kc,input->d);
+		Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
@@ -502,8 +582,8 @@ void pqnn_index(params* input) {
 
 		printf("Quantizzazione dei residui\n");
 		//quantizzare r(y) con Qp, prima si crea il quantizzatore usando m volte k-means
-		double ** Cp = (double**)get_block(sizeof(double*),input->m);
-		int ** Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
+		Cp = (double**)get_block(sizeof(double*),input->m);
+		Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 
 
 		printf("Creazione della Inverted List\n");
@@ -513,7 +593,7 @@ void pqnn_index(params* input) {
 
 		//per ora uso la maniera più stupida e creo tutto poi qui sicuramente si può ottimizzare
 		//allocazione dinamica
-		int *** IL=(int***) get_block(sizeof(int**),input->kc);
+		IL=(int***) get_block(sizeof(int**),input->kc);
 		
 		int* bucket=alloc_vector(input->kc);
 		for(i=0;i < input->kc;i++){
@@ -564,9 +644,45 @@ void pqnn_index(params* input) {
 
 /*
  *	pqnn_search
- * 	===========
+ * 	=========== RICORDARSI DI DEALLOCARE LE COSE OVUNQUE
  */
 void pqnn_search(params* input) {
+
+	if(input->exaustive==0){
+
+		//quantizzare x con i w centroidi più vicini di qc (coarse)
+		//qui si dovrebbe salvare la distanza in modo da usarla successivamente
+		
+		/*int i;
+		printDsQs(NULL,input->qs,0,input->d,input->nq);
+		for(i=0;i< input->nq;i++){
+			
+			
+			printX(x_query,i,input->d);
+
+		}*/
+
+	
+		//per ogni punto per query set
+		int i;
+		for(i=0;i< input->nq;i++){
+
+			printf("calcolo dei w centroidi più vicini\n");
+			printX(x_query,i,input->d);
+			//calcolo dei w centroidi più vicini a x
+			//cerco di passarlgi solo il punto x in modo che i metodi possono preoccuparsi solo di
+			//ciclare su 128 dimensioni in quanto punto singolo. (sulle dimensioni in generale)
+			int* label_w =  w_near_centroids(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
+
+			// per ogni centroide vicino appiclo la ricerca
+			int i_w;
+			for(i_w = 0 ; i_w < w ; i_w++){
+				
+			}
+			
+
+		}
+	}
 	
     // -------------------------------------------------
     // Codificare qui l'algoritmo di interrogazione
@@ -594,14 +710,16 @@ int main(int argc, char** argv) {
 	params* input = malloc(sizeof(params));
 
 	input->filename = NULL;
-	input->exaustive = 1;
+	input->exaustive = 0;
 	input->symmetric = 1;
 	input->knn = 1;
-	input->m = 8;
+	input->m = 4;
+	//input->k = 256;
 	input->k = 16;
 	//input->kc = 8192;
 	input->kc = 16;
-	input->w = 16;
+	//input->w = 16;
+	input->w=4;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -743,11 +861,13 @@ int main(int argc, char** argv) {
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
+	input->n=input->n/2;
 
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
+	input->nq=input->nq/2;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
