@@ -298,6 +298,7 @@ double dist(double * x,double * y, int d){
 	return distance;
 }
 
+/*
 MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 	int i,j;
 	int max=0;//rand() % (n-k);
@@ -309,7 +310,7 @@ MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 		}
 	}
 	return initialCentroid;
-}
+}*/
 
 
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
@@ -522,6 +523,29 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 
 }
 
+double adc(MATRIX x, int y, int m, int d, double** centroids, int** labels, int k ){
+  double dis = 0;
+  MATRIX uj_x;
+  for(int j=0; j<m; j++){
+    uj_x = Uj( x, j, m, 1, d);
+    dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+  }
+  return dis;
+}
+
+
+//in questo metodo la x si presuppone 1 vettore d dimensionale quindi non una matrice.
+MATRIX residuals_x(MATRIX x,MATRIX centroids,int* label, int n,int d){
+	MATRIX results = alloc_matrix(n,d);
+	int i,j;
+	for (i=0;i< n;i++){
+		for(j=0;j<d;j++){
+			results[i*d+j]=x[j]-centroids[label[i]*d+j];
+		}
+	}
+	return results;
+}
+
 
 
 
@@ -676,7 +700,20 @@ void pqnn_search(params* input) {
 
 			// per ogni centroide vicino appiclo la ricerca
 			int i_w;
-			for(i_w = 0 ; i_w < w ; i_w++){
+
+			//calcolo tutti i residui r(x) con i centroidi in w
+			printf("calcolo dei residui r(x) con tutti i centroidi w\n");
+			double* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
+			//da testare meglio per vedere se
+			//effettivamente funziona
+			
+			//printDsQs(res_x,NULL,input->w,input->d,0);
+			for(i_w = 0 ; i_w < input->w ; i_w++){
+				//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
+				//per ogni sotto quantizzatore j e per ogni centroide Cji
+				
+				
+
 				
 			}
 			
