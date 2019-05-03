@@ -298,7 +298,19 @@ double dist(double * x,double * y, int d){
 	return distance;
 }
 
-/*
+int centX(double * centroids, double * x, int k, int d){	
+	double dis = dist(x, centroids, d);
+	int park = 0;
+	for(int i=1; i<k; i++){
+		double tep = dist(x, &centroids[i*d], d);	
+ 		if( tep < dis){
+			dis = tep;
+			park = i;
+		}
+	}
+	return park;
+}
+
 MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 	int i,j;
 	int max=0;//rand() % (n-k);
@@ -310,7 +322,7 @@ MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 		}
 	}
 	return initialCentroid;
-}*/
+}
 
 
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
@@ -431,12 +443,12 @@ MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 	return results;
 }
 
-//in questo modo il primo indice è j per individuare il sottogruppo di centroidi e label.
-//centroids viene inizializzato all'interno quindi va solo passato un puntatore vuoto.
-//il primo indice indica il gruppetto il secondo invece indica la dimensione.
-//si è scelto di rimanere coerenti con le altre implementazioni, per ora tutto cioè che viene 
-//passato come parametro ci si aspetta sia già allocato mentre tutto cioè che sta dentro il metodo
-//compreso il valore di ritorno si alloca dentro il metodo.
+/**in questo modo il primo indice è j per individuare il sottogruppo di centroidi e label.
+centroids viene inizializzato all'interno quindi va solo passato un puntatore vuoto.
+il primo indice indica il gruppetto il secondo invece indica la dimensione.
+si è scelto di rimanere coerenti con le altre implementazioni, per ora tutto cioè che viene 
+passato come parametro ci si aspetta sia già allocato mentre tutto cioè che sta dentro il metodo
+compreso il valore di ritorno si alloca dentro il metodo.*/
 int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float eps,int t_min,int t_max){
 	int j;
 	int sub=d/m;
@@ -523,16 +535,6 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 
 }
 
-double adc(MATRIX x, int y, int m, int d, double** centroids, int** labels, int k ){
-  double dis = 0;
-  MATRIX uj_x;
-  for(int j=0; j<m; j++){
-    uj_x = Uj( x, j, m, 1, d);
-    dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
-  }
-  return dis;
-}
-
 
 //in questo metodo la x si presuppone 1 vettore d dimensionale quindi non una matrice.
 MATRIX residuals_x(MATRIX x,MATRIX centroids,int* label, int n,int d){
@@ -546,7 +548,47 @@ MATRIX residuals_x(MATRIX x,MATRIX centroids,int* label, int n,int d){
 	return results;
 }
 
+int mapping(int i,int j,int n){
+	if(i == j ) 
+		return 0;
+	if ( i > j ){
+		int tmp=i;
+		i=j;
+		j=tmp;
+		//free(&tmp);
+	}
 
+	//si può ottimizzare salvando una variabile dim
+	//che cmq serve anche per allocare le matrici
+	int k = (n*(n-1)/2) - (n-i)*((n-i)-1)/2 + j - i - 1;
+	return k;
+}
+
+double sdc(MATRIX x, int y, int m, int d, double** centroids,int ** labels, int k ){
+	double dis = 0;
+	int c_x;
+	MATRIX uj_x;
+	for(int j=0; j< m; j++){
+		uj_x = Uj( x, j, m,1,d);
+		c_x = centX(centroids[j], uj_x, k, d/m);	
+		dis += pow(dist(& centroids[j][c_x*d/m],& centroids[j][labels[j][y]*d/m],d/m),2);
+	}
+	return dis;
+}
+
+
+double adc(MATRIX x, int y, int m, int d, double** centroids, int** labels, int k ){
+	double dis = 0;
+	MATRIX uj_x;
+	for(int j=0; j<m; j++){
+		uj_x = Uj( x, j, m, 1, d);
+		dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+	}
+	return dis;
+}
+
+//creare il metodo per il precalcolo delle distazne sia da x/r(x) a Cji
+//anche da Cji con Cji 
 
 
 extern void pqnn32_index(params* input);
@@ -655,6 +697,53 @@ void pqnn_index(params* input) {
 		}
 		printf("Fine index\n");
 	}
+
+	if(input->exaustive == 1){
+		int x,y,result;
+
+		//int * cent = alloc_vector(input->nq);//////////////da togliere poi, mi serve solo per le stempe
+		
+		double tmp;
+		double ** centroids = (double**)get_block(sizeof(double*),input->m);
+		int ** pq = productQuant(input->ds, input->n, input->d, input->m, input->k, centroids, input->eps, input->tmin, input->tmax);
+		//printf("ho calcolato i centroidi (productQuant)\n");
+		for(x=0; x<input->nq;x++){
+		printf("\n______________________________________inizio x = %d________________________________________________________________\n", x);
+			if(input->symmetric==1){		////////////////////////////////////se funziona, meglio mettere questo symmetric=1 nell'if di exaustive=1
+				double nn_dis = sdc(&input->qs[x*input->d], 0, input->m, input->d, centroids, pq, input->k);
+				for(y=1; y< input->n; y++){
+				//	printf("\n______________________inizio y = %d__________________\n", y);
+					tmp = sdc(&input->qs[x*input->d], y, input->m, input->d, centroids, pq, input->k);
+				//	printf("distanza corrente =%f\n", nn_dis);
+				//	printf("distanza temporanea =%f\n", tmp);
+					if(tmp < nn_dis){
+						nn_dis = tmp;
+						result = y;
+					}
+					/*printf("nuova distanza=%f\n", nn_dis);
+					printf("\n_______________________fine y = %d___________________\n", y);*/
+				}
+			}
+			else if(input->symmetric==0){
+				double nn_dis = adc(&input->qs[x*input->d], 0, input->m, input->d, centroids, pq, input->k);
+				for(y=1; y< input->n; y++){
+					tmp = adc(&input->qs[x*input->d], y, input->m, input->d, centroids, pq, input->k);
+					if(tmp < nn_dis){
+						nn_dis = tmp;
+						result = y;
+					}
+				}
+			}
+		//	cent[x]=result;
+			printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", x, result);
+			printf("\n______________________________________fine x = %d________________________________________________________________\n", x);
+		}
+	/*	int cnt = 0;//////////////da eliminare serve solo per la stampa
+		for(int i=0; i<input->nq; i++){
+			printf("|	%d	|\n",cent[i]);
+		}
+	**/
+	}
     // -------------------------------------------------
     // Codificare qui l'algoritmo di indicizzazione
     // -------------------------------------------------
@@ -671,6 +760,11 @@ void pqnn_index(params* input) {
  * 	=========== RICORDARSI DI DEALLOCARE LE COSE OVUNQUE
  */
 void pqnn_search(params* input) {
+
+	int i,j;
+	for (i=0;i < 5;i++)
+		for(j=0;j<5;j++)
+			printf("\n\n-------con mapping(%d,%d) = %d---------\n",i,j,mapping(i,j,5));
 
 	if(input->exaustive==0){
 
@@ -712,6 +806,15 @@ void pqnn_search(params* input) {
 				//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
 				//per ogni sotto quantizzatore j e per ogni centroide Cji
 				
+
+
+				//calcolare la distanza tra r(x) e tutti i punti indicizzati nella lista invertita 
+				//qui probabilemte si usa il quantizzatore prodotto sulla y nel caso di ADC e su tutti e due
+				//nel caso di r(x)
+
+
+
+				//salvarsi i k valori che minimizzano la distanza(con il MAXHEAP)
 				
 
 				
@@ -900,12 +1003,15 @@ int main(int argc, char** argv) {
 	input->sub=input->d/input->m;
 	input->n=input->n/2;
 
+	input->n = input->n/4;
+
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
 	input->nq=input->nq/2;
 
+	input->nq = input->nq/4;
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
 	/*MATRIX tmp = Uj(input->ds,0,input->m,input->n,input->d);
