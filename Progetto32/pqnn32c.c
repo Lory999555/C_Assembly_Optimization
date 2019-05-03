@@ -555,7 +555,7 @@ int mapping(int i,int j,int n){
 		int tmp=i;
 		i=j;
 		j=tmp;
-		//free(&tmp);
+		//free(&tmp); scoprire se ha senso farlo o no sulle variabili
 	}
 
 	//si può ottimizzare salvando una variabile dim
@@ -571,7 +571,7 @@ double sdc(MATRIX x, int y, int m, int d, double** centroids,int ** labels, int 
 	for(int j=0; j< m; j++){
 		uj_x = Uj( x, j, m,1,d);
 		c_x = centX(centroids[j], uj_x, k, d/m);	
-		dis += pow(dist(& centroids[j][c_x*d/m],& centroids[j][labels[j][y]*d/m],d/m),2);
+		//dis += pow(dist(& centroids[j][c_x*d/m],& centroids[j][labels[j][y]*d/m],d/m),2);
 	}
 	return dis;
 }
@@ -582,11 +582,59 @@ double adc(MATRIX x, int y, int m, int d, double** centroids, int** labels, int 
 	MATRIX uj_x;
 	for(int j=0; j<m; j++){
 		uj_x = Uj( x, j, m, 1, d);
-		dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 	}
 	return dis;
 }
 
+/*
+x per noi è 1 solo punto d dimensionale
+ottimizzabile come gli altri con una riga in modo
+da avanzare nel gruppo di centroidi j
+*/
+
+double** pre_adc(MATRIX x, double** centroids,int d,int m, int k ){
+	double** result=(double**)get_block(sizeof(double*),m);
+	int sub=d/m;
+	int i,j;
+	MATRIX uj_x;
+	for(j=0; j<m; j++){
+		uj_x = Uj( x, j, m, 1, d);
+		result[j]=alloc_matrix(k,1);
+		for(i = 0; i < k; i++){
+			result[j][i] = pow(dist(uj_x, &centroids[j][i*d/m],d/m),2);
+			printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
+
+		}
+
+		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+	}
+	return result;
+}
+
+
+/*popolazione con struttura dimezzata delle distanze tra tutti i centroidi di un sottogruppo j
+per accedere alla distanza bisogna usare la funzione mapping che ritorna l'indice corretto
+trasformando opportunamente gli indici i,j*/
+double** pre_sdc(double** centroids,int d,int m, int k ){
+	double** result=(double**)get_block(sizeof(double*),m);
+	int sub=d/m;
+	int i,j,c,j_d;
+	for(j=0; j<m; j++){
+		result[j]=alloc_matrix(k*(k-1)/2,1);
+		c=0;
+		for(i = 0; i < k; i++){
+			for(j_d=i+1; j_d < k;j_d++){
+				result[j][c] = pow(dist(&centroids[j][i*d/m], &centroids[j][j_d*d/m],d/m),2);
+				printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j_d,i,result[j][c]);
+				c++;
+			}
+		}
+
+		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+	}
+	return result;
+}
 //creare il metodo per il precalcolo delle distazne sia da x/r(x) a Cji
 //anche da Cji con Cji 
 
@@ -599,6 +647,7 @@ int* Cc_index;
 double** Cp;
 int ** Cp_index;
 int *** IL;
+double** stored_distance;
 
 
 /*
@@ -761,16 +810,15 @@ void pqnn_index(params* input) {
  */
 void pqnn_search(params* input) {
 
+	// TEST DEL MAPPING
+	/*
 	int i,j;
 	for (i=0;i < 5;i++)
 		for(j=0;j<5;j++)
 			printf("\n\n-------con mapping(%d,%d) = %d---------\n",i,j,mapping(i,j,5));
-
+	*/
 	if(input->exaustive==0){
 
-		//quantizzare x con i w centroidi più vicini di qc (coarse)
-		//qui si dovrebbe salvare la distanza in modo da usarla successivamente
-		
 		/*int i;
 		printDsQs(NULL,input->qs,0,input->d,input->nq);
 		for(i=0;i< input->nq;i++){
@@ -779,6 +827,11 @@ void pqnn_search(params* input) {
 			printX(x_query,i,input->d);
 
 		}*/
+		if(input->symmetric==1)
+		{
+			printf("calcolo delle distanze tra Cji e Cji\n");
+			stored_distance=pre_sdc(Cp,input->d,input->m,input->k);
+		}
 
 	
 		//per ogni punto per query set
@@ -793,24 +846,29 @@ void pqnn_search(params* input) {
 			int* label_w =  w_near_centroids(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
 
 			// per ogni centroide vicino appiclo la ricerca
-			int i_w;
+			
 
 			//calcolo tutti i residui r(x) con i centroidi in w
 			printf("calcolo dei residui r(x) con tutti i centroidi w\n");
 			double* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
 			//da testare meglio per vedere se
 			//effettivamente funziona
-			
+			int i_w;
 			//printDsQs(res_x,NULL,input->w,input->d,0);
 			for(i_w = 0 ; i_w < input->w ; i_w++){
 				//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
 				//per ogni sotto quantizzatore j e per ogni centroide Cji
-				
 
+				if(input->symmetric=0){
+					printf("calcolo delle distanze tra res(x) e Cji\n");
+					stored_distance=pre_adc(&res_x[i_w*input->d],Cp,input->d,input->m,input->k);
+				}
+				
 
 				//calcolare la distanza tra r(x) e tutti i punti indicizzati nella lista invertita 
 				//qui probabilemte si usa il quantizzatore prodotto sulla y nel caso di ADC e su tutti e due
 				//nel caso di r(x)
+				
 
 
 
@@ -1001,9 +1059,7 @@ int main(int argc, char** argv) {
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
-	input->n=input->n/2;
-
-	input->n = input->n/4;
+	input->n = input->n/2;
 
 	input->nr = input->n/20;
 
@@ -1011,7 +1067,6 @@ int main(int argc, char** argv) {
 	input->qs = load_data(fname, &input->nq, &input->d);
 	input->nq=input->nq/2;
 
-	input->nq = input->nq/4;
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
 	/*MATRIX tmp = Uj(input->ds,0,input->m,input->n,input->d);
