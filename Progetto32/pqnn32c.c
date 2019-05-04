@@ -89,7 +89,7 @@ typedef struct {
 	int sub; //numero di dimensioni dei sotto gruppetti (d/m)
 	// nns: matrice row major order di interi a 32 bit utilizzata per memorizzare gli ANN
 	// sulla riga i-esima si trovano gli ID (a partire da 0) degli ANN della query i-esima
-	//
+	//probabilment esono long
 	int* ANN; 
 	//
 	// Inserire qui i campi necessari a memorizzare i Quantizzatori
@@ -198,7 +198,7 @@ void save_ANN(char* filename, int* ANN, int nq, int knn) {
 	fp = fopen(fpath, "w");
 	for (i = 0; i < nq; i++) {
 		for (j = 0; j < knn; j++)
-			fprintf(fp, " %f  ", ANN[i*knn+j]);
+			fprintf(fp, " %d  ", ANN[i*knn+j]);
 		fprintf(fp, "\n");
 	}
 	fclose(fp);
@@ -564,26 +564,35 @@ int mapping(int i,int j,int n){
 	return k;
 }
 
-double sdc(MATRIX x, int y, int m, int d, double** centroids,int ** labels, int k ){
-	double dis = 0;
-	int c_x;
-	MATRIX uj_x;
+double sdc(int* c_x,double** stored_distance, int y, int m, int d,int ** labels, int k ){
+	double dis=0;
+	int sub = d/m;
+	int i;
 	for(int j=0; j< m; j++){
-		uj_x = Uj( x, j, m,1,d);
-		c_x = centX(centroids[j], uj_x, k, d/m);	
-		//dis += pow(dist(& centroids[j][c_x*d/m],& centroids[j][labels[j][y]*d/m],d/m),2);
+		
+		//old_dis += pow(dist(& centroids[j][c_x*d/m],& centroids[j][labels[j][y]*d/m],d/m),2);
+
+		//questo controllo è dovuto al fatto che la funzione mapping ritorna l'indice corretto quando è
+		//possibile altrimenti quando i==j torna direttamente 0 e a sto punto evito di accedere alla struttura
+		i=mapping(c_x[j],labels[j][y],k);
+		if (i!=0) {
+			dis+= stored_distance[j][i];
+		}
+		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
 	}
+	//printf("SDC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
 }
 
 
-double adc(MATRIX x, int y, int m, int d, double** centroids, int** labels, int k ){
+//ancora da smaltire
+double adc(double** stored_distance, int y, int m, int** labels){
 	double dis = 0;
-	MATRIX uj_x;
 	for(int j=0; j<m; j++){
-		uj_x = Uj( x, j, m, 1, d);
-		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+		dis+=stored_distance[j][labels[j][y]];
 	}
+	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
 }
 
@@ -603,7 +612,7 @@ double** pre_adc(MATRIX x, double** centroids,int d,int m, int k ){
 		result[j]=alloc_matrix(k,1);
 		for(i = 0; i < k; i++){
 			result[j][i] = pow(dist(uj_x, &centroids[j][i*d/m],d/m),2);
-			printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
+			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
 
@@ -626,7 +635,7 @@ double** pre_sdc(double** centroids,int d,int m, int k ){
 		for(i = 0; i < k; i++){
 			for(j_d=i+1; j_d < k;j_d++){
 				result[j][c] = pow(dist(&centroids[j][i*d/m], &centroids[j][j_d*d/m],d/m),2);
-				printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j_d,i,result[j][c]);
+				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
 				c++;
 			}
 		}
@@ -635,13 +644,18 @@ double** pre_sdc(double** centroids,int d,int m, int k ){
 	}
 	return result;
 }
-//creare il metodo per il precalcolo delle distazne sia da x/r(x) a Cji
-//anche da Cji con Cji 
 
 
 extern void pqnn32_index(params* input);
 extern int* pqnn32_search(params* input);
 
+//variabili utili per l'algoritmo esaustivo
+double ** centroids;
+int ** pq; 
+
+
+
+//variabili utili per l'algoritmo non esaustivo
 MATRIX Cc;
 int* Cc_index;
 double** Cp;
@@ -650,26 +664,14 @@ int *** IL;
 double** stored_distance;
 
 
+
+
 /*
  *	pqnn_index
  * 	==========
  */
 void pqnn_index(params* input) {
 	int i,j;
-	//TEST
-	/*int c4=21;
-	int * c3 = &c4;
-	int ** c2 = &c3;
-	int *** c1 = &c2;
-	int**** c = &c1;
-	int k=***c;
-	/*printf("%d\n",$c);
-	printf("%d\n",$c1);
-	printf("%d\n",$c2);
-	printf("%d\n",$c3);
-	printf("%f\n",k);
-	*/
-	//printDsQs(input->ds,NULL,input->n,input->d,0);
 
 	if(input->exaustive == 0){
 
@@ -748,50 +750,13 @@ void pqnn_index(params* input) {
 	}
 
 	if(input->exaustive == 1){
-		int x,y,result;
-
-		//int * cent = alloc_vector(input->nq);//////////////da togliere poi, mi serve solo per le stempe
-		
-		double tmp;
-		double ** centroids = (double**)get_block(sizeof(double*),input->m);
-		int ** pq = productQuant(input->ds, input->n, input->d, input->m, input->k, centroids, input->eps, input->tmin, input->tmax);
+		centroids = (double**)get_block(sizeof(double*),input->m);
+		pq = productQuant(input->ds, input->n, input->d, input->m, input->k, centroids, input->eps, input->tmin, input->tmax);
 		//printf("ho calcolato i centroidi (productQuant)\n");
-		for(x=0; x<input->nq;x++){
-		printf("\n______________________________________inizio x = %d________________________________________________________________\n", x);
-			if(input->symmetric==1){		////////////////////////////////////se funziona, meglio mettere questo symmetric=1 nell'if di exaustive=1
-				double nn_dis = sdc(&input->qs[x*input->d], 0, input->m, input->d, centroids, pq, input->k);
-				for(y=1; y< input->n; y++){
-				//	printf("\n______________________inizio y = %d__________________\n", y);
-					tmp = sdc(&input->qs[x*input->d], y, input->m, input->d, centroids, pq, input->k);
-				//	printf("distanza corrente =%f\n", nn_dis);
-				//	printf("distanza temporanea =%f\n", tmp);
-					if(tmp < nn_dis){
-						nn_dis = tmp;
-						result = y;
-					}
-					/*printf("nuova distanza=%f\n", nn_dis);
-					printf("\n_______________________fine y = %d___________________\n", y);*/
-				}
-			}
-			else if(input->symmetric==0){
-				double nn_dis = adc(&input->qs[x*input->d], 0, input->m, input->d, centroids, pq, input->k);
-				for(y=1; y< input->n; y++){
-					tmp = adc(&input->qs[x*input->d], y, input->m, input->d, centroids, pq, input->k);
-					if(tmp < nn_dis){
-						nn_dis = tmp;
-						result = y;
-					}
-				}
-			}
-		//	cent[x]=result;
-			printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", x, result);
-			printf("\n______________________________________fine x = %d________________________________________________________________\n", x);
+		if(input->symmetric==1){
+			printf("Calcolo le distanze (SIMMETRICO) tra Cji e Cji\n");
+			stored_distance=pre_sdc(centroids,input->d,input->m,input->k);
 		}
-	/*	int cnt = 0;//////////////da eliminare serve solo per la stampa
-		for(int i=0; i<input->nq; i++){
-			printf("|	%d	|\n",cent[i]);
-		}
-	**/
 	}
     // -------------------------------------------------
     // Codificare qui l'algoritmo di indicizzazione
@@ -863,6 +828,8 @@ void pqnn_search(params* input) {
 					printf("calcolo delle distanze tra res(x) e Cji\n");
 					stored_distance=pre_adc(&res_x[i_w*input->d],Cp,input->d,input->m,input->k);
 				}
+
+				
 				
 
 				//calcolare la distanza tra r(x) e tutti i punti indicizzati nella lista invertita 
@@ -880,6 +847,52 @@ void pqnn_search(params* input) {
 			
 
 		}
+	}
+	if(input->exaustive==1){
+		double tmp;
+		double* uj_x;
+		int* c_x=alloc_vector(input->m);
+		int x,y,result;
+		for(x=0; x<input->nq;x++){
+			
+			for(int j=0;j<input->m;j++){
+				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
+				c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
+			}	
+			dealloc_matrix(uj_x);
+			
+			if(input->symmetric==1){
+				double nn_dis = sdc(c_x,stored_distance, 0, input->m, input->d, pq, input->k);
+				for(y=1; y< input->n; y++){
+					tmp = sdc(c_x,stored_distance, y, input->m, input->d, pq, input->k);
+					//	printf("distanza corrente =%f\n", nn_dis);
+					//	printf("distanza temporanea =%f\n", tmp);
+					if(tmp < nn_dis){
+						nn_dis = tmp;
+						result = y;
+					}
+				//printf("nuova distanza=%f\n", nn_dis);
+				}
+			}
+			else if(input->symmetric==0){
+				//printf("Calcolo le distanze (ASIMMETRICO) tra X e Cji\n");
+				stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
+			
+				double nn_dis = adc(stored_distance, 0, input->m, pq);
+				for(y=1; y< input->n; y++){
+					tmp = adc(stored_distance, y, input->m, pq);
+					if(tmp < nn_dis){
+						nn_dis = tmp;
+						result = y;
+					}
+				}	
+			}
+			printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", x, result);
+			input->ANN[x]=result;
+			//printf("     %d      \n",input->ANN[x]);
+		}
+
+
 	}
 	
     // -------------------------------------------------
@@ -908,16 +921,16 @@ int main(int argc, char** argv) {
 	params* input = malloc(sizeof(params));
 
 	input->filename = NULL;
-	input->exaustive = 0;
-	input->symmetric = 1;
+	input->exaustive = 1;
+	input->symmetric = 0;
 	input->knn = 1;
-	input->m = 4;
+	input->m = 8;
 	//input->k = 256;
-	input->k = 16;
+	input->k = 32;
 	//input->kc = 8192;
-	input->kc = 16;
+	input->kc = 32;
 	//input->w = 16;
-	input->w=4;
+	input->w=8;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -1128,15 +1141,15 @@ int main(int argc, char** argv) {
 	
  	if (input->ANN != NULL)
  	{
- 		if (!input->silent && input->display) {
+ 		//if (!input->silent && input->display) { se si discommenta ritorna "opzionale"
  			printf("\nANN:\n");
- 			/*for (i = 0; i < input->nq; i++) {
+ 			for (i = 0; i < input->nq; i++) {
 				printf("query #%d:", i);
 				for (j = 0; j < input->knn; j++)
-					printf("  %f ", input->ANN[i*input->knn+j]);
+					printf("  %d ", input->ANN[i*input->knn+j]);
 				printf("\n");
- 			}*/
- 		}
+ 			}
+ 		//}
  		save_ANN(input->filename, input->ANN, input->nq, input->knn);
 	}
 	
