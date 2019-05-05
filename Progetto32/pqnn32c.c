@@ -331,7 +331,7 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 	/* output cluster label for each data point */
 	int * labels = alloc_vector(n);
 
-	//ste variabili sono da liberare alla fine del metodo!!!
+	//queste variabili sono da liberare alla fine del metodo!!!
 	double min_distance;
 	double distance;
 	double offset;
@@ -346,7 +346,7 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 	
 	/* temp centroids */
 	MATRIX c1 = alloc_matrix(k,d);
-
+	
 	/****
 	 ** initialization */
 	printf("initilization\n");
@@ -430,7 +430,7 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 	dealloc_vector(counts);
 
 	return labels;
-}
+}//k_means
 
 MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 	MATRIX results = alloc_matrix(n,d);
@@ -849,47 +849,51 @@ void pqnn_search(params* input) {
 		}
 	}
 	if(input->exaustive==1){
-		double tmp;
+		double tmp,nn_dis;
 		double* uj_x;
 		int* c_x=alloc_vector(input->m);
-		int x,y,result;
+		int x,y,index,k;
 		for(x=0; x<input->nq;x++){
-			
-			for(int j=0;j<input->m;j++){
-				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
-				c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
-			}	
-			dealloc_matrix(uj_x);
-			
+			bool* r = (bool*) get_block(sizeof(bool),input->n);			
 			if(input->symmetric==1){
-				double nn_dis = sdc(c_x,stored_distance, 0, input->m, input->d, pq, input->k);
-				for(y=1; y< input->n; y++){
-					tmp = sdc(c_x,stored_distance, y, input->m, input->d, pq, input->k);
-					//	printf("distanza corrente =%f\n", nn_dis);
-					//	printf("distanza temporanea =%f\n", tmp);
-					if(tmp < nn_dis){
-						nn_dis = tmp;
-						result = y;
-					}
-				//printf("nuova distanza=%f\n", nn_dis);
-				}
+				for(int j=0;j<input->m;j++){
+					uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
+					c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
+				}	
+				dealloc_matrix(uj_x);
+				for(k=0; k<input->knn; k++){
+					nn_dis = DBL_MAX;
+					for(y=0; y< input->n; y++){
+						if(r[y]!=true){
+							tmp = sdc(c_x,stored_distance, y, input->m, input->d, pq, input->k);
+							if(tmp < nn_dis){
+								nn_dis = tmp;
+								index = y;
+							}
+						}
+					}//for y
+					input->ANN[x*input->knn+k]=index;
+					r[index]=true;
+				}//for k
 			}
 			else if(input->symmetric==0){
 				//printf("Calcolo le distanze (ASIMMETRICO) tra X e Cji\n");
 				stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
-			
-				double nn_dis = adc(stored_distance, 0, input->m, pq);
-				for(y=1; y< input->n; y++){
-					tmp = adc(stored_distance, y, input->m, pq);
-					if(tmp < nn_dis){
-						nn_dis = tmp;
-						result = y;
+				for(k=0; k<input->knn; k++){
+					nn_dis = DBL_MAX;
+					for(y=0; y< input->n; y++){
+						if(r[y]!=true){
+							tmp = adc(stored_distance, y, input->m, pq);
+							if(tmp < nn_dis){
+								nn_dis = tmp;
+								index = y;
+							}
+						}
 					}
-				}	
+					input->ANN[x*input->knn+k]=index;
+					r[index]=true;	
+				}
 			}
-			printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", x, result);
-			input->ANN[x]=result;
-			//printf("     %d      \n",input->ANN[x]);
 		}
 
 
@@ -923,7 +927,7 @@ int main(int argc, char** argv) {
 	input->filename = NULL;
 	input->exaustive = 1;
 	input->symmetric = 0;
-	input->knn = 1;
+	input->knn = 4;
 	input->m = 8;
 	//input->k = 256;
 	input->k = 32;
@@ -1072,13 +1076,13 @@ int main(int argc, char** argv) {
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
-	input->n = input->n/2;
+	input->n = input->n;
 
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
-	input->nq=input->nq/2;
+	input->nq=input->nq;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
