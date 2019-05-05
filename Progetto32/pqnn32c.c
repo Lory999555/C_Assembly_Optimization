@@ -283,7 +283,7 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 		c=0;
 		for(k = sub*j; k < (j+1)*sub; k++)
 		{	
-			uj[i*sub+c] = ds[i*d+k]; //qui c'è un problema
+			uj[i*sub+c] = ds[i*d+k];
 			c++;
 		}
 	}
@@ -311,6 +311,7 @@ int centX(double * centroids, double * x, int k, int d){
 	return park;
 }
 
+/*
 MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 	int i,j;
 	int max=0;//rand() % (n-k);
@@ -322,7 +323,7 @@ MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 		}
 	}
 	return initialCentroid;
-}
+}*/
 
 
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
@@ -471,17 +472,17 @@ d dimensione dei centroids
 w numero di centroidi "vicini" da analizzare*/
 int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	int i,j;
-	int * result=alloc_vector(w);
+	int * result_w=alloc_vector(w);
 	double * result_dist=alloc_matrix(w,1);
 	double tmp=0;
 	double max=0;
 
 	//riempo i primi w posti con i primi w centroidi e le relative distanze
-	printf("rimepo i primi w posti\n");
+	printf("riempo i primi w posti\n");
 	for(i = 0; i < w; i++)
 	{	
 		tmp=dist(x,&centroids[i],d);
-		result[i]=i;
+		result_w[i]=i;
 		result_dist[i]=tmp;
 		//piccola ottimizzazione, al posto di manteneeree ordinata la struttura
 		//uso un "max" se le distanze che calcolo sono più piccole allora dovrà 
@@ -499,9 +500,8 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
 	for(i=w;i<n;i++){
 		tmp=dist(x,&centroids[i],d);
-		printVector(result,w);
-		printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
-		printf("la distanza max della struttura è = %f\n",max);
+		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
+		//printf("la distanza max della struttura è = %f\n",max);
 
 		if(tmp < max){
 			new_max=tmp;
@@ -512,10 +512,11 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 				//ho il dubbio che ci possano essere più punti con la stessa distanza
 				//ci può stare un controllo
 				if(!trovato && result_dist[j]==max){
-					printf("cambio centroide tolgo il centroide v[%d] = %d e metto quello %d\n",j,result[j],i);
+					//printf("cambio centroide tolgo il centroide v[%d] = %d e metto quello %d\n",j,result_w[j],i);
 					result_dist[j]=tmp;
-					result[j]=i;
+					result_w[j]=i;
 					trovato=true;
+					//printVector(result_w,w);
 
 				}else if (result_dist[j] > new_max)
 				{
@@ -530,7 +531,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 
 	}
 	dealloc_matrix(result_dist);
-	return result;
+	return result_w;
 
 
 }
@@ -564,11 +565,10 @@ int mapping(int i,int j,int n){
 	return k;
 }
 
-double sdc(int* c_x,double** stored_distance, int y, int m, int d,int ** labels, int k ){
+double sdc(int* c_x,double** stored_distance, int y, int m,int ** labels, int k ){
 	double dis=0;
-	int sub = d/m;
-	int i;
-	for(int j=0; j< m; j++){
+	int i,j;
+	for(j=0; j< m; j++){
 		
 		//old_dis += pow(dist(& centroids[j][c_x*d/m],& centroids[j][labels[j][y]*d/m],d/m),2);
 
@@ -593,6 +593,39 @@ double adc(double** stored_distance, int y, int m, int** labels){
 		dis+=stored_distance[j][labels[j][y]];
 	}
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
+	return dis;
+}
+
+
+//a differenza di prima qui abbiamo qua tutte le info calcolate anche per quanto riguarda 
+//il quantizzato di r(y) e quindi inutile usare la label per ottenere le info ma conviene 
+//passarle direttamente in input
+double NE_adc(double** stored_distance, int m,int* res){
+	double dis = 0;
+	for(int j=0; j<m; j++){
+		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
+		dis+=stored_distance[j][res[j]];
+	}
+	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
+	return dis;
+}
+double NE_sdc(int* c_x,double** stored_distance,int m, int* res,int k ){
+	double dis=0;
+	int i,j;
+	for(j=0; j< m; j++){
+		
+		//old_dis += pow(dist(& centroids[j][c_x*d/m],& centroids[j][labels[j][y]*d/m],d/m),2);
+
+		//questo controllo è dovuto al fatto che la funzione mapping ritorna l'indice corretto quando è
+		//possibile altrimenti quando i==j torna direttamente 0 e a sto punto evito di accedere alla struttura
+		i=mapping(c_x[j],res[j],k);
+		//printf(" i=%d  ------- c_x[%d]=%d -------- res[%d]=%d\n",i,j,c_x[j],j,res[j]);
+		if (i!=0) {
+			dis+= stored_distance[j][i];
+		}
+		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
+	}
+	//printf("SDC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
 }
 
@@ -652,6 +685,8 @@ extern int* pqnn32_search(params* input);
 //variabili utili per l'algoritmo esaustivo
 double ** centroids;
 int ** pq; 
+double* uj_x;
+int* c_x;
 
 
 
@@ -662,6 +697,7 @@ double** Cp;
 int ** Cp_index;
 int *** IL;
 double** stored_distance;
+int* len_IL;
 
 
 
@@ -713,6 +749,8 @@ void pqnn_index(params* input) {
 		IL=(int***) get_block(sizeof(int**),input->kc);
 		
 		int* bucket=alloc_vector(input->kc);
+		len_IL=alloc_vector(input->kc);
+
 		for(i=0;i < input->kc;i++){
 			bucket[i]=0;
 			for(j=0;j< input->n;j++){
@@ -722,6 +760,10 @@ void pqnn_index(params* input) {
 			}
 			printf("bucket[%d]=%d\n",i,bucket[i]);
 			IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
+
+			// mi serve questo perchè dopo devo scorrere tutte le celle
+			//mentre bucket viene usato solo per riempire la IL e perde le sue info
+			len_IL[i]= bucket[i];
 		}
 
 		printf("Popolazione dell'Inverted List\n");
@@ -736,16 +778,23 @@ void pqnn_index(params* input) {
 			for(int j = 1; j < input->m+1; j++)
 			{
 				nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
+				//forse posso addirittura deallocare Cp_index che avanti non viene usato
 				
 			}
 			ind = Cc_index[i];
-			printf("\n");
-			printf("Cc_index[%d] = %d\n",i,ind);
-			printf("bucket[%d] = %d\n",ind,bucket[ind]);
-
-			IL[ind][bucket[ind]]=nodo;
+			//printf("\n");
+			//printf("Cc_index[%d] = %d\n",i,ind);
+			//printf("bucket[%d] = %d\n",ind,bucket[ind]);
+			//printf("STAMPA DEL NODO sotto: %d\n",i);
+			
 			bucket[ind]--;
+			IL[ind][bucket[ind]]=nodo;
+			//printVector(IL[ind][bucket[ind]],input->m+1);
+			
 		}
+
+		//bucket dovrebbe essere tutto zero
+		dealloc_vector(bucket);
 		printf("Fine index\n");
 	}
 
@@ -800,11 +849,12 @@ void pqnn_search(params* input) {
 
 	
 		//per ogni punto per query set
-		int i;
+		int i,i_w,ind,result;
+		c_x=alloc_vector(input->m);
 		for(i=0;i< input->nq;i++){
 
-			printf("calcolo dei w centroidi più vicini\n");
-			printX(x_query,i,input->d);
+			printf("calcolo dei w centroidi più vicini con X = %d\n",i);
+			//printX(x_query,i,input->d);
 			//calcolo dei w centroidi più vicini a x
 			//cerco di passarlgi solo il punto x in modo che i metodi possono preoccuparsi solo di
 			//ciclare su 128 dimensioni in quanto punto singolo. (sulle dimensioni in generale)
@@ -812,46 +862,86 @@ void pqnn_search(params* input) {
 
 			// per ogni centroide vicino appiclo la ricerca
 			
-
 			//calcolo tutti i residui r(x) con i centroidi in w
 			printf("calcolo dei residui r(x) con tutti i centroidi w\n");
 			double* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
 			//da testare meglio per vedere se
 			//effettivamente funziona
-			int i_w;
+			double tmp,nn_dis = DBL_MAX;
+			int C_i;
+			int** L_i;
 			//printDsQs(res_x,NULL,input->w,input->d,0);
 			for(i_w = 0 ; i_w < input->w ; i_w++){
-				//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
-				//per ogni sotto quantizzatore j e per ogni centroide Cji
 
-				if(input->symmetric=0){
-					printf("calcolo delle distanze tra res(x) e Cji\n");
-					stored_distance=pre_adc(&res_x[i_w*input->d],Cp,input->d,input->m,input->k);
+				if(input->symmetric==1)
+				{
+					printf("SDC: calcolo delle distanze tra Cji e Cji\n");
+					for(int j=0;j<input->m;j++){
+						uj_x = Uj( &res_x[i_w*input->d], j, input->m,1,input->d);
+						c_x[j] = centX(Cp[j], uj_x, input->k, input->d/input->m);
+					}	
+					//dealloc_matrix(uj_x);
+					//centroide più vicino associato al punto
+					C_i= label_w[i_w];
+					L_i = IL[C_i];
+					//printf("\n .......%d........\n........%d.........",label_w[i_w],len_IL[i_w]);
+					//printf("\n .......%d........\n........%d.........",L_i[0][0],L_i[0][1]);
+					
+
+					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
+					for( ind = 0; ind < len_IL[C_i]; ind++)
+					{	
+						
+						//printVector(&L_i[ind][1],input->m);
+						tmp = NE_sdc(c_x,stored_distance, input->m, &L_i[ind][1],input->k);
+						if(tmp < nn_dis){
+							nn_dis = tmp;
+							result = L_i[ind][0];
+						}
+					}
 				}
+				else if(input->symmetric==0)
+				{
+						
+					//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
+					//per ogni sotto quantizzatore j e per ogni centroide Cji
 
+					printf("ADC: calcolo delle distanze tra res(x) e Cji\n");
+					stored_distance=pre_adc(&res_x[i_w*input->d],Cp,input->d,input->m,input->k);
+
+					//adesso devo entrare nell'inverted list con il centroide w' in questione e calcolare 
+					//la distanza con tutte le y che fanno parte della lista (che poi servirà avere in centroide
+					// collegato a quella determinata y)
+
+					//con questo ottendo la i-esima inverted List 
+					C_i= label_w[i_w];
+					L_i = IL[C_i];
+
+					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
+					for( ind = 0; ind < len_IL[C_i]; ind++)
+					{
+						tmp = NE_adc(stored_distance, input->m, &L_i[ind][1]);
+						if(tmp < nn_dis){
+							nn_dis = tmp;
+							result = L_i[ind][0];
+						}
+					}
+					
+				}
 				
-				
-
-				//calcolare la distanza tra r(x) e tutti i punti indicizzati nella lista invertita 
-				//qui probabilemte si usa il quantizzatore prodotto sulla y nel caso di ADC e su tutti e due
-				//nel caso di r(x)
-				
-
-
-
-				//salvarsi i k valori che minimizzano la distanza(con il MAXHEAP)
-				
-
 				
 			}
+			//salvarsi i k valori che minimizzano la distanza(con il MAXHEAP)
+			//printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", i, result);
+			input->ANN[i*input->knn]=result;
+
 			
 
 		}
 	}
 	if(input->exaustive==1){
 		double tmp,nn_dis;
-		double* uj_x;
-		int* c_x=alloc_vector(input->m);
+		c_x=alloc_vector(input->m);
 		int x,y,index,k;
 		for(x=0; x<input->nq;x++){
 			bool* r = (bool*) get_block(sizeof(bool),input->n);			
@@ -865,7 +955,7 @@ void pqnn_search(params* input) {
 					nn_dis = DBL_MAX;
 					for(y=0; y< input->n; y++){
 						if(r[y]!=true){
-							tmp = sdc(c_x,stored_distance, y, input->m, input->d, pq, input->k);
+							tmp = sdc(c_x,stored_distance, y, input->m, pq, input->k);
 							if(tmp < nn_dis){
 								nn_dis = tmp;
 								index = y;
@@ -914,6 +1004,8 @@ void pqnn_search(params* input) {
 
 
 int main(int argc, char** argv) {
+
+	
 	
 	char fname[256];
 	int i, j;
@@ -1130,14 +1222,14 @@ int main(int argc, char** argv) {
 	
 	input->ANN = calloc(input->nq*input->knn,sizeof(int));
 
-	t = clock();
+	clock_t t_1 = clock();
 	pqnn_search(input);
-	t = clock() - t;
+	t_1 = clock() - t_1;
 	
 	if (!input->silent)
-		printf("\nSearching time = %.3f secs\n", ((float)t)/CLOCKS_PER_SEC);
+		printf("\nSearching time = %.3f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
 	else
-		printf("%.3f\n", ((float)t)/CLOCKS_PER_SEC);
+		printf("%.3f\n", ((float)t_1)/CLOCKS_PER_SEC);
 	
 	//
 	// Salva gli ANN
@@ -1157,8 +1249,12 @@ int main(int argc, char** argv) {
  		save_ANN(input->filename, input->ANN, input->nq, input->knn);
 	}
 	
-	if (!input->silent)
+	if (!input->silent){
 		printf("\nDone.\n");
+	}
 
+	printf("\nIndexing time = %.3f secs\n", ((float)t)/CLOCKS_PER_SEC);
+	printf("\nSearching time = %.3f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
+	//printDsQs(input->ds,NULL,input->n,input->d,0);
 	return 0;
 }
