@@ -49,8 +49,7 @@
 #include <stdbool.h>
 //#include "kmeans2.c"
 
-#define 	MATRIX		double*
-#define	    VECTOR		double*
+#define 	MATRIX		float*
 #define 	x_query 	input->qs
 
 typedef struct {
@@ -101,40 +100,21 @@ typedef struct {
 } params;
 
 //variabili utili per l'algoritmo esaustivo
-double ** centroids;
+float ** centroids;
 int ** pq; 
-double* uj_x;
+float* uj_x;
 int* c_x;
 int c_max_heap=0;
-double pre_max_heap=0;
+float pre_max_heap=0;
 
 
 //variabili utili per l'algoritmo non esaustivo
 MATRIX Cc;
 int* Cc_index;
-double** Cp;
+float** Cp;
 int ** Cp_index;
 int *** IL;
-double** stored_distance;
-int* len_IL;
-
-//variabili utili per l'algoritmo esaustivo
-double ** centroids;
-int ** pq; 
-double* uj_x;
-int* c_x;
-int c_max_heap=0;
-double pre_max_heap=0;
-
-
-
-//variabili utili per l'algoritmo non esaustivo
-MATRIX Cc;
-int* Cc_index;
-double** Cp;
-int ** Cp_index;
-int *** IL;
-double** stored_distance;
+float** stored_distance;
 int* len_IL;
 
 
@@ -166,7 +146,7 @@ void free_block(void* p) {
 
 
 MATRIX alloc_matrix(int rows, int cols) {
-	return (MATRIX) get_block(sizeof(double),rows*cols);
+	return (MATRIX) get_block(sizeof(float),rows*cols);
 }
 
 //riguardare bene il fatto dell'allineamento (di default è 16)
@@ -218,7 +198,7 @@ MATRIX load_data(char* filename, int *n, int *d) {
 	status = fread(&rows, sizeof(int), 1, fp);
 		
 	MATRIX data = alloc_matrix(rows,cols);
-	status = fread(data, sizeof(double), rows*cols, fp);
+	status = fread(data, sizeof(float), rows*cols, fp);
 	fclose(fp);
 	
 	*n = rows;
@@ -329,19 +309,19 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 	return uj;
 }
 
-double dist(double * x,double * y, int d){
-	double distance = 0;
+float dist(float * x,float * y, int d){
+	float distance = 0;
 	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
 	return distance;
 }
 
-int centX(double * centroids, double * x, int k, int d){	
-	double dis = dist(x, centroids, d);
+int centX(float * centroids, float * x, int k, int d){	
+	float dis = dist(x, centroids, d);
 	int park = 0;
 	for(int i=1; i<k; i++){
-		double tep = dist(x, &centroids[i*d], d);	
+		float tep = dist(x, &centroids[i*d], d);	
  		if( tep < dis){
 			dis = tep;
 			park = i;
@@ -372,15 +352,15 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 	int * labels = alloc_vector(n);
 
 	//queste variabili sono da liberare alla fine del metodo!!!
-	double min_distance;
-	double distance;
-	double offset;
+	float min_distance;
+	float distance;
+	float offset;
 	int iter=0;
 	int h, i, j; /* loop counters, of course */
 	
 	/* size of each cluster */
 	int* counts = alloc_vector(k);
-	double old_error, error = DBL_MAX; /* sum of squared euclidean distance */
+	float old_error, error = FLT_MAX;//DBL_MAX; /* sum of squared euclidean distance */
 	
 	MATRIX c = centroids;
 	
@@ -416,7 +396,7 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 		printf("identify the closest cluster in %d iteration\n",iter);
 		for (h = 0; h < n; h++) {
 			/* identify the closest cluster */
-			min_distance = DBL_MAX;
+			min_distance = FLT_MAX;//DBL_MAX;
 			for (i = 0; i < k; i++) {
 				distance = 0;
 				for (j = 0; j < d ; j++){
@@ -489,11 +469,11 @@ il primo indice indica il gruppetto il secondo invece indica la dimensione.
 si è scelto di rimanere coerenti con le altre implementazioni, per ora tutto cioè che viene 
 passato come parametro ci si aspetta sia già allocato mentre tutto cioè che sta dentro il metodo
 compreso il valore di ritorno si alloca dentro il metodo.*/
-int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float eps,int t_min,int t_max){
+int** productQuant(MATRIX ds,int n,int d,int m,int k,float** centroids,float eps,int t_min,int t_max){
 	int j;
 	int sub=d/m;
 	int** result = (int**) get_block(sizeof(int*),m);
-	//centroids = (double**) get_block(sizeof(MATRIX),m);
+	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
 		printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
@@ -517,8 +497,8 @@ int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float ep
  * è false allora il metodo per,finchè non sarà completamente popoalta, carica la struttura
  * con gli elementi e ritorna il massimo 
  **/
-double max_heap(int* index,double* result_dist,int y,double tmp,double max,int dim,bool full){
-	double new_max;
+float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,bool full){
+	float new_max;
 	if (full==true || c_max_heap == dim) { // dovrebbe andar bene anche solo con ==
 		//printf("IF:\n C=%d\n",c_max_heap);
 		bool trovato = false;
@@ -569,9 +549,9 @@ w numero di centroidi "vicini" da analizzare*/
 /*int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	int i,j;
 	int * result_w=alloc_vector(w);
-	double * result_dist=alloc_matrix(w,1);
-	double tmp=0;
-	double max=0;
+	float * result_dist=alloc_matrix(w,1);
+	float tmp=0;
+	float max=0;
 
 	//riempo i primi w posti con i primi w centroidi e le relative distanze
 	printf("riempo i primi w posti\n");
@@ -589,7 +569,7 @@ w numero di centroidi "vicini" da analizzare*/
 	}
 
 	int new_i;
-	double new_max;
+	float new_max;
 	bool trovato;
 	//n qui simboleggia il numero dei centroidi
 	
@@ -631,9 +611,9 @@ w numero di centroidi "vicini" da analizzare*/
 int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	int i,j;
 	int * result_w=alloc_vector(w);
-	double * result_dist=alloc_matrix(w,1);
-	double tmp=0;
-	double max=0;
+	float * result_dist=alloc_matrix(w,1);
+	float tmp=0;
+	float max=0;
 
 	//riempo i primi w posti con i primi w centroidi e le relative distanze
 	printf("riempo i primi w posti\n");
@@ -651,7 +631,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	}
 
 	int new_i;
-	//	double new_max;
+	//	float new_max;
 	//	bool trovato;
 	//n qui simboleggia il numero dei centroidi
 	
@@ -705,8 +685,8 @@ int mapping(int i,int j,int n){
 	return k;
 }
 
-double sdc(int* c_x,double** stored_distance, int y, int m,int ** labels, int k ){
-	double dis=0;
+float sdc(int* c_x,float** stored_distance, int y, int m,int ** labels, int k ){
+	float dis=0;
 	int i,j;
 	for(j=0; j< m; j++){
 		
@@ -726,8 +706,8 @@ double sdc(int* c_x,double** stored_distance, int y, int m,int ** labels, int k 
 
 
 //ancora da smaltire
-double adc(double** stored_distance, int y, int m, int** labels){
-	double dis = 0;
+float adc(float** stored_distance, int y, int m, int** labels){
+	float dis = 0;
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 		dis+=stored_distance[j][labels[j][y]];
@@ -740,8 +720,8 @@ double adc(double** stored_distance, int y, int m, int** labels){
 //a differenza di prima qui abbiamo qua tutte le info calcolate anche per quanto riguarda 
 //il quantizzato di r(y) e quindi inutile usare la label per ottenere le info ma conviene 
 //passarle direttamente in input
-double NE_adc(double** stored_distance, int m,int* res){
-	double dis = 0;
+float NE_adc(float** stored_distance, int m,int* res){
+	float dis = 0;
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 		dis+=stored_distance[j][res[j]];
@@ -749,8 +729,8 @@ double NE_adc(double** stored_distance, int m,int* res){
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
 }
-double NE_sdc(int* c_x,double** stored_distance,int m, int* res,int k ){
-	double dis=0;
+float NE_sdc(int* c_x,float** stored_distance,int m, int* res,int k ){
+	float dis=0;
 	int i,j;
 	for(j=0; j< m; j++){
 		
@@ -775,8 +755,8 @@ ottimizzabile come gli altri con una riga in modo
 da avanzare nel gruppo di centroidi j
 */
 
-double** pre_adc(MATRIX x, double** centroids,int d,int m, int k ){
-	double** result=(double**)get_block(sizeof(double*),m);
+float** pre_adc(MATRIX x, float** centroids,int d,int m, int k ){
+	float** result=(float**)get_block(sizeof(float*),m);
 	int sub=d/m;
 	int i,j;
 	MATRIX uj_x;
@@ -798,8 +778,8 @@ double** pre_adc(MATRIX x, double** centroids,int d,int m, int k ){
 /*popolazione con struttura dimezzata delle distanze tra tutti i centroidi di un sottogruppo j
 per accedere alla distanza bisogna usare la funzione mapping che ritorna l'indice corretto
 trasformando opportunamente gli indici i,j*/
-double** pre_sdc(double** centroids,int d,int m, int k ){
-	double** result=(double**)get_block(sizeof(double*),m);
+float** pre_sdc(float** centroids,int d,int m, int k ){
+	float** result=(float**)get_block(sizeof(float*),m);
 	int sub=d/m;
 	int i,j,c,j_d;
 	for(j=0; j<m; j++){
@@ -833,14 +813,11 @@ void pqnn_index(params* input) {
 	if(input->exaustive == 0){
 
 
-		/* TEST 
-		era per provare il kmeans1.c
-		MATRIX Cc = randCentroid(input->ds,input->n,input->d,input->kc);
-		printDsQs(Cc,NULL,input->kc,input->d,0);
-		int* Cc_index = (int*)get_block(sizeof(int),input->n);
-		kmeans(input->d,input->ds,input->n,input->kc,Cc,Cc_index);
-		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
-		*/
+		//TEST 
+		//era per provare il kmeans1.c
+		//MATRIX Cc = randCentroid(input->ds,input->n,input->d,input->kc);
+		//printDsQs(input->ds,input->qs,input->n,input->d,input->nq);
+		//return;
 
 
 		printf("Quantizzazione y in qc\n");
@@ -856,7 +833,7 @@ void pqnn_index(params* input) {
 
 		printf("Quantizzazione dei residui\n");
 		//quantizzare r(y) con Qp, prima si crea il quantizzatore usando m volte k-means
-		Cp = (double**)get_block(sizeof(double*),input->m);
+		Cp = (float**)get_block(sizeof(float*),input->m);
 		Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		/*
@@ -932,7 +909,7 @@ void pqnn_index(params* input) {
 	}
 
 	if(input->exaustive == 1){
-		centroids = (double**)get_block(sizeof(double*),input->m);
+		centroids = (float**)get_block(sizeof(float*),input->m);
 		pq = productQuant(input->ds, input->n, input->d, input->m, input->k, centroids, input->eps, input->tmin, input->tmax);
 		//printf("ho calcolato i centroidi (productQuant)\n");
 		if(input->symmetric==1){
@@ -956,14 +933,7 @@ void pqnn_index(params* input) {
  * 	=========== RICORDARSI DI DEALLOCARE LE COSE OVUNQUE
  */
 void pqnn_search(params* input) {
-
-	// TEST DEL MAPPING
-	/*
-	int i,j;
-	for (i=0;i < 5;i++)
-		for(j=0;j<5;j++)
-			printf("\n\n-------con mapping(%d,%d) = %d---------\n",i,j,mapping(i,j,5));
-	*/
+	
 	if(input->exaustive==0){
 		if(input->symmetric==1)
 		{
@@ -994,14 +964,14 @@ void pqnn_search(params* input) {
 			
 			//calcolo tutti i residui r(x) con i centroidi in w
 			printf("calcolo dei residui r(x) con tutti i centroidi w\n");
-			double* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
+			float* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
 			//da testare meglio per vedere se
 			//effettivamente funziona
 
 			//allocazioni per ottenere un MaxHeap che interagisca con il metodo max_heap
 			int * k_nn=alloc_vector(input->knn);
-			double * result_dist=alloc_matrix(input->knn,1);
-			double tmp,nn_dis = DBL_MAX;
+			float * result_dist=alloc_matrix(input->knn,1);
+			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
 			int C_i;
 			int** L_i;
 			//printDsQs(res_x,NULL,input->w,input->d,0);
@@ -1089,7 +1059,7 @@ void pqnn_search(params* input) {
 		}
 	}
 	/*if(input->exaustive==1 && input->symmetric==1){
-		double tmp,nn_dis;
+		float tmp,nn_dis;
 		c_x=alloc_vector(input->m);
 		int x,y,index,k;
 		for(x=0; x<input->nq;x++){
@@ -1117,18 +1087,18 @@ void pqnn_search(params* input) {
 		}
 	}*/
 	if(input->exaustive==1 && input->symmetric==1){
-		double tmp,nn_dis;
+		float tmp,nn_dis;
 		c_x=alloc_vector(input->m);
 		int x,y,k;
 		for(x=0; x<input->nq;x++){	
 			int* k_nn = alloc_vector(input->knn);	
-			double* result_dist=alloc_matrix(input->knn,1);	
+			float* result_dist=alloc_matrix(input->knn,1);	
 			for(int j=0;j<input->m;j++){
 				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
 			}	
 			dealloc_matrix(uj_x);
-			nn_dis = DBL_MAX;
+			nn_dis = FLT_MAX;//DBL_MAX;
 			for(y=0; y< input->n; y++){
 				tmp = sdc(c_x,stored_distance, y, input->m, pq, input->k);
 				if(tmp < nn_dis){
@@ -1143,18 +1113,16 @@ void pqnn_search(params* input) {
 		}
 	}
 	if(input->exaustive==1 && input->symmetric==0){
-		double tmp,nn_dis;
+		float tmp,nn_dis;
 		int x,y,k;
 		for(x=0; x<input->nq;x++){
 			int* k_nn = alloc_vector(input->knn);
-			double* result_dist=alloc_matrix(input->knn,1);
+			float* result_dist=alloc_matrix(input->knn,1);
 			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
-				nn_dis = DBL_MAX;
+				nn_dis = FLT_MAX;
+				//nn_dis = DBL_MAX;
 				for(y=0; y< input->n; y++){
 						tmp = adc(stored_distance, y, input->m, pq);
-						if(x==999){
-							printf("y = %d 	dist = %f \n",y,tmp);
-						}
 						if(tmp < nn_dis){
 							nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
 						}
@@ -1168,7 +1136,7 @@ void pqnn_search(params* input) {
 	}
 
 	/*if(input->exaustive==1 && input->symmetric==0){
-		double tmp,nn_dis;
+		float tmp,nn_dis;
 		int x,y,index,k;
 		for(x=0; x<input->nq;x++){
 			bool* r = (bool*) get_block(sizeof(bool),input->n);			
@@ -1373,11 +1341,11 @@ int main(int argc, char** argv) {
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
-	input->n = input->n/2 + 1;
+	//input->n = input->n/2 + 2;
 	input->nr = input->n/20;
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
-	input->nq=input->nq/2 + 1;
+	//input->nq=input->nq/2 + 2;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
