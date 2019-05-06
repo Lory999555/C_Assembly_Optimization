@@ -100,6 +100,23 @@ typedef struct {
 	//
 } params;
 
+//variabili utili per l'algoritmo esaustivo
+double ** centroids;
+int ** pq; 
+double* uj_x;
+int* c_x;
+int c_max_heap=0;
+double pre_max_heap=0;
+
+
+//variabili utili per l'algoritmo non esaustivo
+MATRIX Cc;
+int* Cc_index;
+double** Cp;
+int ** Cp_index;
+int *** IL;
+double** stored_distance;
+int* len_IL;
 
 /*
  * 
@@ -466,11 +483,54 @@ int** productQuant(MATRIX ds,int n,int d,int m,int k,double** centroids,float ep
 	return result;
 }
 
+
+
+double max_heap(int* index,double* result_dist,int y,double tmp,double max,int dim,bool full){
+  double new_max;
+  if (full==true || c_max_heap == dim) {
+  
+    bool trovato = false;
+    new_max=tmp;
+    //bisogna inserire ed aggiornare la struttura
+    for(int j = 0; j < dim; j++)
+    {
+      //ho il dubbio che ci possano essere più punti con la stessa distanza
+      //ci può stare un controllo
+      if(!trovato && result_dist[j]==max){
+        printf("cambio centroide tolgo il centroide v[%d] = %d e metto quello %d\n",j,index[j],y);
+        result_dist[j]=tmp;
+        index[j]=y;
+        trovato=true;
+        printVector(index,dim);
+      }else if (result_dist[j] > new_max)
+      {
+        new_max = result_dist[j];
+      }  
+    }
+		return new_max;
+  }
+  else
+  {
+    index[c_max_heap]=y;
+    result_dist[c_max_heap]=tmp;
+    if (tmp > pre_max_heap) {
+      pre_max_heap=tmp;
+    }
+    c_max_heap++;
+    if (c_max_heap==dim) {
+      return pre_max_heap;
+    }else
+    {
+      return max;
+    }
+  }
+}
+
 /*x=query
 n è il numero dei centroidi del quantizzatore coarse
 d dimensione dei centroids
 w numero di centroidi "vicini" da analizzare*/
-int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
+/*int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	int i,j;
 	int * result_w=alloc_vector(w);
 	double * result_dist=alloc_matrix(w,1);
@@ -484,7 +544,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 		tmp=dist(x,&centroids[i],d);
 		result_w[i]=i;
 		result_dist[i]=tmp;
-		//piccola ottimizzazione, al posto di manteneeree ordinata la struttura
+		//piccola ottimizzazione, al posto di mantenere ordinata la struttura
 		//uso un "max" se le distanze che calcolo sono più piccole allora dovrà 
 		//entrare nella struttura altrimenti no.
 		if (max < tmp) {
@@ -496,7 +556,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	double new_max;
 	bool trovato;
 	//n qui simboleggia il numero dei centroidi
-
+	
 	printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
 	for(i=w;i<n;i++){
 		tmp=dist(x,&centroids[i],d);
@@ -506,9 +566,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 		if(tmp < max){
 			new_max=tmp;
 			//bisogna inserire ed aggiornare la struttura
-			for(int j = 0; j < w; j++)
-			{
-
+			for(int j = 0; j < w; j++){
 				//ho il dubbio che ci possano essere più punti con la stessa distanza
 				//ci può stare un controllo
 				if(!trovato && result_dist[j]==max){
@@ -526,6 +584,54 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 			}
 			max = new_max;
 			trovato=false;
+			
+		}
+
+	}
+	dealloc_matrix(result_dist);
+	return result_w;
+
+
+}*/
+int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
+	int i,j;
+	int * result_w=alloc_vector(w);
+	double * result_dist=alloc_matrix(w,1);
+	double tmp=0;
+	double max=0;
+
+	//riempo i primi w posti con i primi w centroidi e le relative distanze
+	printf("riempo i primi w posti\n");
+	for(i = 0; i < w; i++)
+	{	
+		tmp=dist(x,&centroids[i],d);
+		result_w[i]=i;
+		result_dist[i]=tmp;
+		//piccola ottimizzazione, al posto di mantenere ordinata la struttura
+		//uso un "max" se le distanze che calcolo sono più piccole allora dovrà 
+		//entrare nella struttura altrimenti no.
+		if (max < tmp) {
+			max = tmp;
+		}
+	}
+
+	int new_i;
+	//	double new_max;
+	//	bool trovato;
+	//n qui simboleggia il numero dei centroidi
+	
+	printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
+	for(i=w;i<n;i++){
+		tmp=dist(x,&centroids[i],d);
+		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
+		//printf("la distanza max della struttura è = %f\n",max);
+		
+		if(tmp < max){
+	//			new_max=tmp;
+			//bisogna inserire ed aggiornare la struttura
+			max=max_heap(result_w,result_dist,i,tmp,max,w,true);
+	//			max = new_max;
+	//			trovato=false;
 			
 		}
 
@@ -682,26 +788,6 @@ double** pre_sdc(double** centroids,int d,int m, int k ){
 extern void pqnn32_index(params* input);
 extern int* pqnn32_search(params* input);
 
-//variabili utili per l'algoritmo esaustivo
-double ** centroids;
-int ** pq; 
-double* uj_x;
-int* c_x;
-
-
-
-//variabili utili per l'algoritmo non esaustivo
-MATRIX Cc;
-int* Cc_index;
-double** Cp;
-int ** Cp_index;
-int *** IL;
-double** stored_distance;
-int* len_IL;
-
-
-
-
 /*
  *	pqnn_index
  * 	==========
@@ -764,6 +850,7 @@ void pqnn_index(params* input) {
 			// mi serve questo perchè dopo devo scorrere tutte le celle
 			//mentre bucket viene usato solo per riempire la IL e perde le sue info
 			len_IL[i]= bucket[i];
+			bucket[i]=0;
 		}
 
 		printf("Popolazione dell'Inverted List\n");
@@ -787,8 +874,8 @@ void pqnn_index(params* input) {
 			//printf("bucket[%d] = %d\n",ind,bucket[ind]);
 			//printf("STAMPA DEL NODO sotto: %d\n",i);
 			
-			bucket[ind]--;
 			IL[ind][bucket[ind]]=nodo;
+      bucket[ind]++;
 			//printVector(IL[ind][bucket[ind]],input->m+1);
 			
 		}
@@ -935,59 +1022,116 @@ void pqnn_search(params* input) {
 			//printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", i, result);
 			input->ANN[i*input->knn]=result;
 
-			
+			c_max_heap = 0;			
 
 		}
 	}
-	if(input->exaustive==1){
+	/*if(input->exaustive==1 && input->symmetric==1){
 		double tmp,nn_dis;
 		c_x=alloc_vector(input->m);
 		int x,y,index,k;
 		for(x=0; x<input->nq;x++){
 			bool* r = (bool*) get_block(sizeof(bool),input->n);			
-			if(input->symmetric==1){
-				for(int j=0;j<input->m;j++){
-					uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
-					c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
-				}	
-				dealloc_matrix(uj_x);
-				for(k=0; k<input->knn; k++){
-					nn_dis = DBL_MAX;
-					for(y=0; y< input->n; y++){
-						if(r[y]!=true){
-							tmp = sdc(c_x,stored_distance, y, input->m, pq, input->k);
-							if(tmp < nn_dis){
-								nn_dis = tmp;
-								index = y;
-							}
-						}
-					}//for y
-					input->ANN[x*input->knn+k]=index;
-					r[index]=true;
-				}//for k
-			}
-			else if(input->symmetric==0){
-				//printf("Calcolo le distanze (ASIMMETRICO) tra X e Cji\n");
-				stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
-				for(k=0; k<input->knn; k++){
-					nn_dis = DBL_MAX;
-					for(y=0; y< input->n; y++){
-						if(r[y]!=true){
-							tmp = adc(stored_distance, y, input->m, pq);
-							if(tmp < nn_dis){
-								nn_dis = tmp;
-								index = y;
-							}
+			for(int j=0;j<input->m;j++){
+				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
+				c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
+			}	
+			dealloc_matrix(uj_x);
+			for(k=0; k<input->knn; k++){
+				nn_dis = DBL_MAX;
+				for(y=0; y< input->n; y++){
+					if(r[y]!=true){
+						tmp = sdc(c_x,stored_distance, y, input->m, pq, input->k);
+						if(tmp < nn_dis){
+							nn_dis = tmp;
+							index = y;
 						}
 					}
-					input->ANN[x*input->knn+k]=index;
-					r[index]=true;	
+				}//for y
+				input->ANN[x*input->knn+k]=index;
+			//	printf("\n x = %d	y = %d	dist = %f",x,index,nn_dis);
+				r[index]=true;
+			}//for k
+		}
+	}*/
+	if(input->exaustive==1 && input->symmetric==1){
+		double tmp,nn_dis;
+		c_x=alloc_vector(input->m);
+		int x,y,k;
+		for(x=0; x<input->nq;x++){	
+			int* k_nn = alloc_vector(input->knn);	
+			double* result_dist=alloc_matrix(input->knn,1);	
+			for(int j=0;j<input->m;j++){
+				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
+				c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
+			}	
+			dealloc_matrix(uj_x);
+			nn_dis = DBL_MAX;
+			for(y=0; y< input->n; y++){
+				tmp = sdc(c_x,stored_distance, y, input->m, pq, input->k);
+				if(tmp < nn_dis){
+					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+					}
+			}//for y
+			for(int i=0; i<input->knn; i++){
+				input->ANN[x*input->knn+i]=k_nn[i];
+			}
+			c_max_heap=0;
+			pre_max_heap=0;
+		}
+	}
+	if(input->exaustive==1 && input->symmetric==0){
+		double tmp,nn_dis;
+		int x,y,k;
+		for(x=0; x<input->nq;x++){
+			int* k_nn = alloc_vector(input->knn);
+			double* result_dist=alloc_matrix(input->knn,1);
+			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
+				nn_dis = DBL_MAX;
+				for(y=0; y< input->n; y++){
+						tmp = adc(stored_distance, y, input->m, pq);
+						if(x==999){
+							printf("y = %d 	dist = %f \n",y,tmp);
+						}
+						if(tmp < nn_dis){
+							nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+						}
 				}
+				for(int i=0; i<input->knn; i++){
+					input->ANN[x*input->knn+i]=k_nn[i];
+				}
+				c_max_heap=0;
+				pre_max_heap = 0;	
+		}
+	}
+
+	/*if(input->exaustive==1 && input->symmetric==0){
+		double tmp,nn_dis;
+		int x,y,index,k;
+		for(x=0; x<input->nq;x++){
+			bool* r = (bool*) get_block(sizeof(bool),input->n);			
+			//printf("Calcolo le distanze (ASIMMETRICO) tra X e Cji\n");
+			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
+			for(k=0; k<input->knn; k++){
+				nn_dis = DBL_MAX;
+				for(y=0; y< input->n; y++){
+					if(r[y]!=true){
+						tmp = adc(stored_distance, y, input->m, pq);
+						if(x==999){
+							printf("y = %d 	dist = %f \n",y,tmp);
+						}
+						if(tmp < nn_dis){
+							nn_dis = tmp;
+							index = y;
+						}
+					}
+				}
+				input->ANN[x*input->knn+k]=index;
+			//	printf("\n x = %d	y = %d	dist = %f",x,index,nn_dis);
+				r[index]=true;	
 			}
 		}
-
-
-	}
+	}*/
 	
     // -------------------------------------------------
     // Codificare qui l'algoritmo di interrogazione
@@ -1018,7 +1162,7 @@ int main(int argc, char** argv) {
 
 	input->filename = NULL;
 	input->exaustive = 1;
-	input->symmetric = 0;
+	input->symmetric = 1;
 	input->knn = 4;
 	input->m = 8;
 	//input->k = 256;
@@ -1168,13 +1312,13 @@ int main(int argc, char** argv) {
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
-	input->n = input->n;
+	input->n = input->n/2 +1;
 
 	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
-	input->nq=input->nq;
+	input->nq=input->nq/2 +1;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
