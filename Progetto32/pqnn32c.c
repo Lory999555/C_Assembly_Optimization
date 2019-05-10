@@ -118,6 +118,13 @@ float** stored_distance;
 int* len_IL;
 
 
+//test
+int accesso=0; //utilizzato per SDC
+int accesso_1=0; //utilizzato per ADC
+int accesso_2=0; //utilizzato per gli accessi nel max_heap
+int accesso_3=0;
+
+
 
 
 /*
@@ -292,6 +299,21 @@ void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 	}
 }
 
+/**metodo per estrapolare in maniera semi-casuale nr elementi da
+ * un dataset */
+
+MATRIX extrac(MATRIX ds,int n,int d,int nr){
+	MATRIX result = alloc_matrix(nr,d);
+	int i,j,h;
+	for (h = i = 0; i < nr; h += n/nr , i++) {
+		for (j = 0; j < d;j++){
+			result[i*d+j] = ds[h*d+j];
+		}
+	}
+	return result;
+	
+}
+
 //metodo che prende un sottogruppo (sub dimensionale) del data set
 // j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
 MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
@@ -441,7 +463,6 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 		}
 		free(c1[i]);
 	}*/
-
 	
 	printf("housekeeping\n");
 	
@@ -498,6 +519,7 @@ int** productQuant(MATRIX ds,int n,int d,int m,int k,float** centroids,float eps
  * con gli elementi e ritorna il massimo 
  **/
 float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,bool full){
+	accesso_2++;
 	float new_max;
 	if (full==true || c_max_heap == dim) { // dovrebbe andar bene anche solo con ==
 		//printf("IF:\n C=%d\n",c_max_heap);
@@ -697,6 +719,7 @@ float sdc(int* c_x,float** stored_distance, int y, int m,int ** labels, int k ){
 		i=mapping(c_x[j],labels[j][y],k);
 		if (i!=0) {
 			dis+= stored_distance[j][i];
+			accesso++;
 		}
 		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
 	}
@@ -711,6 +734,7 @@ float adc(float** stored_distance, int y, int m, int** labels){
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 		dis+=stored_distance[j][labels[j][y]];
+		accesso_1++;
 	}
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
@@ -725,6 +749,7 @@ float NE_adc(float** stored_distance, int m,int* res){
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 		dis+=stored_distance[j][res[j]];
+		accesso_1++;
 	}
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
@@ -742,6 +767,7 @@ float NE_sdc(int* c_x,float** stored_distance,int m, int* res,int k ){
 		//printf(" i=%d  ------- c_x[%d]=%d -------- res[%d]=%d\n",i,j,c_x[j],j,res[j]);
 		if (i!=0) {
 			dis+= stored_distance[j][i];
+			accesso++;
 		}
 		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
 	}
@@ -764,7 +790,8 @@ float** pre_adc(MATRIX x, float** centroids,int d,int m, int k ){
 		uj_x = Uj( x, j, m, 1, d);
 		result[j]=alloc_matrix(k,1);
 		for(i = 0; i < k; i++){
-			result[j][i] = pow(dist(uj_x, &centroids[j][i*d/m],d/m),2);
+			//result[j][i] = pow(dist(uj_x, &centroids[j][i*d/m],d/m),2);
+			result[j][i] = dist(uj_x, &centroids[j][i*d/m],d/m);
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
@@ -786,8 +813,9 @@ float** pre_sdc(float** centroids,int d,int m, int k ){
 		result[j]=alloc_matrix(k*(k-1)/2,1);
 		c=0;
 		for(i = 0; i < k; i++){
-			for(j_d=i+1; j_d < k;j_d++){
-				result[j][c] = pow(dist(&centroids[j][i*d/m], &centroids[j][j_d*d/m],d/m),2);
+			for(j_d = i+1; j_d < k; j_d++){
+				//result[j][c] = pow(dist(&centroids[j][i*sub], &centroids[j][j_d*sub],sub),2);
+				result[j][c] = dist(&centroids[j][i*sub], &centroids[j][j_d*sub],sub);
 				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
 				c++;
 			}
@@ -822,18 +850,34 @@ void pqnn_index(params* input) {
 
 		printf("Quantizzazione y in qc\n");
 		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
+		//qui dovremmo usare un sottoinsieme
+		MATRIX sub_set = extrac(input->ds,input->n,input->d,input->nr);
+		input->n = input->nr; // per non cambiare tutto dopo
+
+		//Creazione del quantizzatore Coarse e relativi Centroidi
+
+		//printDsQs(input->ds,sub_set,input->n,input->d,input->nr);
 		Cc= alloc_matrix(input->kc,input->d);
-		Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		Cc_index=k_means(sub_set,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
-		//calcolo dei redisui r(y) = y - Ci
-		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
+		//me non avrebbe senso quindi per adesso calcoliamo TUTTI i residui per tutto il dataset
+		//MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+
+		/**in questa variante i residui vengono calcolati su un sottoinsieme di punti del data-set
+		 * precedentemenete clusterizzato*/
+		
+		MATRIX res= residuals(sub_set,Cc,Cc_index,input->n,input->d);
 		//printDsQs(res,NULL,input->n,input->d,0);
 
 		printf("Quantizzazione dei residui\n");
 		//quantizzare r(y) con Qp, prima si crea il quantizzatore usando m volte k-means
 		Cp = (float**)get_block(sizeof(float*),input->m);
+
+		//adesso sarà input->nr
 		Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		/*
@@ -906,6 +950,13 @@ void pqnn_index(params* input) {
 		//bucket dovrebbe essere tutto zero
 		dealloc_vector(bucket);
 		printf("Fine index\n");
+
+		if(input->symmetric==1)
+		{
+			printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
+			stored_distance=pre_sdc(Cp,input->d,input->m,input->k);
+		}
+
 	}
 
 	if(input->exaustive == 1){
@@ -935,12 +986,6 @@ void pqnn_index(params* input) {
 void pqnn_search(params* input) {
 	
 	if(input->exaustive==0){
-		if(input->symmetric==1)
-		{
-			printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
-			stored_distance=pre_sdc(Cp,input->d,input->m,input->k);
-		}
-
 	
 		//per ogni punto per query set
 		int i,i_w,ind,result;
@@ -1058,7 +1103,11 @@ void pqnn_search(params* input) {
 			//printf("\n x=%d 	y=%d	dist=%f\n",i,result,nn_dis);
 		}
 	}
-	/*if(input->exaustive==1 && input->symmetric==1){
+
+
+	/* Variante senza max_heap
+	
+	if(input->exaustive==1 && input->symmetric==1){
 		float tmp,nn_dis;
 		c_x=alloc_vector(input->m);
 		int x,y,index,k;
@@ -1091,13 +1140,16 @@ void pqnn_search(params* input) {
 		c_x=alloc_vector(input->m);
 		int x,y,k;
 		for(x=0; x<input->nq;x++){	
+			clock_t t11 = clock();
 			int* k_nn = alloc_vector(input->knn);	
-			float* result_dist=alloc_matrix(input->knn,1);	
+			float* result_dist=alloc_matrix(input->knn,1);
+
 			for(int j=0;j<input->m;j++){
 				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
 			}	
 			dealloc_matrix(uj_x);
+
 			nn_dis = FLT_MAX;//DBL_MAX;
 			for(y=0; y< input->n; y++){
 				tmp = sdc(c_x,stored_distance, y, input->m, pq, input->k);
@@ -1110,32 +1162,46 @@ void pqnn_search(params* input) {
 			}
 			c_max_heap=0;
 			pre_max_heap=0;
+			t11 = clock() - t11;
+			printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
 		}
 	}
 	if(input->exaustive==1 && input->symmetric==0){
 		float tmp,nn_dis;
 		int x,y,k;
 		for(x=0; x<input->nq;x++){
+			clock_t t11 = clock();
 			int* k_nn = alloc_vector(input->knn);
 			float* result_dist=alloc_matrix(input->knn,1);
+
 			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
-				nn_dis = FLT_MAX;
-				//nn_dis = DBL_MAX;
-				for(y=0; y< input->n; y++){
-						tmp = adc(stored_distance, y, input->m, pq);
-						if(tmp < nn_dis){
-							nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
-						}
+
+			nn_dis = FLT_MAX;
+			//nn_dis = DBL_MAX;
+			for(y=0; y< input->n; y++){
+				tmp = adc(stored_distance, y, input->m, pq);
+				if(tmp < nn_dis){
+					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
 				}
-				for(int i=0; i<input->knn; i++){
-					input->ANN[x*input->knn+i]=k_nn[i];
-				}
-				c_max_heap=0;
-				pre_max_heap = 0;	
+			}
+			for(int i=0; i<input->knn; i++){
+				input->ANN[x*input->knn+i]=k_nn[i];
+			}
+			c_max_heap=0;
+			pre_max_heap = 0;	
+			t11 = clock() - t11;
+			printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
 		}
 	}
 
-	/*if(input->exaustive==1 && input->symmetric==0){
+	printf("\nACCESSI SDC : %d\n",accesso);
+	printf("\nACCESSI ADC : %d\n",accesso_1);
+	printf("\nACCESSI nel max_heap : %d\n",accesso_2);
+
+
+
+	/* variante senza max_heap
+	if(input->exaustive==1 && input->symmetric==0){
 		float tmp,nn_dis;
 		int x,y,index,k;
 		for(x=0; x<input->nq;x++){
@@ -1342,7 +1408,9 @@ int main(int argc, char** argv) {
 	input->ds = load_data(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
-	input->nr = input->n/20;
+
+	input->nr = input->n/10;
+
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
 	//input->nq=input->nq/2 + 2;
