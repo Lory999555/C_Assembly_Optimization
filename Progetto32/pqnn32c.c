@@ -51,6 +51,7 @@
 
 #define 	MATRIX		float*
 #define 	x_query 	input->qs
+#define     nodo		(input->m+1)
 
 typedef struct {
 /*
@@ -898,8 +899,7 @@ void pqnn_index(params* input) {
 		//per ora uso la maniera più stupida e creo tutto poi qui sicuramente si può ottimizzare
 		//allocazione dinamica
 		//IL=(int***) get_block(sizeof(int**),input->kc);
-
-		IL= alloc_vector(input->kc*input->n*input->m+1);
+		IL= alloc_vector(input->kc*input->n*nodo);
 		bucket=calloc(input->kc,sizeof(int));
 		jump=calloc(input->kc,sizeof(int));
 
@@ -940,7 +940,7 @@ void pqnn_index(params* input) {
 			//int* nodo = alloc_vector(input->m+1);
 			//nodo[0]=i;
 			ind = Cc_index[i];
-			IL[(jump[ind]*input->m+1) + bucket[ind]*input->m+1]=i;
+			IL[jump[ind]*nodo + bucket[ind]*nodo]=i;
 			
 
 			//printf("\n");
@@ -950,7 +950,7 @@ void pqnn_index(params* input) {
 			for(int j = 1; j < input->m+1; j++)
 			{
 
-				IL[(jump[ind]*input->m+1) + bucket[ind]*input->m+1 + j] = Cp_index[j-1][i];
+				IL[(jump[ind]*nodo) + bucket[ind]*nodo + j] = Cp_index[j-1][i];
 				
 				//nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
 				//forse posso addirittura deallocare Cp_index che avanti non viene usato
@@ -966,9 +966,11 @@ void pqnn_index(params* input) {
 			bucket[ind]++;
 
 
-			//printVector(IL[ind][bucket[ind]],input->m+1);
 			
 		}
+
+		printVector(bucket,input->kc);
+
 
 		//bucket dovrebbe essere tutto zero
 		//dealloc_vector(bucket);
@@ -1067,10 +1069,10 @@ void pqnn_search(params* input) {
 					{	
 						
 						//printVector(&L_i[ind][1],input->m);
-						tmp = NE_sdc(c_x,stored_distance, input->m, &IL[(jump[C_i]*input->m+1) + ind*input->m+1 +1],input->k);
+						tmp = NE_sdc(c_x,stored_distance, input->m, &IL[(jump[C_i]*nodo) + (ind*nodo) +1],input->k);
 						if(tmp < nn_dis){
 							
-							nn_dis=max_heap(k_nn,result_dist,IL[(jump[C_i]*input->m+1) + ind*input->m+1],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist,IL[(jump[C_i]*nodo) + ind*nodo],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
@@ -1097,9 +1099,9 @@ void pqnn_search(params* input) {
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
 					for( ind = 0; ind < bucket[C_i]; ind++)
 					{
-						tmp = NE_adc(stored_distance, input->m, &IL[(jump[C_i]*input->m+1) + ind*input->m+1 +1]);
+						tmp = NE_adc(stored_distance, input->m, &IL[(jump[C_i]*nodo) + ind*nodo +1]);
 						if(tmp < nn_dis){
-							nn_dis=max_heap(k_nn,result_dist, IL[(jump[C_i]*input->m+1) + ind*input->m+1],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist, IL[(jump[C_i]*nodo) + ind*nodo],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
