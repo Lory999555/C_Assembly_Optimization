@@ -51,6 +51,7 @@
 
 #define 	MATRIX		float*
 #define 	x_query 	input->qs
+#define     nodo		(input->m+1)
 
 typedef struct {
 /*
@@ -113,9 +114,19 @@ MATRIX Cc;
 int* Cc_index;
 float* Cp;
 int * Cp_index;
-int *** IL;
 float* stored_distance;
 int* len_IL;
+int * IL;
+int* bucket;
+int* jump;
+//int* len_IL;
+
+
+//test
+int accesso=0; //utilizzato per SDC
+int accesso_1=0; //utilizzato per ADC
+int accesso_2=0; //utilizzato per gli accessi nel max_heap
+int accesso_3=0;
 
 
 
@@ -292,10 +303,23 @@ void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 	}
 }
 
-/**
- * metodo che prende un sottogruppo (sub dimensionale) del data set
- * j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
-*/
+/**metodo per estrapolare in maniera semi-casuale nr elementi da
+ * un dataset */
+
+MATRIX extrac(MATRIX ds,int n,int d,int nr){
+	MATRIX result = alloc_matrix(nr,d);
+	int i,j,h;
+	for (h = i = 0; i < nr; h += n/nr , i++) {
+		for (j = 0; j < d;j++){
+			result[i*d+j] = ds[h*d+j];
+		}
+	}
+	return result;
+	
+}
+
+//metodo che prende un sottogruppo (sub dimensionale) del data set
+// j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
 MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 	int i,k,c;
 	int sub=d/m;
@@ -502,6 +526,7 @@ int* productQuant(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,i
  * con gli elementi e ritorna il massimo 
  **/
 float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,bool full){
+	//accesso_2++;
 	float new_max;
 	if (full==true || c_max_heap == dim) { // dovrebbe andar bene anche solo con ==
 		//printf("IF:\n C=%d\n",c_max_heap);
@@ -794,7 +819,7 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 		//result[j]=alloc_matrix(k*(k-1)/2,1);
 		c=0;
 		for(i = 0; i < k; i++){
-			for(j_d=i+1; j_d < k;j_d++){
+			for(j_d = i+1; j_d < k;j_d++){
 				//result[j][c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
 				result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
 				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
@@ -831,6 +856,15 @@ void pqnn_index(params* input) {
 
 		printf("Quantizzazione y in qc\n");
 		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
+		//qui dovremmo usare un sottoinsieme
+
+
+		//MATRIX sub_set = extrac(input->ds,input->n,input->d,input->nr);
+		//input->n = input->nr; // per non cambiare tutto dopo
+
+		//Creazione del quantizzatore Coarse e relativi Centroidi
+
+		//printDsQs(input->ds,sub_set,input->n,input->d,input->nr);
 		Cc= alloc_matrix(input->kc,input->d);
 		Cc_index = alloc_vector(input->n);///////////////////////////////////////////////////////////////////////????????????????n?????????????////
 		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
@@ -838,8 +872,14 @@ void pqnn_index(params* input) {
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
-		//calcolo dei redisui r(y) = y - Ci
+		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
+		//me non avrebbe senso quindi per adesso calcoliamo TUTTI i residui per tutto il dataset
 		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+
+		/**in questa variante i residui vengono calcolati su un sottoinsieme di punti del data-set
+		 * precedentemenete clusterizzato*/
+		
+		//MATRIX res= residuals(sub_set,Cc,Cc_index,input->n,input->d);
 		//printDsQs(res,NULL,input->n,input->d,0);
 
 		printf("Quantizzazione dei residui\n");
@@ -863,28 +903,35 @@ void pqnn_index(params* input) {
 
 		//per ora uso la maniera più stupida e creo tutto poi qui sicuramente si può ottimizzare
 		//allocazione dinamica
-		IL=(int***) get_block(sizeof(int**),input->kc);
-		
-		int* bucket=alloc_vector(input->kc);
-		len_IL=alloc_vector(input->kc);
+		//IL=(int***) get_block(sizeof(int**),input->kc);
+		IL= alloc_vector(input->kc*input->n*nodo);
+		bucket=calloc(input->kc,sizeof(int));
+		jump=calloc(input->kc,sizeof(int));
 
-		for(i=0;i < input->kc;i++){
-			bucket[i]=0;
+		//len_IL=alloc_vector(input->kc);
+
+		//sto creando una struttura che ospita sia il numero di centroidi dentro una lista e
+		//anche il numero di celle da sorpassare per arrivarci- è importante far avanzare il for di +2
+		for(i=1; i < input->kc; i++){
+			jump[i]=jump[i-1];
 			for(j=0;j< input->n;j++){
-				if(Cc_index[j]==i)
-					bucket[i]++;
+				if(Cc_index[j]==i-1)
+					jump[i]++;
 					
 			}
-			printf("bucket[%d]=%d\n",i,bucket[i]);
-			IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
+			
+
+			printf("jump[%d]=%d\n",i,jump[i]);
+			//printf("bucket[%d]=%d\n",i,bucket[i]);
+			//IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
 
 			// mi serve questo perchè dopo devo scorrere tutte le celle
 			//mentre bucket viene usato solo per riempire la IL e perde le sue info
 			//forse possiamo fare a meno di questa struttura len_IL
-			len_IL[i]= bucket[i];
+			//len_IL[i]= bucket[i];
 
 			//fatto per popolare la struttura in maniera coerente alla scansione del dataset
-			bucket[i] = 0;
+			//bucket[i] = 0;
 		}
 
 		printf("Popolazione dell'Inverted List\n");
@@ -894,30 +941,52 @@ void pqnn_index(params* input) {
 			//potrei caricare i valori al contrario facendo -- in modo da essere sicuro che riempo tutto
 			//per simulare la tupla vado a creare un vettore dove il primo elemento è l'iD della y e i restanti
 			//sono gli indici che compongono il product quantizzazion e quindi m.
-			int* nodo = alloc_vector(input->m+1);
-			nodo[0]=i;
-			for(int j = 1; j < input->m+1; j++)
-			{
-				nodo[j]=Cp_index[(j-1)*input->n+i]; // prendo i vari gruppi 
-				//forse posso addirittura deallocare Cp_index che avanti non viene usato
-				
-			}
+			
+			//int* nodo = alloc_vector(input->m+1);
+			//nodo[0]=i;
 			ind = Cc_index[i];
+			IL[jump[ind]*nodo + bucket[ind]*nodo]=i;
+			
+
 			//printf("\n");
 			//printf("Cc_index[%d] = %d\n",i,ind);
 			//printf("bucket[%d] = %d\n",ind,bucket[ind]);
 			//printf("STAMPA DEL NODO sotto: %d\n",i);
+			for(int j = 1; j < input->m+1; j++)
+			{
+
+				IL[(jump[ind]*nodo) + bucket[ind]*nodo + j] = Cp_index[(j-1)*input->n+i];
+				
+				//nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
+				//forse posso addirittura deallocare Cp_index che avanti non viene usato
+				
+			}
 			
 			//bucket[ind]--;
-			IL[ind][bucket[ind]]=nodo;
+			//IL[ind][bucket[ind]]=nodo;
+
+			//per riuscire ad avanzare del giusto numero di posizioni devi sommarle
+
+			
 			bucket[ind]++;
-			//printVector(IL[ind][bucket[ind]],input->m+1);
+
+
 			
 		}
 
+		printVector(bucket,input->kc);
+
+
 		//bucket dovrebbe essere tutto zero
-		dealloc_vector(bucket);
+		//dealloc_vector(bucket);
 		printf("Fine index\n");
+
+		if(input->symmetric==1)
+		{
+			printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
+			stored_distance=pre_sdc(Cp,input->d,input->m,input->k);
+		}
+
 	}
 
 	if(input->exaustive == 1){
@@ -947,12 +1016,6 @@ void pqnn_index(params* input) {
 void pqnn_search(params* input) {
 	
 	if(input->exaustive==0){
-		if(input->symmetric==1)
-		{
-			printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
-			stored_distance=pre_sdc(Cp,input->d,input->m,input->k);
-		}
-
 	
 		//per ogni punto per query set
 		int i,i_w,ind,result;
@@ -985,7 +1048,7 @@ void pqnn_search(params* input) {
 			float * result_dist=alloc_matrix(input->knn,1);
 			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
 			int C_i;
-			int** L_i;
+			//int** L_i;
 			//printDsQs(res_x,NULL,input->w,input->d,0);
 			for(i_w = 0 ; i_w < input->w ; i_w++){
 				
@@ -1001,19 +1064,20 @@ void pqnn_search(params* input) {
 					dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
 					//centroide più vicino associato al punto
 					C_i= label_w[i_w];
-					L_i = IL[C_i];
+					//L_i = IL[C_i];
+					
 					
 					
 
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
-					for( ind = 0; ind < len_IL[C_i]; ind++)
+					for( ind = 0; ind < bucket[C_i]; ind++)
 					{	
 						
 						//printVector(&L_i[ind][1],input->m);
-						tmp = NE_sdc(c_x,stored_distance, input->m, &L_i[ind][1],input->k);
+						tmp = NE_sdc(c_x,stored_distance, input->m, &IL[(jump[C_i]*nodo) + (ind*nodo) +1],input->k);
 						if(tmp < nn_dis){
 							
-							nn_dis=max_heap(k_nn,result_dist,L_i[ind][0],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist,IL[(jump[C_i]*nodo) + ind*nodo],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
@@ -1035,14 +1099,14 @@ void pqnn_search(params* input) {
 
 					//con questo ottendo la i-esima inverted List 
 					C_i= label_w[i_w];
-					L_i = IL[C_i];
+					//L_i = IL[C_i];
 
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
-					for( ind = 0; ind < len_IL[C_i]; ind++)
+					for( ind = 0; ind < bucket[C_i]; ind++)
 					{
-						tmp = NE_adc(stored_distance,input->k, input->m, &L_i[ind][1]);
+						tmp = NE_adc(stored_distance, input->k, input->m, &IL[(jump[C_i]*nodo) + ind*nodo +1]);
 						if(tmp < nn_dis){
-							nn_dis=max_heap(k_nn,result_dist,L_i[ind][0],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist, IL[(jump[C_i]*nodo) + ind*nodo],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
@@ -1070,7 +1134,11 @@ void pqnn_search(params* input) {
 			//printf("\n x=%d 	y=%d	dist=%f\n",i,result,nn_dis);
 		}
 	}
-	/*if(input->exaustive==1 && input->symmetric==1){
+
+
+	/* Variante senza max_heap
+	
+	if(input->exaustive==1 && input->symmetric==1){
 		float tmp,nn_dis;
 		c_x=alloc_vector(input->m);
 		int x,y,index,k;
@@ -1103,13 +1171,16 @@ void pqnn_search(params* input) {
 		c_x=alloc_vector(input->m);
 		int x,y,k;
 		for(x=0; x<input->nq;x++){	
+			clock_t t11 = clock();
 			int* k_nn = alloc_vector(input->knn);	
-			float* result_dist=alloc_matrix(input->knn,1);	
+			float* result_dist=alloc_matrix(input->knn,1);
+
 			for(int j=0;j<input->m;j++){
 				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centX(&centroids[j*input->k*input->d /input->m], uj_x, input->k, input->d/input->m);
 			}	
 			dealloc_matrix(uj_x);
+
 			nn_dis = FLT_MAX;//DBL_MAX;
 			for(y=0; y< input->n; y++){
 				tmp = sdc(c_x,stored_distance, y, input->m, input->n, pq, input->k);
@@ -1140,7 +1211,8 @@ void pqnn_search(params* input) {
 			}
 			c_max_heap=0;
 			pre_max_heap=0;
-		printf("\n");
+			t11 = clock() - t11;
+			printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
 		}
 		
 	}
@@ -1148,9 +1220,10 @@ void pqnn_search(params* input) {
 		float tmp,nn_dis;
 		int x,y,k;
 		for(x=0; x<input->nq;x++){
-
+			clock_t t11 = clock();
 			int* k_nn = alloc_vector(input->knn);
 			float* result_dist=alloc_matrix(input->knn,1);
+
 			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
 				nn_dis = FLT_MAX;
 				//nn_dis = DBL_MAX;
@@ -1178,12 +1251,20 @@ void pqnn_search(params* input) {
 				}
 				c_max_heap=0;
 				pre_max_heap = 0;	
-				printf("\n");
+				t11 = clock() - t11;
+			printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
 		}
 		
 	}
 
-	/*if(input->exaustive==1 && input->symmetric==0){
+	printf("\nACCESSI SDC : %d\n",accesso);
+	printf("\nACCESSI ADC : %d\n",accesso_1);
+	printf("\nACCESSI nel max_heap : %d\n",accesso_2);
+
+
+
+	/* variante senza max_heap
+	if(input->exaustive==1 && input->symmetric==0){
 		float tmp,nn_dis;
 		int x,y,index,k;
 		for(x=0; x<input->nq;x++){
@@ -1390,7 +1471,9 @@ int main(int argc, char** argv) {
 	input->ds = load_data(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
-	input->nr = input->n/20;
+
+	input->nr = input->n/10;
+
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
 	//input->nq=input->nq/2 + 2;
