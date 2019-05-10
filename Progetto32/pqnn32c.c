@@ -113,9 +113,11 @@ MATRIX Cc;
 int* Cc_index;
 float** Cp;
 int ** Cp_index;
-int *** IL;
+int * IL;
 float** stored_distance;
-int* len_IL;
+int* bucket;
+int* jump;
+//int* len_IL;
 
 
 //test
@@ -519,7 +521,7 @@ int** productQuant(MATRIX ds,int n,int d,int m,int k,float** centroids,float eps
  * con gli elementi e ritorna il massimo 
  **/
 float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,bool full){
-	accesso_2++;
+	//accesso_2++;
 	float new_max;
 	if (full==true || c_max_heap == dim) { // dovrebbe andar bene anche solo con ==
 		//printf("IF:\n C=%d\n",c_max_heap);
@@ -734,7 +736,7 @@ float adc(float** stored_distance, int y, int m, int** labels){
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 		dis+=stored_distance[j][labels[j][y]];
-		accesso_1++;
+		//accesso_1++;
 	}
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
@@ -749,7 +751,7 @@ float NE_adc(float** stored_distance, int m,int* res){
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 		dis+=stored_distance[j][res[j]];
-		accesso_1++;
+		//accesso_1++;
 	}
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
@@ -767,7 +769,7 @@ float NE_sdc(int* c_x,float** stored_distance,int m, int* res,int k ){
 		//printf(" i=%d  ------- c_x[%d]=%d -------- res[%d]=%d\n",i,j,c_x[j],j,res[j]);
 		if (i!=0) {
 			dis+= stored_distance[j][i];
-			accesso++;
+			//accesso++;
 		}
 		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
 	}
@@ -895,28 +897,36 @@ void pqnn_index(params* input) {
 
 		//per ora uso la maniera più stupida e creo tutto poi qui sicuramente si può ottimizzare
 		//allocazione dinamica
-		IL=(int***) get_block(sizeof(int**),input->kc);
-		
-		int* bucket=alloc_vector(input->kc);
-		len_IL=alloc_vector(input->kc);
+		//IL=(int***) get_block(sizeof(int**),input->kc);
 
-		for(i=0;i < input->kc;i++){
-			bucket[i]=0;
+		IL= alloc_vector(input->kc*input->n*input->m+1);
+		bucket=calloc(input->kc,sizeof(int));
+		jump=calloc(input->kc,sizeof(int));
+
+		//len_IL=alloc_vector(input->kc);
+
+		//sto creando una struttura che ospita sia il numero di centroidi dentro una lista e
+		//anche il numero di celle da sorpassare per arrivarci- è importante far avanzare il for di +2
+		for(i=1; i < input->kc; i++){
+			jump[i]=jump[i-1];
 			for(j=0;j< input->n;j++){
-				if(Cc_index[j]==i)
-					bucket[i]++;
+				if(Cc_index[j]==i-1)
+					jump[i]++;
 					
 			}
-			printf("bucket[%d]=%d\n",i,bucket[i]);
-			IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
+			
+
+			printf("jump[%d]=%d\n",i,jump[i]);
+			//printf("bucket[%d]=%d\n",i,bucket[i]);
+			//IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
 
 			// mi serve questo perchè dopo devo scorrere tutte le celle
 			//mentre bucket viene usato solo per riempire la IL e perde le sue info
 			//forse possiamo fare a meno di questa struttura len_IL
-			len_IL[i]= bucket[i];
+			//len_IL[i]= bucket[i];
 
 			//fatto per popolare la struttura in maniera coerente alla scansione del dataset
-			bucket[i] = 0;
+			//bucket[i] = 0;
 		}
 
 		printf("Popolazione dell'Inverted List\n");
@@ -926,29 +936,42 @@ void pqnn_index(params* input) {
 			//potrei caricare i valori al contrario facendo -- in modo da essere sicuro che riempo tutto
 			//per simulare la tupla vado a creare un vettore dove il primo elemento è l'iD della y e i restanti
 			//sono gli indici che compongono il product quantizzazion e quindi m.
-			int* nodo = alloc_vector(input->m+1);
-			nodo[0]=i;
-			for(int j = 1; j < input->m+1; j++)
-			{
-				nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
-				//forse posso addirittura deallocare Cp_index che avanti non viene usato
-				
-			}
+			
+			//int* nodo = alloc_vector(input->m+1);
+			//nodo[0]=i;
 			ind = Cc_index[i];
+			IL[(jump[ind]*input->m+1) + bucket[ind]*input->m+1]=i;
+			
+
 			//printf("\n");
 			//printf("Cc_index[%d] = %d\n",i,ind);
 			//printf("bucket[%d] = %d\n",ind,bucket[ind]);
 			//printf("STAMPA DEL NODO sotto: %d\n",i);
+			for(int j = 1; j < input->m+1; j++)
+			{
+
+				IL[(jump[ind]*input->m+1) + bucket[ind]*input->m+1 + j] = Cp_index[j-1][i];
+				
+				//nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
+				//forse posso addirittura deallocare Cp_index che avanti non viene usato
+				
+			}
 			
 			//bucket[ind]--;
-			IL[ind][bucket[ind]]=nodo;
+			//IL[ind][bucket[ind]]=nodo;
+
+			//per riuscire ad avanzare del giusto numero di posizioni devi sommarle
+
+			
 			bucket[ind]++;
+
+
 			//printVector(IL[ind][bucket[ind]],input->m+1);
 			
 		}
 
 		//bucket dovrebbe essere tutto zero
-		dealloc_vector(bucket);
+		//dealloc_vector(bucket);
 		printf("Fine index\n");
 
 		if(input->symmetric==1)
@@ -1018,7 +1041,7 @@ void pqnn_search(params* input) {
 			float * result_dist=alloc_matrix(input->knn,1);
 			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
 			int C_i;
-			int** L_i;
+			//int** L_i;
 			//printDsQs(res_x,NULL,input->w,input->d,0);
 			for(i_w = 0 ; i_w < input->w ; i_w++){
 				
@@ -1034,19 +1057,20 @@ void pqnn_search(params* input) {
 					dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
 					//centroide più vicino associato al punto
 					C_i= label_w[i_w];
-					L_i = IL[C_i];
+					//L_i = IL[C_i];
+					
 					
 					
 
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
-					for( ind = 0; ind < len_IL[C_i]; ind++)
+					for( ind = 0; ind < bucket[C_i]; ind++)
 					{	
 						
 						//printVector(&L_i[ind][1],input->m);
-						tmp = NE_sdc(c_x,stored_distance, input->m, &L_i[ind][1],input->k);
+						tmp = NE_sdc(c_x,stored_distance, input->m, &IL[(jump[C_i]*input->m+1) + ind*input->m+1 +1],input->k);
 						if(tmp < nn_dis){
 							
-							nn_dis=max_heap(k_nn,result_dist,L_i[ind][0],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist,IL[(jump[C_i]*input->m+1) + ind*input->m+1],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
@@ -1068,14 +1092,14 @@ void pqnn_search(params* input) {
 
 					//con questo ottendo la i-esima inverted List 
 					C_i= label_w[i_w];
-					L_i = IL[C_i];
+					//L_i = IL[C_i];
 
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
-					for( ind = 0; ind < len_IL[C_i]; ind++)
+					for( ind = 0; ind < bucket[C_i]; ind++)
 					{
-						tmp = NE_adc(stored_distance, input->m, &L_i[ind][1]);
+						tmp = NE_adc(stored_distance, input->m, &IL[(jump[C_i]*input->m+1) + ind*input->m+1 +1]);
 						if(tmp < nn_dis){
-							nn_dis=max_heap(k_nn,result_dist,L_i[ind][0],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist, IL[(jump[C_i]*input->m+1) + ind*input->m+1],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
