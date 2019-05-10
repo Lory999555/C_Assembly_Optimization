@@ -100,8 +100,8 @@ typedef struct {
 } params;
 
 //variabili utili per l'algoritmo esaustivo
-float ** centroids;
-int ** pq; 
+float * centroids;
+int * pq; 
 float* uj_x;
 int* c_x;
 int c_max_heap=0;
@@ -111,10 +111,10 @@ float pre_max_heap=0;
 //variabili utili per l'algoritmo non esaustivo
 MATRIX Cc;
 int* Cc_index;
-float** Cp;
-int ** Cp_index;
+float* Cp;
+int * Cp_index;
 int *** IL;
-float** stored_distance;
+float* stored_distance;
 int* len_IL;
 
 
@@ -231,7 +231,7 @@ void printX(MATRIX x,int i,int d){
 }
 
 //metodo che stampa i centroidi e i punti associati ad esso (sotto forma di vettore di indici)
-void printCentroids(MATRIX C,int* index, int n,int d,int k){
+void printCentroids(MATRIX C,int* index, int n,int d,int k){/////////////////////////////////////forse va cambiato///////////////////
 	int i,j,jj;
 	for (i=0;i<k;i++){
 		for(j=0;j<d;j++){
@@ -292,8 +292,10 @@ void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 	}
 }
 
-//metodo che prende un sottogruppo (sub dimensionale) del data set
-// j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
+/**
+ * metodo che prende un sottogruppo (sub dimensionale) del data set
+ * j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
+*/
 MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 	int i,k,c;
 	int sub=d/m;
@@ -321,9 +323,9 @@ int centX(float * centroids, float * x, int k, int d){
 	float dis = dist(x, centroids, d);
 	int park = 0;
 	for(int i=1; i<k; i++){
-		float tep = dist(x, &centroids[i*d], d);	
- 		if( tep < dis){
-			dis = tep;
+		float tmp = dist(x, &centroids[i*d], d);	
+ 		if( tmp < dis){
+			dis = tmp;
 			park = i;
 		}
 	}
@@ -346,10 +348,10 @@ int centX(float * centroids, float * x, int k, int d){
 
 
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
-int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_min,int t_max) {
+void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
 	
 	/* output cluster label for each data point */
-	int * labels = alloc_vector(n);
+	//int * labels = alloc_vector(n);
 
 	//queste variabili sono da liberare alla fine del metodo!!!
 	float min_distance;
@@ -441,7 +443,6 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 		}
 		free(c1[i]);
 	}*/
-
 	
 	printf("housekeeping\n");
 	
@@ -449,10 +450,10 @@ int * k_means(MATRIX data, int n, int d, int k, float t, MATRIX centroids,int t_
 
 	dealloc_vector(counts);
 
-	return labels;
+	//return labels;
 }//k_means
 
-MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
+MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){///////////////////////////////////non so se modificarlo////////////////////
 	MATRIX results = alloc_matrix(n,d);
 	int i,j;
 	for (i=0;i< n;i++){
@@ -460,6 +461,7 @@ MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 			results[i*d+j]=ds[i*d+j]-centroids[label[i]*d+j];
 		}
 	}
+	
 	return results;
 }
 
@@ -469,17 +471,19 @@ il primo indice indica il gruppetto il secondo invece indica la dimensione.
 si è scelto di rimanere coerenti con le altre implementazioni, per ora tutto cioè che viene 
 passato come parametro ci si aspetta sia già allocato mentre tutto cioè che sta dentro il metodo
 compreso il valore di ritorno si alloca dentro il metodo.*/
-int** productQuant(MATRIX ds,int n,int d,int m,int k,float** centroids,float eps,int t_min,int t_max){
+int* productQuant(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,int t_min,int t_max){
 	int j;
 	int sub=d/m;
-	int** result = (int**) get_block(sizeof(int*),m);
+	//int** result = (int**) get_block(sizeof(int*),m);
+	int* result = alloc_vector(m*n);
 	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
 		printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		MATRIX tmp = Uj(ds,j,m,n,d);
-		centroids[j]=alloc_matrix(k,sub);
-		result[j]=k_means(tmp,n,sub,k,eps,centroids[j],t_min,t_max);
+		//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
+		//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
+		k_means(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
 		dealloc_matrix(tmp); // da testare
 	}
 	return result;
@@ -685,7 +689,7 @@ int mapping(int i,int j,int n){
 	return k;
 }
 
-float sdc(int* c_x,float** stored_distance, int y, int m,int ** labels, int k ){
+float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int k ){
 	float dis=0;
 	int i,j;
 	for(j=0; j< m; j++){
@@ -694,9 +698,11 @@ float sdc(int* c_x,float** stored_distance, int y, int m,int ** labels, int k ){
 
 		//questo controllo è dovuto al fatto che la funzione mapping ritorna l'indice corretto quando è
 		//possibile altrimenti quando i==j torna direttamente 0 e a sto punto evito di accedere alla struttura
-		i=mapping(c_x[j],labels[j][y],k);
+		//i=mapping(c_x[j],labels[j][y],k);
+		i=mapping(c_x[j],labels[j*n+y],k);
 		if (i!=0) {
-			dis+= stored_distance[j][i];
+			//dis+= stored_distance[j][i];
+			dis+= stored_distance[j*(k*(k-1)/2)+i];
 		}
 		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
 	}
@@ -706,11 +712,11 @@ float sdc(int* c_x,float** stored_distance, int y, int m,int ** labels, int k ){
 
 
 //ancora da smaltire
-float adc(float** stored_distance, int y, int m, int** labels){
+float adc(float* stored_distance, int y, int k, int m, int n, int* labels){
 	float dis = 0;
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
-		dis+=stored_distance[j][labels[j][y]];
+		dis+=stored_distance[j*k+labels[j*n+y]];
 	}
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
@@ -720,16 +726,16 @@ float adc(float** stored_distance, int y, int m, int** labels){
 //a differenza di prima qui abbiamo qua tutte le info calcolate anche per quanto riguarda 
 //il quantizzato di r(y) e quindi inutile usare la label per ottenere le info ma conviene 
 //passarle direttamente in input
-float NE_adc(float** stored_distance, int m,int* res){
+float NE_adc(float* stored_distance, int k, int m,int* res){
 	float dis = 0;
 	for(int j=0; j<m; j++){
 		//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
-		dis+=stored_distance[j][res[j]];
+		dis+=stored_distance[j*k+res[j]];
 	}
 	//printf("ADC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
 }
-float NE_sdc(int* c_x,float** stored_distance,int m, int* res,int k ){
+float NE_sdc(int* c_x,float* stored_distance,int m, int* res,int k ){
 	float dis=0;
 	int i,j;
 	for(j=0; j< m; j++){
@@ -741,7 +747,7 @@ float NE_sdc(int* c_x,float** stored_distance,int m, int* res,int k ){
 		i=mapping(c_x[j],res[j],k);
 		//printf(" i=%d  ------- c_x[%d]=%d -------- res[%d]=%d\n",i,j,c_x[j],j,res[j]);
 		if (i!=0) {
-			dis+= stored_distance[j][i];
+			dis+= stored_distance[j*(k*(k-1)/2)+i];
 		}
 		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
 	}
@@ -755,16 +761,17 @@ ottimizzabile come gli altri con una riga in modo
 da avanzare nel gruppo di centroidi j
 */
 
-float** pre_adc(MATRIX x, float** centroids,int d,int m, int k ){
-	float** result=(float**)get_block(sizeof(float*),m);
+float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
+	//float* result=(float**)get_block(sizeof(float*),m);
+	float* result= alloc_matrix(m,k);
 	int sub=d/m;
 	int i,j;
 	MATRIX uj_x;
 	for(j=0; j<m; j++){
 		uj_x = Uj( x, j, m, 1, d);
-		result[j]=alloc_matrix(k,1);
+		//result[j]=alloc_matrix(k,1);
 		for(i = 0; i < k; i++){
-			result[j][i] = pow(dist(uj_x, &centroids[j][i*d/m],d/m),2);
+			result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
@@ -778,16 +785,18 @@ float** pre_adc(MATRIX x, float** centroids,int d,int m, int k ){
 /*popolazione con struttura dimezzata delle distanze tra tutti i centroidi di un sottogruppo j
 per accedere alla distanza bisogna usare la funzione mapping che ritorna l'indice corretto
 trasformando opportunamente gli indici i,j*/
-float** pre_sdc(float** centroids,int d,int m, int k ){
-	float** result=(float**)get_block(sizeof(float*),m);
+float* pre_sdc(float* centroids,int d,int m, int k ){
+	//float** result=(float**)get_block(sizeof(float*),m);
+	float* result= alloc_matrix(m,k*(k-1)/2);
 	int sub=d/m;
 	int i,j,c,j_d;
 	for(j=0; j<m; j++){
-		result[j]=alloc_matrix(k*(k-1)/2,1);
+		//result[j]=alloc_matrix(k*(k-1)/2,1);
 		c=0;
 		for(i = 0; i < k; i++){
 			for(j_d=i+1; j_d < k;j_d++){
-				result[j][c] = pow(dist(&centroids[j][i*d/m], &centroids[j][j_d*d/m],d/m),2);
+				//result[j][c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
+				result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
 				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
 				c++;
 			}
@@ -823,7 +832,9 @@ void pqnn_index(params* input) {
 		printf("Quantizzazione y in qc\n");
 		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
 		Cc= alloc_matrix(input->kc,input->d);
-		Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		Cc_index = alloc_vector(input->n);///////////////////////////////////////////////////////////////////////????????????????n?????????????////
+		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
@@ -833,7 +844,8 @@ void pqnn_index(params* input) {
 
 		printf("Quantizzazione dei residui\n");
 		//quantizzare r(y) con Qp, prima si crea il quantizzatore usando m volte k-means
-		Cp = (float**)get_block(sizeof(float*),input->m);
+		//Cp = (float**)get_block(sizeof(float*),input->m);
+		Cp = alloc_matrix(input->m,input->k * input->d / input->m);
 		Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		/*
@@ -886,7 +898,7 @@ void pqnn_index(params* input) {
 			nodo[0]=i;
 			for(int j = 1; j < input->m+1; j++)
 			{
-				nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
+				nodo[j]=Cp_index[(j-1)*input->n+i]; // prendo i vari gruppi 
 				//forse posso addirittura deallocare Cp_index che avanti non viene usato
 				
 			}
@@ -909,7 +921,7 @@ void pqnn_index(params* input) {
 	}
 
 	if(input->exaustive == 1){
-		centroids = (float**)get_block(sizeof(float*),input->m);
+		centroids = alloc_matrix(input->m,input->k * input->d / input->m);
 		pq = productQuant(input->ds, input->n, input->d, input->m, input->k, centroids, input->eps, input->tmin, input->tmax);
 		//printf("ho calcolato i centroidi (productQuant)\n");
 		if(input->symmetric==1){
@@ -984,7 +996,7 @@ void pqnn_search(params* input) {
 					for(int j=0;j<input->m;j++){
 						//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 						uj_x = Uj( &res_x[i_w*input->d], j, input->m,1,input->d);
-						c_x[j] = centX(Cp[j], uj_x, input->k, input->d/input->m);
+						c_x[j] = centX(&Cp[j*input->sub*input->k], uj_x, input->k, input->d/input->m);
 					}	
 					dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
 					//centroide più vicino associato al punto
@@ -1028,7 +1040,7 @@ void pqnn_search(params* input) {
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
 					for( ind = 0; ind < len_IL[C_i]; ind++)
 					{
-						tmp = NE_adc(stored_distance, input->m, &L_i[ind][1]);
+						tmp = NE_adc(stored_distance,input->k, input->m, &L_i[ind][1]);
 						if(tmp < nn_dis){
 							nn_dis=max_heap(k_nn,result_dist,L_i[ind][0],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
@@ -1095,44 +1107,80 @@ void pqnn_search(params* input) {
 			float* result_dist=alloc_matrix(input->knn,1);	
 			for(int j=0;j<input->m;j++){
 				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
-				c_x[j] = centX(centroids[j], uj_x, input->k, input->d/input->m);
+				c_x[j] = centX(&centroids[j*input->k*input->d /input->m], uj_x, input->k, input->d/input->m);
 			}	
 			dealloc_matrix(uj_x);
 			nn_dis = FLT_MAX;//DBL_MAX;
 			for(y=0; y< input->n; y++){
-				tmp = sdc(c_x,stored_distance, y, input->m, pq, input->k);
+				tmp = sdc(c_x,stored_distance, y, input->m, input->n, pq, input->k);
 				if(tmp < nn_dis){
 					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
 					}
 			}//for y
+			
+			/**
+			 * stampa risultati con relative distanze
+			*/
+			printf("query %d -->",x);
+			for(int i=0; i<input->knn; i++){
+				printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
+			}
+
+			/**
+			 * stampa distanza reale tra x e y
+			*/
+			printf("\nquery %d -->",x);
+			for(int i=0; i<input->knn; i++){
+				printf(" %d	[dist = %f]	",k_nn[i],dist(&input->qs[x*input->d],&input->ds[k_nn[i]],input->d));
+			}
+
+
 			for(int i=0; i<input->knn; i++){
 				input->ANN[x*input->knn+i]=k_nn[i];
 			}
 			c_max_heap=0;
 			pre_max_heap=0;
+		printf("\n");
 		}
+		
 	}
 	if(input->exaustive==1 && input->symmetric==0){
 		float tmp,nn_dis;
 		int x,y,k;
 		for(x=0; x<input->nq;x++){
+
 			int* k_nn = alloc_vector(input->knn);
 			float* result_dist=alloc_matrix(input->knn,1);
 			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
 				nn_dis = FLT_MAX;
 				//nn_dis = DBL_MAX;
 				for(y=0; y< input->n; y++){
-						tmp = adc(stored_distance, y, input->m, pq);
+						tmp = adc(stored_distance, y, input->k, input->m, input->n, pq);
 						if(tmp < nn_dis){
 							nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
 						}
 				}
+				/**
+			 	* stampa risultati con relative distanze
+				*/
+				printf("query %d -->",x);
+				for(int i=0; i<input->knn; i++){
+					printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
+				}
+				printf("\nquery %d -->",x);
+			for(int i=0; i<input->knn; i++){
+				printf(" %d	[dist = %f]	",k_nn[i],dist(&input->qs[x*input->d],&input->ds[k_nn[i]],input->d));
+			}
+			printf("\n \n");
+
 				for(int i=0; i<input->knn; i++){
 					input->ANN[x*input->knn+i]=k_nn[i];
 				}
 				c_max_heap=0;
 				pre_max_heap = 0;	
+				printf("\n");
 		}
+		
 	}
 
 	/*if(input->exaustive==1 && input->symmetric==0){
@@ -1418,7 +1466,7 @@ int main(int argc, char** argv) {
  			}
  		//}
  		save_ANN(input->filename, input->ANN, input->nq, input->knn);
-	}
+ 	}
 	
 	if (!input->silent){
 		printf("\nDone.\n");
