@@ -854,26 +854,28 @@ void pqnn_index(params* input) {
 		printf("Quantizzazione y in qc\n");
 		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
 		//qui dovremmo usare un sottoinsieme
-		MATRIX sub_set = extrac(input->ds,input->n,input->d,input->nr);
-		input->n = input->nr; // per non cambiare tutto dopo
+
+
+		//MATRIX sub_set = extrac(input->ds,input->n,input->d,input->nr);
+		//input->n = input->nr; // per non cambiare tutto dopo
 
 		//Creazione del quantizzatore Coarse e relativi Centroidi
 
 		//printDsQs(input->ds,sub_set,input->n,input->d,input->nr);
 		Cc= alloc_matrix(input->kc,input->d);
-		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
-		Cc_index=k_means(sub_set,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
+		//Cc_index=k_means(sub_set,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
 		//me non avrebbe senso quindi per adesso calcoliamo TUTTI i residui per tutto il dataset
-		//MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
 
 		/**in questa variante i residui vengono calcolati su un sottoinsieme di punti del data-set
 		 * precedentemenete clusterizzato*/
 		
-		MATRIX res= residuals(sub_set,Cc,Cc_index,input->n,input->d);
+		//MATRIX res= residuals(sub_set,Cc,Cc_index,input->n,input->d);
 		//printDsQs(res,NULL,input->n,input->d,0);
 
 		printf("Quantizzazione dei residui\n");
