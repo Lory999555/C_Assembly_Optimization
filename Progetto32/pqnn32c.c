@@ -334,19 +334,37 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 	return uj;
 }
 
-float dist(float * x,float * y, int d){
+/*float dist(float * x,float * y, int d){
 	float distance = 0;
 	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
 	return distance;
-}
+}*/
 
-int centX(float * centroids, float * x, int k, int d){	
+/*int centX(float * centroids, float * x, int k, int d){	
 	float dis = dist(x, centroids, d);
 	int park = 0;
 	for(int i=1; i<k; i++){
 		float tmp = dist(x, &centroids[i*d], d);	
+ 		if( tmp < dis){
+			dis = tmp;
+			park = i;
+		}
+	}
+	return park;
+}*/
+int centX(float * centroids, float * x, int k, int d){	
+	float dis = 0;
+	for (int i=0; i<d;i++){
+	    dis += pow(x[i] - centroids[i], 2);
+	}
+	int park = 0;
+	for(int i=1; i<k; i++){
+		float tmp = 0;
+		for (int j=0; j<d;j++){
+			tmp += pow(x[j] - centroids[i*d+j], 2);
+		}	
  		if( tmp < dis){
 			dis = tmp;
 			park = i;
@@ -647,7 +665,11 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	//printf("riempo i primi w posti\n");
 	for(i = 0; i < w; i++)
 	{	
-		tmp=dist(x,&centroids[i*d],d);
+		//tmp=dist(x,&centroids[i],d);
+		tmp = 0;
+		for (int j=0; j<d;j++){
+			tmp += pow(x[j] - centroids[i*d+j], 2);
+		}
 		result_w[i]=i;
 		result_dist[i]=tmp;
 		//piccola ottimizzazione, al posto di mantenere ordinata la struttura
@@ -665,9 +687,13 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	
 	//printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
 	for(i=w;i<n;i++){
-		tmp=dist(x,&centroids[i*d],d);
+		//tmp=dist(x,&centroids[i],d);
 		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
 		//printf("la distanza max della struttura è = %f\n",max);
+		tmp = 0;
+		for (int j=0; j<d;j++){
+			tmp += pow(x[j] - centroids[i*d+j], 2);
+		}
 		
 		if(tmp < max){
 	//			new_max=tmp;
@@ -794,12 +820,18 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 	float* result= alloc_matrix(m,k);
 	int sub=d/m;
 	int i,j;
+	float distance;
 	MATRIX uj_x;
 	for(j=0; j<m; j++){
 		uj_x = Uj( x, j, m, 1, d);
 		//result[j]=alloc_matrix(k,1);
 		for(i = 0; i < k; i++){
-			result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
+			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
+			distance = 0;
+			for (int z=0; z<sub ;z++){
+				distance += pow(uj_x[z] - centroids[j*k*sub+i*sub+z], 2);
+			}
+			result[j*k+i] = distance;
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
@@ -818,13 +850,19 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 	float* result= alloc_matrix(m,k*(k-1)/2);
 	int sub=d/m;
 	int i,j,c,j_d;
+	float distance;
 	for(j=0; j<m; j++){
 		//result[j]=alloc_matrix(k*(k-1)/2,1);
 		c=0;
 		for(i = 0; i < k; i++){
 			for(j_d = i+1; j_d < k;j_d++){
 				//result[j][c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
-				result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
+				//result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
+				distance = 0;
+				for (int z=0; z<sub;z++){
+					distance += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
+				}
+				result[j*(k*(k-1)/2)+c]=distance;
 				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
 				c++;
 			}
@@ -1226,14 +1264,17 @@ void pqnn_search(params* input) {
 			printf("query %d -->",x);
 			for(int i=0; i<input->knn; i++){
 				printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
-			}
+			}*/
 
-			printf("\nquery %d -->",x);
+			/**
+			 * stampa distanza reale tra x e y
+			*/
+			/*printf("\nquery %d -->",x);
 			for(int i=0; i<input->knn; i++){
 				printf(" %d	[dist = %f]	",k_nn[i],dist(&input->qs[x*input->d],&input->ds[k_nn[i]],input->d));
-			}
+			}*/
 
-		*/
+		
 			for(int i=0; i<input->knn; i++){
 				input->ANN[x*input->knn+i]=k_nn[i];
 			}
@@ -1264,8 +1305,7 @@ void pqnn_search(params* input) {
 				/**
 			 	* stampa risultati con relative distanze
 				*/
-			/*
-				printf("query %d -->",x);
+				/*printf("query %d -->",x);
 				for(int i=0; i<input->knn; i++){
 					printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
 				}
