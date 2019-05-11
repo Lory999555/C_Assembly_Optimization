@@ -476,7 +476,7 @@ void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX cent
 	//return labels;
 }//k_means
 
-MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){///////////////////////////////////non so se modificarlo////////////////////
+MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 	MATRIX results = alloc_matrix(n,d);
 	int i,j;
 	for (i=0;i< n;i++){
@@ -502,7 +502,7 @@ int* productQuant(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,i
 	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
-		printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
+		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		MATRIX tmp = Uj(ds,j,m,n,d);
 		//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
 		//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
@@ -647,7 +647,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	//printf("riempo i primi w posti\n");
 	for(i = 0; i < w; i++)
 	{	
-		tmp=dist(x,&centroids[i],d);
+		tmp=dist(x,&centroids[i*d],d);
 		result_w[i]=i;
 		result_dist[i]=tmp;
 		//piccola ottimizzazione, al posto di mantenere ordinata la struttura
@@ -665,7 +665,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	
 	//printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
 	for(i=w;i<n;i++){
-		tmp=dist(x,&centroids[i],d);
+		tmp=dist(x,&centroids[i*d],d);
 		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
 		//printf("la distanza max della struttura è = %f\n",max);
 		
@@ -835,10 +835,9 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 	return result;
 }
 
-extern void pqnn32_index(params* input);
-extern int* pqnn32_search(params* input);
-
-
+//extern void pqnn32_index(params* input);
+//extern int* pqnn32_search(params* input);
+extern void residual_nasm(float* res, float* ds,float* Cc,int* Cc, int n, int n);
 
 /*
  *	pqnn_index
@@ -869,7 +868,7 @@ void pqnn_index(params* input) {
 
 		//printDsQs(input->ds,sub_set,input->n,input->d,input->nr);
 		Cc= alloc_matrix(input->kc,input->d);
-		Cc_index = alloc_vector(input->n);///////////////////////////////////////////////////////////////////////????????????????n?????????????////
+		Cc_index = alloc_vector(input->n);
 		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
 		k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
@@ -878,6 +877,9 @@ void pqnn_index(params* input) {
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
 		//me non avrebbe senso quindi per adesso calcoliamo TUTTI i residui per tutto il dataset
 		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+
+		//funzione NASM per il calcolo dei residui
+		//residuals_nasm(res,input->ds,Cc,Cc_index,input->n,input->d);
 
 		/**in questa variante i residui vengono calcolati su un sottoinsieme di punti del data-set
 		 * precedentemenete clusterizzato*/
@@ -1019,7 +1021,7 @@ void pqnn_index(params* input) {
     // Codificare qui l'algoritmo di indicizzazione
     // -------------------------------------------------
     
-    pqnn32_index(input); // Chiamata funzione assembly
+    //pqnn32_index(input); // Chiamata funzione assembly
 
     // -------------------------------------------------
 
@@ -1057,6 +1059,10 @@ void pqnn_search(params* input) {
 			//calcolo tutti i residui r(x) con i centroidi in w
 			//printf("calcolo dei residui r(x) con tutti i centroidi w\n");
 			float* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
+
+			//funzione NASM per il calcolo dei residui
+
+
 			//da testare meglio per vedere se
 			//effettivamente funziona
 
@@ -1319,7 +1325,7 @@ void pqnn_search(params* input) {
     // Codificare qui l'algoritmo di interrogazione
     // -------------------------------------------------
     
-    pqnn32_search(input); // Chiamata funzione assembly
+    //pqnn32_search(input); // Chiamata funzione assembly
 
 	// Restituisce il risultato come una matrice di nq * knn
 	// identificatori associati agli ANN approssimati delle nq query.
