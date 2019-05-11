@@ -116,10 +116,9 @@ float* Cp;
 int * Cp_index;
 float* stored_distance;
 int* len_IL;
-int * IL;
+int ** IL;
 int* bucket;
-int* jump;
-//int* len_IL;
+//int* jump;
 
 
 //test
@@ -908,24 +907,27 @@ void pqnn_index(params* input) {
 		//per ora uso la maniera più stupida e creo tutto poi qui sicuramente si può ottimizzare
 		//allocazione dinamica
 		//IL=(int***) get_block(sizeof(int**),input->kc);
-		IL= alloc_vector(input->kc*input->n*nodo);
+		IL= (int**) get_block (sizeof(int*),input->kc);
 		bucket=alloc_vector(input->kc);
-		jump=alloc_vector(input->kc);
+		//jump=alloc_vector(input->kc);
 
-		//len_IL=alloc_vector(input->kc);
+		len_IL=alloc_vector(input->kc);
 
 		//sto creando una struttura che ospita sia il numero di centroidi dentro una lista e
 		//anche il numero di celle da sorpassare per arrivarci- è importante far avanzare il for di +2
-		jump[0]=0;
-		bucket[0]=0;
-		for(i=1; i < input->kc; i++){
+		//jump[0]=0;
+		for(i=0; i < input->kc; i++){
 			bucket[i]=0;
-			jump[i]=jump[i-1];
+			//jump[i]=jump[i-1];
 			for(j=0;j< input->n;j++){
-				if(Cc_index[j]==i-1)
-					jump[i]++;
+				if(Cc_index[j]==i)
+					//jump[i]++;
+					bucket[i]++;
 					
 			}
+			IL[i]=alloc_vector(bucket[i]*nodo);
+			len_IL[i]=bucket[i];
+			bucket[i]=0;
 			
 
 			//printf("jump[%d]=%d\n",i,jump[i]);
@@ -944,6 +946,7 @@ void pqnn_index(params* input) {
 		printf("Popolazione dell'Inverted List\n");
 		int ind;
 		int sjump,sbucket;
+		int* L_i;
 		for(i=0;i<input->n;i++){
 			//posso usare bucket[i] per sapere la dim di ogni cosa e magari farmene una copia
 			//potrei caricare i valori al contrario facendo -- in modo da essere sicuro che riempo tutto
@@ -953,11 +956,13 @@ void pqnn_index(params* input) {
 			//int* nodo = alloc_vector(input->m+1);
 			//nodo[0]=i;
 			ind = Cc_index[i];
-			sjump = jump[ind]*nodo;
+			L_i = IL[ind];
+			//sjump = jump[ind]*nodo;
 			sbucket = bucket[ind]*nodo;
 			
-			//IL[jump[ind]*nodo + bucket[ind]*nodo]=i;
-			IL[sjump + sbucket]=i;
+			L_i[sbucket]=i;
+			
+			//IL[sjump + sbucket]=i;
 			
 
 			//printf("\n");
@@ -967,7 +972,7 @@ void pqnn_index(params* input) {
 			for(int j = 1; j < input->m+1; j++)
 			{
 
-				IL[sjump + sbucket + j] = Cp_index[(j-1)*input->n+i];
+				L_i[sbucket + j] = Cp_index[(j-1)*input->n+i];
 				
 				//nodo[j]=Cp_index[j-1][i]; // prendo i vari gruppi 
 				//forse posso addirittura deallocare Cp_index che avanti non viene usato
@@ -1060,7 +1065,7 @@ void pqnn_search(params* input) {
 			float * result_dist=alloc_matrix(input->knn,1);
 			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
 			int C_i;
-			//int** L_i;
+			int* L_i;
 			//printDsQs(res_x,NULL,input->w,input->d,0);
 			for(i_w = 0 ; i_w < input->w ; i_w++){
 				
@@ -1076,10 +1081,10 @@ void pqnn_search(params* input) {
 					dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
 					//centroide più vicino associato al punto
 					C_i= label_w[i_w];
-					//L_i = IL[C_i];
+					L_i = IL[C_i];
 
 					//variabile usata per non accedere continuamente in jump[C_i]*nodo
-					sjump=jump[C_i]*nodo;
+					//sjump=jump[C_i]*nodo;
 					sbucket=bucket[C_i];
 					
 					
@@ -1090,10 +1095,10 @@ void pqnn_search(params* input) {
 					{	
 						
 						//printVector(&L_i[ind][1],input->m);
-						tmp = NE_sdc(c_x,stored_distance, input->m, &IL[sjump + (ind*nodo) +1],input->k);
+						tmp = NE_sdc(c_x,stored_distance, input->m, &L_i[ind*nodo +1],input->k);
 						if(tmp < nn_dis){
 							
-							nn_dis=max_heap(k_nn,result_dist,IL[sjump + (ind*nodo)],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
@@ -1115,17 +1120,17 @@ void pqnn_search(params* input) {
 
 					//con questo ottendo la i-esima inverted List 
 					C_i= label_w[i_w];
-					//L_i = IL[C_i];
-					sjump=jump[C_i]*nodo;
+					L_i = IL[C_i];
+					//sjump=jump[C_i]*nodo;
 					sbucket=bucket[C_i];
 
 
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
 					for( ind = 0; ind < sbucket; ind++)
 					{
-						tmp = NE_adc(stored_distance, input->k, input->m, &IL[sjump + ind*nodo +1]);
+						tmp = NE_adc(stored_distance, input->k, input->m, &L_i[ind*nodo +1]);
 						if(tmp < nn_dis){
-							nn_dis=max_heap(k_nn,result_dist, IL[sjump + ind*nodo],tmp,nn_dis,input->knn,false);
+							nn_dis=max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false);
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
