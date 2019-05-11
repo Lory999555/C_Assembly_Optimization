@@ -335,19 +335,37 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 	return uj;
 }
 
-float dist(float * x,float * y, int d){
+/*float dist(float * x,float * y, int d){
 	float distance = 0;
 	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
 	return distance;
-}
+}*/
 
-int centX(float * centroids, float * x, int k, int d){	
+/*int centX(float * centroids, float * x, int k, int d){	
 	float dis = dist(x, centroids, d);
 	int park = 0;
 	for(int i=1; i<k; i++){
 		float tmp = dist(x, &centroids[i*d], d);	
+ 		if( tmp < dis){
+			dis = tmp;
+			park = i;
+		}
+	}
+	return park;
+}*/
+int centX(float * centroids, float * x, int k, int d){	
+	float dis = 0;
+	for (int i=0; i<d;i++){
+	    dis += pow(x[i] - centroids[i], 2);
+	}
+	int park = 0;
+	for(int i=1; i<k; i++){
+		float tmp = 0;
+		for (int j=0; j<d;j++){
+			tmp += pow(x[j] - centroids[i*d+j], 2);
+		}	
  		if( tmp < dis){
 			dis = tmp;
 			park = i;
@@ -477,7 +495,7 @@ void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX cent
 	//return labels;
 }//k_means
 
-MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){///////////////////////////////////non so se modificarlo////////////////////
+MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 	MATRIX results = alloc_matrix(n,d);
 	int i,j;
 	for (i=0;i< n;i++){
@@ -503,7 +521,7 @@ int* productQuant(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,i
 	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
-		printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
+		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		MATRIX tmp = Uj(ds,j,m,n,d);
 		//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
 		//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
@@ -645,10 +663,14 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	float max=0;
 
 	//riempo i primi w posti con i primi w centroidi e le relative distanze
-	printf("riempo i primi w posti\n");
+	//printf("riempo i primi w posti\n");
 	for(i = 0; i < w; i++)
 	{	
-		tmp=dist(x,&centroids[i],d);
+		//tmp=dist(x,&centroids[i],d);
+		tmp = 0;
+		for (int j=0; j<d;j++){
+			tmp += pow(x[j] - centroids[i*d+j], 2);
+		}
 		result_w[i]=i;
 		result_dist[i]=tmp;
 		//piccola ottimizzazione, al posto di mantenere ordinata la struttura
@@ -664,11 +686,15 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	//	bool trovato;
 	//n qui simboleggia il numero dei centroidi
 	
-	printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
+	//printf("incomincio a analizzare tutti i centroidi per il calcolo dei w più vicini\n");
 	for(i=w;i<n;i++){
-		tmp=dist(x,&centroids[i],d);
+		//tmp=dist(x,&centroids[i],d);
 		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
 		//printf("la distanza max della struttura è = %f\n",max);
+		tmp = 0;
+		for (int j=0; j<d;j++){
+			tmp += pow(x[j] - centroids[i*d+j], 2);
+		}
 		
 		if(tmp < max){
 	//			new_max=tmp;
@@ -791,12 +817,18 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 	float* result= alloc_matrix(m,k);
 	int sub=d/m;
 	int i,j;
+	float distance;
 	MATRIX uj_x;
 	for(j=0; j<m; j++){
 		uj_x = Uj( x, j, m, 1, d);
 		//result[j]=alloc_matrix(k,1);
 		for(i = 0; i < k; i++){
-			result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
+			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
+			distance = 0;
+			for (int z=0; z<sub ;z++){
+				distance += pow(uj_x[z] - centroids[j*k*sub+i*sub+z], 2);
+			}
+			result[j*k+i] = distance;
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
@@ -815,13 +847,19 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 	float* result= alloc_matrix(m,k*(k-1)/2);
 	int sub=d/m;
 	int i,j,c,j_d;
+	float distance;
 	for(j=0; j<m; j++){
 		//result[j]=alloc_matrix(k*(k-1)/2,1);
 		c=0;
 		for(i = 0; i < k; i++){
 			for(j_d = i+1; j_d < k;j_d++){
 				//result[j][c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
-				result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
+				//result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
+				distance = 0;
+				for (int z=0; z<sub;z++){
+					distance += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
+				}
+				result[j*(k*(k-1)/2)+c]=distance;
 				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
 				c++;
 			}
@@ -921,7 +959,7 @@ void pqnn_index(params* input) {
 			}
 			
 
-			printf("jump[%d]=%d\n",i,jump[i]);
+			//printf("jump[%d]=%d\n",i,jump[i]);
 			//printf("bucket[%d]=%d\n",i,bucket[i]);
 			//IL[i]=(int**)get_block(sizeof(int*),bucket[i]);
 
@@ -974,7 +1012,7 @@ void pqnn_index(params* input) {
 			
 		}
 
-		printVector(bucket,input->kc);
+		//printVector(bucket,input->kc);
 
 
 		//bucket dovrebbe essere tutto zero
@@ -1022,7 +1060,7 @@ void pqnn_search(params* input) {
 		c_x=alloc_vector(input->m);
 		for(i=0;i< input->nq;i++){
 			
-			printf("calcolo dei w centroidi più vicini alla query X = %d\n",i);
+			//printf("calcolo dei w centroidi più vicini alla query X = %d\n",i);
 			//printX(x_query,i,input->d);
 			//calcolo dei w centroidi più vicini a x
 			//cerco di passarlgi solo il punto x in modo che i metodi possono preoccuparsi solo di
@@ -1038,7 +1076,7 @@ void pqnn_search(params* input) {
 			// per ogni centroide vicino appiclo la ricerca
 			
 			//calcolo tutti i residui r(x) con i centroidi in w
-			printf("calcolo dei residui r(x) con tutti i centroidi w\n");
+			//printf("calcolo dei residui r(x) con tutti i centroidi w\n");
 			float* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
 			//da testare meglio per vedere se
 			//effettivamente funziona
@@ -1055,7 +1093,7 @@ void pqnn_search(params* input) {
 
 				if(input->symmetric==1)
 				{
-					printf("SDC: scorrimento della Inverted List: %d\n",i_w);
+					//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 					for(int j=0;j<input->m;j++){
 						//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 						uj_x = Uj( &res_x[i_w*input->d], j, input->m,1,input->d);
@@ -1090,7 +1128,7 @@ void pqnn_search(params* input) {
 					//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
 					//per ogni sotto quantizzatore j e per ogni centroide Cji
 
-					printf("ADC: scorrimento della Inverted List: %d\n",i_w);
+					//printf("ADC: scorrimento della Inverted List: %d\n",i_w);
 					stored_distance=pre_adc(&res_x[i_w*input->d],Cp,input->d,input->m,input->k);
 
 					//adesso devo entrare nell'inverted list con il centroide w' in questione e calcolare 
@@ -1171,7 +1209,7 @@ void pqnn_search(params* input) {
 		c_x=alloc_vector(input->m);
 		int x,y,k;
 		for(x=0; x<input->nq;x++){	
-			clock_t t11 = clock();
+			//clock_t t11 = clock();
 			int* k_nn = alloc_vector(input->knn);	
 			float* result_dist=alloc_matrix(input->knn,1);
 
@@ -1192,18 +1230,18 @@ void pqnn_search(params* input) {
 			/**
 			 * stampa risultati con relative distanze
 			*/
-			printf("query %d -->",x);
+			/*printf("query %d -->",x);
 			for(int i=0; i<input->knn; i++){
 				printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
-			}
+			}*/
 
 			/**
 			 * stampa distanza reale tra x e y
 			*/
-			printf("\nquery %d -->",x);
+			/*printf("\nquery %d -->",x);
 			for(int i=0; i<input->knn; i++){
 				printf(" %d	[dist = %f]	",k_nn[i],dist(&input->qs[x*input->d],&input->ds[k_nn[i]],input->d));
-			}
+			}*/
 
 
 			for(int i=0; i<input->knn; i++){
@@ -1211,8 +1249,8 @@ void pqnn_search(params* input) {
 			}
 			c_max_heap=0;
 			pre_max_heap=0;
-			t11 = clock() - t11;
-			printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
+			//t11 = clock() - t11;
+			//printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
 		}
 		
 	}
@@ -1220,7 +1258,7 @@ void pqnn_search(params* input) {
 		float tmp,nn_dis;
 		int x,y,k;
 		for(x=0; x<input->nq;x++){
-			clock_t t11 = clock();
+			//clock_t t11 = clock();
 			int* k_nn = alloc_vector(input->knn);
 			float* result_dist=alloc_matrix(input->knn,1);
 
@@ -1236,7 +1274,7 @@ void pqnn_search(params* input) {
 				/**
 			 	* stampa risultati con relative distanze
 				*/
-				printf("query %d -->",x);
+				/*printf("query %d -->",x);
 				for(int i=0; i<input->knn; i++){
 					printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
 				}
@@ -1244,22 +1282,22 @@ void pqnn_search(params* input) {
 			for(int i=0; i<input->knn; i++){
 				printf(" %d	[dist = %f]	",k_nn[i],dist(&input->qs[x*input->d],&input->ds[k_nn[i]],input->d));
 			}
-			printf("\n \n");
+			printf("\n \n");*/
 
 				for(int i=0; i<input->knn; i++){
 					input->ANN[x*input->knn+i]=k_nn[i];
 				}
 				c_max_heap=0;
 				pre_max_heap = 0;	
-				t11 = clock() - t11;
-			printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
+				//t11 = clock() - t11;
+			//printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
 		}
 		
 	}
 
-	printf("\nACCESSI SDC : %d\n",accesso);
-	printf("\nACCESSI ADC : %d\n",accesso_1);
-	printf("\nACCESSI nel max_heap : %d\n",accesso_2);
+	//printf("\nACCESSI SDC : %d\n",accesso);
+	//printf("\nACCESSI ADC : %d\n",accesso_1);
+	//printf("\nACCESSI nel max_heap : %d\n",accesso_2);
 
 
 
