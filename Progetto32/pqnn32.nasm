@@ -89,6 +89,7 @@ extern free_block
 global pqnn32_index
 global pqnn32_search
 
+
 input		equ		8
 
 
@@ -145,4 +146,3 @@ pqnn32_search:
 		mov	esp, ebp							; ripristina lo Stack Pointer
 		pop	ebp									; ripristina il Base Pointer
 		ret										; torna alla funzione C chiamante
-		

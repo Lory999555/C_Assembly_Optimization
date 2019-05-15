@@ -334,15 +334,15 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 	return uj;
 }
 
-/*float dist(float * x,float * y, int d){
+float dist(float * x,float * y, int d){
 	float distance = 0;
 	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
 	return distance;
-}*/
+}
 
-/*int centX(float * centroids, float * x, int k, int d){	
+int centX(float * centroids, float * x, int k, int d){	
 	float dis = dist(x, centroids, d);
 	int park = 0;
 	for(int i=1; i<k; i++){
@@ -353,7 +353,8 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 		}
 	}
 	return park;
-}*/
+}
+/*
 int centX(float * centroids, float * x, int k, int d){	
 	float dis = 0;
 	for (int i=0; i<d;i++){
@@ -371,7 +372,7 @@ int centX(float * centroids, float * x, int k, int d){
 		}
 	}
 	return park;
-}
+}*/
 
 /**MATRIX randCentroid(MATRIX ds,int n,int d,int k){
 	int i,j;
@@ -385,6 +386,48 @@ int centX(float * centroids, float * x, int k, int d){
 	}
 	return initialCentroid;
 }**/
+
+
+int mapping(int i,int j,int n){
+	if(i == j ) 
+		return 0;
+	else if ( i > j ){
+		return (n*(n-1)/2) - (n-j)*((n-j)-1)/2 + i - j - 1;
+		/*int tmp=i;
+		i=j;
+		j=tmp;
+		//free(&tmp); scoprire se ha senso farlo o no sulle variabili*/
+	}else
+	{
+		return (n*(n-1)/2) - (n-i)*((n-i)-1)/2 + j - i - 1;
+	}
+	
+
+	//si può ottimizzare salvando una variabile dim
+	//che cmq serve anche per allocare le matrici
+	
+}
+
+void interClusterCalc(float* MCD, float* centroids,float* stored_distance,int n,int d,int k){
+	int i,j,ind;
+	float tmp;
+	for(i = 0; i < k; i++){
+		tmp=0;
+		for(j = i+1; j < k; j++){
+			tmp = dist(&centroids[i*d],&centroids[j*d],d);
+			ind=mapping(i,j,k);
+			stored_distance[ind]=tmp;
+			if(MCD[i]==-1 || MCD[i] > 0.5*tmp){
+				MCD[i]==0.5*tmp;
+			}
+			if(MCD[j]==-1 || MCD[j] > 0.5*tmp){
+				MCD[j]==0.5*tmp;
+			}
+		}
+	}
+}
+
+
 
 
 
@@ -421,9 +464,8 @@ void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX cent
 			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h*d+j]);
 		}
 	}
+	
 	printf("main loop\n");
-	/****
-	 ** main loop */
 
 	do {
 		iter++;
@@ -494,6 +536,182 @@ void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX cent
 	//return labels;
 }//k_means
 
+void triangle_k_means(MATRIX data,float* stored_distance, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
+	
+
+	float tmp;
+	float min_distance;
+	float distance;
+	float offset;
+	int iter=0;
+	int h, i, j; /* loop counters, of course */
+	
+
+	
+	/* size of each cluster */
+	int* counts = alloc_vector(k);
+	float old_error, error = FLT_MAX;//DBL_MAX; /* sum of squared euclidean distance */
+	
+	MATRIX c = centroids;
+	
+	/* temp centroids */
+	MATRIX c1 = alloc_matrix(k,d);
+	
+	/****
+	 ** initialization */
+	printf("initilization\n");
+	for (h = i = 0; i < k; h += n / k, i++) {
+		/* pick k points as initial centroids */
+		//printf("----h=%d-----i=%d-------\n",h,i);
+		for (j = 0; j < d;j++){
+			c[i*d+j] = data[h*d+j];
+			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h*d+j]);
+		}
+	}
+
+	float * l = calloc(n*k,sizeof(float));
+	float* u = calloc(n*k,sizeof(float));
+	float* ICD = stored_distance;
+	//dovrebbe metterli tutti a 0 e quindi tutti false;
+	bool* r=calloc(n,sizeof(bool));
+	
+	float * MCD = alloc_matrix(k,1);
+	for(int i =0;i<k;i++){
+		MCD[i]=-1;
+	}
+	interClusterCalc(MCD,centroids,ICD,n,d,k);
+
+	//puliziatmp
+	for (i = 0; i < k;i++) {
+		counts[i] = 0;
+		for (j = 0; j < d; j++){
+			c1[i*d+j] = 0;
+		}
+	}
+
+	//initilization
+	for (int i = 0; i < n; i++)
+	{
+	/* identify the closest cluster */
+		int pos=0;
+		distance = dist(&data[i*d],&centroids[pos*d],d);
+		min_distance=distance;
+		labels[i]=pos;
+		int currentCentroid = pos;
+
+		//lowerbound[point.id][closestCentroid]
+		l[i*k+pos]=min_distance;
+
+		for (int i_c = 0; i_c < k; i_c++) {
+			if (i_c != currentCentroid){
+				int ind = mapping(labels[i],pos,k);
+				if ( 0.5*ICD[ind] < min_distance)
+				{
+					distance = dist(&data[i*d],&centroids[i_c*d],d);
+					l[i*k+pos]=distance;
+					if (min_distance > distance) 
+					{
+					//labels[i] = pos;
+					labels[i]=i_c;
+					min_distance = distance;
+					}
+				}
+			}
+			//pos++;
+		}
+		u[i]=min_distance;
+		counts[labels[i]]++;
+
+		for (j = 0; j < d; j++){
+				c1[labels[i]*d+j] += data[i*d+j]; // c'era un +=
+		}
+		/* update standard error */
+		error += min_distance;
+	
+	}
+
+	//recalculateCentroids()
+	int pos=0;
+	printf("Update all centroids\n");
+	for (i = 0; i < k; i++) { /* update all centroids */
+		for (j = 0; j < d; j++) {
+			if(counts[i]!=0){
+				c[i*d+j] = c1[i*d+j] / counts[i];
+			}else
+			{
+				c[i*d+j] =c1[i*d+j];
+			}
+		}
+	}
+
+	do {
+			iter++;
+			/* save error from last step */
+			old_error = error, error = 0;
+			/* clear old counts and temp centroids */
+			for (i = 0; i < k;i++) {
+				counts[i] = 0;
+				for (j = 0; j < d; j++){
+					c1[i*d+j] = 0;
+				}
+			}
+
+			//assignPoints
+			interClusterCalc(MCD,centroids,ICD,n,d,k);
+			
+
+
+			for (h = 0; h < n; h++) {
+
+
+				/* identify the closest cluster */
+				min_distance = FLT_MAX;//DBL_MAX;
+				for (i = 0; i < k; i++) {
+					distance = 0;
+					for (j = 0; j < d ; j++){
+						distance += pow(data[h*d+j] - c[i*d+j], 2);
+					}
+					if (distance < min_distance) {
+						labels[h] = i;
+						min_distance = distance;
+					}
+				}
+				//printf("update size and temp centroid of the destination cluster for %d point\n",h);
+				/* update size and temp centroid of the destination cluster */
+				for (j = 0; j < d; j++){
+					c1[labels[h]*d+j] += data[h*d+j]; // c'era un +=
+				}
+				counts[labels[h]]++;
+				/* update standard error */
+				error += min_distance;
+			}
+			printf("Update all centroids\n");
+			for (i = 0; i < k; i++) { /* update all centroids */
+				for (j = 0; j < d; j++) {
+					if(counts[i]!=0){
+						c[i*d+j] = c1[i*d+j] / counts[i];
+						//printf("SI ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+					}else
+					{
+						c[i*d+j] =c1[i*d+j];
+						//printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+					}
+				}
+			}
+		}//while (fabs(error-old_error) > t); 
+		while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+
+		
+		printf("housekeeping\n");
+		
+		dealloc_matrix(c1);
+
+		dealloc_vector(counts);
+
+		//return labels;
+	}//k_means
+
+
 MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 	MATRIX results = alloc_matrix(n,d);
 	int i,j;
@@ -521,11 +739,17 @@ int* productQuant(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,i
 	for( j = 0; j < m; j++)
 	{
 		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
-		MATRIX tmp = Uj(ds,j,m,n,d);
-		//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
-		//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
-		k_means(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
-		dealloc_matrix(tmp); // da testare
+		if(m!=1){
+			MATRIX tmp = Uj(ds,j,m,n,d);
+			//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
+			//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
+			k_means(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
+			dealloc_matrix(tmp); // da testare
+		}else
+		{
+			k_means(ds,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
+		}
+		
 	}
 	return result;
 }
@@ -723,25 +947,7 @@ MATRIX residuals_x(MATRIX x,MATRIX centroids,int* label, int n,int d){
 	return results;
 }
 
-int mapping(int i,int j,int n){
-	if(i == j ) 
-		return 0;
-	else if ( i > j ){
-		return (n*(n-1)/2) - (n-j)*((n-j)-1)/2 + i - j - 1;
-		/*int tmp=i;
-		i=j;
-		j=tmp;
-		//free(&tmp); scoprire se ha senso farlo o no sulle variabili*/
-	}else
-	{
-		return (n*(n-1)/2) - (n-i)*((n-i)-1)/2 + j - i - 1;
-	}
-	
 
-	//si può ottimizzare salvando una variabile dim
-	//che cmq serve anche per allocare le matrici
-	
-}
 
 float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int k ){
 	float dis=0;
@@ -858,10 +1064,16 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 			for(j_d = i+1; j_d < k;j_d++){
 				//result[j][c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
 				//result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
+
+				
 				distance = 0;
 				for (int z=0; z<sub;z++){
 					distance += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
 				}
+
+				//funzione NASM
+				//distance=rowdistance32(centroids[j*k*sub+i*sub],centroids[j*k*sub+j_d*sub],d);
+
 				result[j*(k*(k-1)/2)+c]=distance;
 				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
 				c++;
@@ -873,9 +1085,11 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 	return result;
 }
 
+
 //extern void pqnn32_index(params* input);
 //extern int* pqnn32_search(params* input);
-extern void residual_nasm(float* res, float* ds,float* Cc,int* Cc, int n, int n);
+extern void residual_nasm(float* res, float* ds,float* Cc,int* Cc_index, int n, int d);
+extern float rowdistance32(float * c1,float* c2,int d);
 
 /*
  *	pqnn_index
@@ -890,7 +1104,7 @@ void pqnn_index(params* input) {
 		//TEST 
 		//era per provare il kmeans1.c
 		//MATRIX Cc = randCentroid(input->ds,input->n,input->d,input->kc);
-		//printDsQs(input->ds,input->qs,input->n,input->d,input->nq);
+		printDsQs(input->ds,input->qs,input->n,input->d,input->nq);
 		//return;
 
 
@@ -899,24 +1113,24 @@ void pqnn_index(params* input) {
 		//qui dovremmo usare un sottoinsieme
 
 
-		//MATRIX sub_set = extrac(input->ds,input->n,input->d,input->nr);
-		//input->n = input->nr; // per non cambiare tutto dopo
+		MATRIX sub_set = extrac(input->ds,input->n,input->d,input->nr);
+		input->n = input->nr; // per non cambiare tutto dopo
 
 		//Creazione del quantizzatore Coarse e relativi Centroidi
 
 		//printDsQs(input->ds,sub_set,input->n,input->d,input->nr);
 		Cc= alloc_matrix(input->kc,input->d);
 		Cc_index = alloc_vector(input->n);
-		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
-		k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
+		k_means(sub_set,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
+		//k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
 		//me non avrebbe senso quindi per adesso calcoliamo TUTTI i residui per tutto il dataset
-		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+		MATRIX res= residuals(sub_set,Cc,Cc_index,input->n,input->d);
 
-		//funzione NASM per il calcolo dei residui
+		//funzione NASM per il calcolo dei residui (non riesco ad ottimizzarlo in nasm)
 		//residuals_nasm(res,input->ds,Cc,Cc_index,input->n,input->d);
 
 		/**in questa variante i residui vengono calcolati su un sottoinsieme di punti del data-set
@@ -1050,10 +1264,14 @@ void pqnn_index(params* input) {
 		centroids = alloc_matrix(input->m,input->k * input->d / input->m);
 		pq = productQuant(input->ds, input->n, input->d, input->m, input->k, centroids, input->eps, input->tmin, input->tmax);
 		//printf("ho calcolato i centroidi (productQuant)\n");
+
+		
 		if(input->symmetric==1){
 			printf("PRE-Calcolo le distanze (SIMMETRICO) tra Cji e Cji\n");
 			stored_distance=pre_sdc(centroids,input->d,input->m,input->k);
 		}
+
+
 	}
     // -------------------------------------------------
     // Codificare qui l'algoritmo di indicizzazione
@@ -1294,14 +1512,14 @@ void pqnn_search(params* input) {
 			float* result_dist=alloc_matrix(input->knn,1);
 
 			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
-				nn_dis = FLT_MAX;
-				//nn_dis = DBL_MAX;
-				for(y=0; y< input->n; y++){
-						tmp = adc(stored_distance, y, input->k, input->m, input->n, pq);
-						if(tmp < nn_dis){
-							nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
-						}
-				}
+			nn_dis = FLT_MAX;
+			//nn_dis = DBL_MAX;
+			for(y=0; y< input->n; y++){
+					tmp = adc(stored_distance, y, input->k, input->m, input->n, pq);
+					if(tmp < nn_dis){
+						nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+					}
+			}
 				/**
 			 	* stampa risultati con relative distanze
 				*/
@@ -1541,7 +1759,7 @@ int main(int argc, char** argv) {
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
 
-	input->nr = input->n/10;
+	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data(fname, &input->nq, &input->d);
