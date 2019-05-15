@@ -6,7 +6,8 @@ section .data			; Sezione contenente dati inizializzati
 
 c1		equ		8
 c2		equ		12
-d		equ		16
+dim		equ		16
+dist    equ     20
 
 p		equ		4
 UNROLL		equ		4
