@@ -662,6 +662,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 
 	//return labels;
 }//k_means
+
 void k_means_row(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
 	
 	/* output cluster label for each data point */
@@ -694,8 +695,9 @@ void k_means_row(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h+j*n]);
 		}
 	}
-	
 	printf("main loop\n");
+	/****
+	 ** main loop */
 
 	do {
 		iter++;
@@ -715,7 +717,8 @@ void k_means_row(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			for (i = 0; i < k; i++) {
 				distance = 0;
 				for (j = 0; j < d ; j++){
-					distance += pow(data[h*d+j] - c[i*d+j], 2);
+					//distance += pow(data[h*d+j] - c[i*d+j], 2);
+					distance += pow(data[h+j*n] - c[i*d+j], 2);
 				}
 				if (distance < min_distance) {
 					labels[h] = i;
@@ -725,7 +728,8 @@ void k_means_row(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			//printf("update size and temp centroid of the destination cluster for %d point\n",h);
 			/* update size and temp centroid of the destination cluster */
 			for (j = 0; j < d; j++){
-				c1[labels[h]*d+j] += data[h*d+j]; // c'era un +=
+				//c1[labels[h]*d+j] += data[h*d+j]; // c'era un +=
+				c1[labels[h]*d+j] += data[h+j*n];
 			}
 			counts[labels[h]]++;
 			/* update standard error */
@@ -1197,7 +1201,7 @@ MATRIX residuals_x(MATRIX x,MATRIX centroids,int* label, int n,int d){
 
 
 
-float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int k ){
+/*float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int k ){
 	float dis=0;
 	int i,j;
 	for(j=0; j< m; j++){
@@ -1216,8 +1220,9 @@ float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int 
 	}
 	//printf("SDC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
-}
+}*/
 
+//ancora da smaltire
 
 float adc(float* stored_distance, int y, int k, int m, int n, int* labels){
 	float dis = 0;
