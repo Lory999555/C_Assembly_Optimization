@@ -193,7 +193,7 @@ void dealloc_matrix(MATRIX mat) {
  * 
  */
 
-MATRIX load_data(char* filename, int *n, int *d) {	
+/*MATRIX load_data(char* filename, int *n, int *d) {	
 	FILE* fp;
 	int rows, cols, status, i;
 	
@@ -215,11 +215,11 @@ MATRIX load_data(char* filename, int *n, int *d) {
 	*d = cols;
 
 	return data;
-}
+}*/
 
 
 //salvataggio matrice per colonne
-/*MATRIX load_data(char* filename, int *n, int *d) {	
+MATRIX load_data_col(char* filename, int *n, int *d) {	
 	FILE* fp;
 	int rows, cols, status, i, cnt;
 	
@@ -246,10 +246,34 @@ MATRIX load_data(char* filename, int *n, int *d) {
 			data[z+j*rows] = data1[z*cols+j];
 		}
 	}
+	return data;
+}
+
+MATRIX load_data_row(char* filename, int *n, int *d) {	
+	FILE* fp;
+	int rows, cols, status, i;
+	
+	fp = fopen(filename, "rb");
+	
+	if (fp == NULL) {
+		printf("'%s' : bad data file name!\n", filename);
+		exit(0);
+	}
+	
+	status = fread(&cols, sizeof(int), 1, fp);
+	status = fread(&rows, sizeof(int), 1, fp);
+		
+	MATRIX data = alloc_matrix(rows,cols);
+	status = fread(data, sizeof(float), rows*cols, fp);
+	fclose(fp);
+	
+	*n = rows;
+	*d = cols;
 
 	return data;
 }
-*/
+
+
 
 void save_ANN(char* filename, int* ANN, int nq, int knn) {	
 	FILE* fp;
@@ -297,8 +321,8 @@ void printDsQs(MATRIX ds, MATRIX qs,int n,int d,int nq){
 	printf("-------------Data Set-------------\n");
 	for (i=0;i<n;i++){
 		for(j=0;j<d;j++){
-			printf("ds[%d][%d]=   %f   \n",i,j,ds[i*d+j]);
-			//printf("ds[%d][%d]=   %f   \n",i,j,ds[i+j*n]);
+			//printf("ds[%d][%d]=   %f   \n",i,j,ds[i*d+j]); 					//per riga
+			printf("ds[%d][%d]=   %f   \n",i,j,ds[i+j*n]);
 		}
 	}
 	if(qs!=NULL){
@@ -319,7 +343,7 @@ void printVector(int * v,int n){
 }
 
 //print per testare il metodo Uj
-void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
+void printEq_row(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 	printf("Si ipotizza che m1 sia più grande di m2 (sia d che n)");
 	int i,j;
 	for (i=0;i<m1_n;i++){
@@ -336,10 +360,28 @@ void printEq(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 	}
 }
 
+//print per testare il metodo Uj
+void printEq_col(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
+	printf("Si ipotizza che m1 sia più grande di m2 (sia d che n)");
+	int i,j;
+	for (i=0;i<m1_n;i++){
+		for(j=0;j<m1_d;j++){
+			
+			if(i < m2_n && j < m2_d )
+				printf("m1[%d][%d]=   %f   ------>   m2[%d][%d]=  %f  \n",i,j,m1[i+m1_n*j],i,j,m2[i+m2_n*j]);
+			else
+			{
+				printf("m1[%d][%d]=   %f   ------>   m2[%d][%d]= Null \n",i,j,m1[i+m1_n*j],i,j);
+			}
+			
+		}
+	}
+}
+
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
 
-MATRIX extrac(MATRIX ds,int n,int d,int nr){
+MATRIX extrac_row(MATRIX ds,int n,int d,int nr){																	
 	MATRIX result = alloc_matrix(nr,d);
 	int i,j,h;
 	for (h = i = 0; i < nr; h += n/nr , i++) {
@@ -348,13 +390,38 @@ MATRIX extrac(MATRIX ds,int n,int d,int nr){
 		}
 	}
 	return result;
-	
+}
+
+MATRIX extrac_col(MATRIX ds,int n,int d,int nr){																	
+	MATRIX result = alloc_matrix(nr,d);
+	int i,j,h;
+	for (h = i = 0; i < nr; h += n/nr , i++) {
+		for (j = 0; j < d;j++){
+			result[i+nr*j] = ds[h+n*j];
+		}
+	}
+	return result;
 }
 
 //metodo che prende un sottogruppo (sub dimensionale) del data set
 // j serve per prendere il j-esimo gruppetto di dimensioni j=2 equivale ad U2
-MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
-	int i,k,c;
+MATRIX Uj_col(MATRIX ds, int j,int m,int n,int d){
+	int j_d,k,c,i;
+	int sub=d/m;
+	MATRIX uj = alloc_matrix(n,sub);
+	c=0;																					
+	for(j_d=j*sub; j_d<(j+1)*sub; j_d++){																	
+		for(i=0; i<n; i++){
+			uj[i+n*c] = ds[i+n*j_d];
+			
+		}
+		c++;
+	}																					
+	return uj;
+}
+
+MATRIX Uj_row(MATRIX ds, int j,int m,int n,int d){
+	int j_d,k,c,i;
 	int sub=d/m;
 	MATRIX uj = alloc_matrix(n,sub);
 	for(i = 0; i < n; i++){
@@ -362,6 +429,22 @@ MATRIX Uj(MATRIX ds, int j,int m,int n,int d){
 		for(k = sub*j; k < (j+1)*sub; k++)
 		{	
 			uj[i*sub+c] = ds[i*d+k];
+			c++;
+		}
+	}																		
+	return uj;
+}
+
+
+MATRIX Uj_x(MATRIX qs, int j,int m,int n,int d){
+	int i,k,c;
+	int sub=d/m;
+	MATRIX uj = alloc_matrix(n,sub);
+	for(i = 0; i < n; i++){
+		c=0;
+		for(k = sub*j; k < (j+1)*sub; k++)
+		{	
+			uj[i*sub+c] = qs[i*d+k];
 			c++;
 		}
 	}
@@ -423,7 +506,7 @@ int centX(float * centroids, float * x, int k, int d){
 
 
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
-void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
+void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
 	
 	/* output cluster label for each data point */
 	//int * labels = alloc_vector(n);
@@ -447,12 +530,125 @@ void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX cent
 	/****
 	 ** initialization */
 	printf("initilization\n");
-	for (h = i = 0; i < k; h += n / k, i++) {
+	for (h = i = 0; i < k; h += n/k, i++) {
 		/* pick k points as initial centroids */
 		//printf("----h=%d-----i=%d-------\n",h,i);
 		for (j = 0; j < d;j++){
-			c[i*d+j] = data[h*d+j];
-			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h*d+j]);
+			//c[i*d+j] = data[h*d+j];						
+			c[i*d+j] = data[h+j*n];																	///////////////////////////////////////////////
+			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h+j*n]);
+		}
+	}
+	printf("main loop\n");
+	/****
+	 ** main loop */
+
+	do {
+		iter++;
+		/* save error from last step */
+		old_error = error, error = 0;
+		/* clear old counts and temp centroids */
+		for (i = 0; i < k;i++) {
+			counts[i] = 0;
+			for (j = 0; j < d; j++){
+				c1[i*d+j] = 0;
+			}
+		}
+		printf("identify the closest cluster in %d iteration\n",iter);
+		for (h = 0; h < n; h++) {
+			/* identify the closest cluster */
+			min_distance = FLT_MAX;//DBL_MAX;
+			for (i = 0; i < k; i++) {
+				distance = 0;
+				for (j = 0; j < d ; j++){
+					//distance += pow(data[h*d+j] - c[i*d+j], 2);
+					distance += pow(data[h+j*n] - c[i*d+j], 2);
+				}
+				if (distance < min_distance) {
+					labels[h] = i;
+					min_distance = distance;
+				}
+			}
+			//printf("update size and temp centroid of the destination cluster for %d point\n",h);
+			/* update size and temp centroid of the destination cluster */
+			for (j = 0; j < d; j++){
+				//c1[labels[h]*d+j] += data[h*d+j]; // c'era un +=
+				c1[labels[h]*d+j] += data[h+j*n];
+			}
+			counts[labels[h]]++;
+			/* update standard error */
+			error += min_distance;
+		}
+		printf("Update all centroids\n");
+		for (i = 0; i < k; i++) { /* update all centroids */
+			for (j = 0; j < d; j++) {
+				if(counts[i]!=0){
+					c[i*d+j] = c1[i*d+j] / counts[i];
+					//printf("SI ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+				}else
+				{
+					c[i*d+j] =c1[i*d+j];
+					//printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+				}
+			}
+		}
+	}//while (fabs(error-old_error) > t); 
+	while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+
+	/****
+	 ** housekeeping */
+
+	/*for (i = 0; i < k; i++) {
+		if (!centroids) {
+			free(c[i]);
+		}
+		free(c1[i]);
+	}*/
+	
+	printf("housekeeping\n");
+	
+	/*for(int i=0; i< k; i++){
+		for(int j=0; j<d; j++){
+			printf("c[%d][%d] = %f\n",i,j,centroids[i*d+j]);
+		}
+	}*/
+
+	dealloc_matrix(c1);
+
+	dealloc_vector(counts);
+
+	//return labels;
+}//k_means
+void k_means_row(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
+	
+	/* output cluster label for each data point */
+	//int * labels = alloc_vector(n);
+
+	//queste variabili sono da liberare alla fine del metodo!!!
+	float min_distance;
+	float distance;
+	float offset;
+	int iter=0;
+	int h, i, j; /* loop counters, of course */
+	
+	/* size of each cluster */
+	int* counts = alloc_vector(k);
+	float old_error, error = FLT_MAX;//DBL_MAX; /* sum of squared euclidean distance */
+	
+	MATRIX c = centroids;
+	
+	/* temp centroids */
+	MATRIX c1 = alloc_matrix(k,d);
+	
+	/****
+	 ** initialization */
+	printf("initilization\n");
+	for (h = i = 0; i < k; h += n/k, i++) {
+		/* pick k points as initial centroids */
+		//printf("----h=%d-----i=%d-------\n",h,i);
+		for (j = 0; j < d;j++){
+			c[i*d+j] = data[h*d+j];						
+			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h+j*n]);
 		}
 	}
 	printf("main loop\n");
@@ -521,6 +717,12 @@ void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX cent
 	
 	printf("housekeeping\n");
 	
+	/*for(int i=0; i< k; i++){
+		for(int j=0; j<d; j++){
+			printf("c[%d][%d] = %f\n",i,j,centroids[i*d+j]);
+		}
+	}*/
+
 	dealloc_matrix(c1);
 
 	dealloc_vector(counts);
@@ -528,7 +730,7 @@ void k_means(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX cent
 	//return labels;
 }//k_means
 
-MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
+MATRIX residuals_row(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 	MATRIX results = alloc_matrix(n,d);
 	int i,j;
 	for (i=0;i< n;i++){
@@ -537,6 +739,17 @@ MATRIX residuals(MATRIX ds,MATRIX centroids,int* label, int n,int d){
 		}
 	}
 	
+	return results;
+}
+
+MATRIX residuals_col(MATRIX ds,MATRIX centroids,int* label, int n,int d){
+	MATRIX results = alloc_matrix(n,d);
+	int i,j;
+	for (i=0;i< n;i++){
+		for(j=0;j<d;j++){
+			results[i+n*j]=ds[i+j*n]-centroids[label[i]*d+j];
+		}
+	}
 	return results;
 }
 
@@ -555,10 +768,10 @@ int* productQuant(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,i
 	for( j = 0; j < m; j++)
 	{
 		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
-		MATRIX tmp = Uj(ds,j,m,n,d);
+		MATRIX tmp = Uj_col(ds,j,m,n,d);
 		//centroids[j]=alloc_matrix(k,sub);
 		//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
-		k_means(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
+		k_means_col(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
 		dealloc_matrix(tmp); // da testare
 	}
 	return result;
@@ -626,6 +839,7 @@ float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,b
 n è il numero dei centroidi del quantizzatore coarse
 d dimensione dei centroids
 w numero di centroidi "vicini" da analizzare*/
+
 /*int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	int i,j;
 	int * result_w=alloc_vector(w);
@@ -858,7 +1072,7 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 	float distance;
 	MATRIX uj_x;
 	for(j=0; j<m; j++){
-		uj_x = Uj( x, j, m, 1, d);
+		uj_x = Uj_x( x, j, m, 1, d);
 		//result[j]=alloc_matrix(k,1);
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
@@ -867,6 +1081,7 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 				distance += pow(uj_x[z] - centroids[j*k*sub+i*sub+z], 2);
 			}
 			result[j*k+i] = distance;
+			//printf("\n %f", distance);
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
@@ -934,8 +1149,8 @@ void pqnn_index(params* input) {
 		//qui dovremmo usare un sottoinsieme
 
 
-		//MATRIX sub_set = extrac(input->ds,input->n,input->d,input->nr);
-		//input->n = input->nr; // per non cambiare tutto dopo
+		MATRIX sub_set = extrac_col(input->ds,input->n,input->d,input->nr);
+		input->n = input->nr; // per non cambiare tutto dopo
 
 		//Creazione del quantizzatore Coarse e relativi Centroidi
 
@@ -943,13 +1158,13 @@ void pqnn_index(params* input) {
 		Cc= alloc_matrix(input->kc,input->d);
 		Cc_index = alloc_vector(input->n);
 		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
-		k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
+		k_means_col(sub_set,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
 		//me non avrebbe senso quindi per adesso calcoliamo TUTTI i residui per tutto il dataset
-		MATRIX res= residuals(input->ds,Cc,Cc_index,input->n,input->d);
+		MATRIX res= residuals_col(sub_set,Cc,Cc_index,input->n,input->d);
 
 		//funzione NASM per il calcolo dei residui
 		//residuals_nasm(res,input->ds,Cc,Cc_index,input->n,input->d);
@@ -1088,6 +1303,7 @@ void pqnn_index(params* input) {
 		if(input->symmetric==1){
 			printf("PRE-Calcolo le distanze (SIMMETRICO) tra Cji e Cji\n");
 			stored_distance=pre_sdc(centroids,input->d,input->m,input->k);
+			
 		}
 	}
     // -------------------------------------------------
@@ -1154,7 +1370,7 @@ void pqnn_search(params* input) {
 					//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 					for(int j=0;j<input->m;j++){
 						//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
-						uj_x = Uj( &res_x[i_w*input->d], j, input->m,1,input->d);
+						uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 						c_x[j] = centX(&Cp[j*input->sub*input->k], uj_x, input->k, input->d/input->m);
 					}	
 					dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
@@ -1294,7 +1510,7 @@ void pqnn_search(params* input) {
 			float* result_dist=alloc_matrix(input->knn,1);
 
 			for(int j=0;j<input->m;j++){
-				uj_x = Uj( &input->qs[x*input->d], j, input->m,1,input->d);
+				uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centX(&centroids[j*input->k*input->d /input->m], uj_x, input->k, input->d/input->m);
 			}	
 			dealloc_matrix(uj_x);
@@ -1353,39 +1569,38 @@ void pqnn_search(params* input) {
 			float* result_dist=alloc_matrix(input->knn,1);
 
 			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
-				nn_dis = FLT_MAX;
-				//nn_dis = DBL_MAX;
-				for(y=0; y< input->n; y++){
-						//tmp = adc(stored_distance, y, input->k, input->m, input->n, pq);
-						
-						tmp = 0;
-						for(int j=0; j < input->m; j++){
-							tmp+=stored_distance[j*input->k+pq[j*input->n+y]];
-						}
-
-						if(tmp < nn_dis){
-							nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
-						}
+			
+			nn_dis = FLT_MAX;
+			//nn_dis = DBL_MAX;
+			for(y=0; y< input->n; y++){
+				//tmp = adc(stored_distance, y, input->k, input->m, input->n, pq);
+				tmp = 0;
+				for(int j=0; j < input->m; j++){
+					tmp+=stored_distance[j*input->k+pq[j*input->n+y]];
 				}
-				/**
-			 	* stampa risultati con relative distanze
-				*/
-				/*printf("query %d -->",x);
-				for(int i=0; i<input->knn; i++){
-					printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
+				if(tmp < nn_dis){
+					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
 				}
-				printf("\nquery %d -->",x);
+			}
+			/**
+			* stampa risultati con relative distanze
+			*/
+			/*printf("query %d -->",x);
+			for(int i=0; i<input->knn; i++){
+				printf(" %d	[dist = %f]	",k_nn[i],result_dist[i]);
+			}
+			printf("\nquery %d -->",x);
 			for(int i=0; i<input->knn; i++){
 				printf(" %d	[dist = %f]	",k_nn[i],dist(&input->qs[x*input->d],&input->ds[k_nn[i]],input->d));
 			}
 			printf("\n \n");
 			*/
-				for(int i=0; i<input->knn; i++){
-					input->ANN[x*input->knn+i]=k_nn[i];
-				}
-				c_max_heap=0;
-				pre_max_heap = 0;	
-				//t11 = clock() - t11;
+			for(int i=0; i<input->knn; i++){
+				input->ANN[x*input->knn+i]=k_nn[i];
+			}
+			c_max_heap=0;
+			pre_max_heap = 0;	
+			//t11 = clock() - t11;
 			//printf("\n tempo di calcolo per x=%d = %.6f secs\n",x, ((float)t11)/CLOCKS_PER_SEC);
 		}
 		
@@ -1602,14 +1817,14 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data(fname, &input->n, &input->d);
+	input->ds = load_data_col(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
 
-	input->nr = input->n/10;
+	input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data(fname, &input->nq, &input->d);
+	input->qs = load_data_row(fname, &input->nq, &input->d);
 	//input->nq=input->nq/2 + 2;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
