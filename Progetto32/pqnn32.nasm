@@ -28,7 +28,8 @@
 ;     nasm -f elf32 pqnn32.nasm 
 ;
 
-; %dnclude "sseutils.nasm"
+;%include "sseutils.nasm"
+%include "distance32col.nasm"
 
 section .data			; Sezione contenente dati inizializzati
 
