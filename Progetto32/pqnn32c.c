@@ -301,7 +301,7 @@ void printX(MATRIX x,int i,int d){
 }
 
 //metodo che stampa i centroidi e i punti associati ad esso (sotto forma di vettore di indici)
-void printCentroids(MATRIX C,int* index, int n,int d,int k){/////////////////////////////////////forse va cambiato///////////////////
+void printCentroids(MATRIX C,int* index, int n,int d,int k){
 	int i,j,jj;
 	for (i=0;i<k;i++){
 		for(j=0;j<d;j++){
@@ -392,6 +392,7 @@ void printEq_col(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 extern void residual_nasm(float* res, float* ds,float* Cc,int* Cc_index, int n, int d);
 extern float rowdistance32(float * c1,float* c2,int d);
 extern void coldistance32(float * ds,float* c,float* distance,int i,int j,int d,int n);
+extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
@@ -577,7 +578,8 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 	int h, i, j; /* loop counters, of course */
 	
 	/* size of each cluster */
-	int* counts = alloc_vector(k);
+	float* counts = alloc_matrix(k,1);
+	//int* counts = alloc_vector(k);
 	float old_error, error = FLT_MAX;//DBL_MAX; /* sum of squared euclidean distance */
 	
 	MATRIX c = centroids;
@@ -677,19 +679,30 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			error += min_distance[2];
 			error += min_distance[3];
 		}
-		//printf("Update all centroids\n");
-		for (i = 0; i < k; i++) { /* update all centroids */
+
+
+
+		updateCentroid(c,c1,counts,k,d);
+		printf("\n calcolati");
+
+		/*
+		for (i = 0; i < k; i++) {
 			for (j = 0; j < d; j++) {
+
+
 				if(counts[i]!=0){
 					c[i*d+j] = c1[i*d+j] / counts[i];
-					//printf("SI ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+					printf("counts[%d]=%d ------ c[%d][%d] =  %f \n",i,counts[i],i,j,c[i*d+j]);
 				}else
 				{
 					c[i*d+j] =c1[i*d+j];
-					//printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+					printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
 				}
+
 			}
-		}
+		}*/
+		
+		
 	}//while (fabs(error-old_error) > t); 
 	while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
 
@@ -713,7 +726,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 
 	dealloc_matrix(c1);
 
-	dealloc_vector(counts);
+	dealloc_matrix(counts);
 
 	//return labels;
 }//k_means
@@ -1650,6 +1663,7 @@ void pqnn_search(params* input) {
 						uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 						c_x[j] = centX(&Cp[j*input->sub*input->k], uj_x, input->k, input->d/input->m);
 					}	
+					
 					dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
 					//centroide più vicino associato al punto
 					C_i= label_w[i_w];
