@@ -23,11 +23,11 @@ dmask:	db		'%f ',0
 cr:		db		10,0
 br1:	db		'( ',0
 br2:	db		')',10,0
-
 ;------------roba messa da me-----
 imask:	db		'%d',0
 align 16
 xmmtemp: db 0.0, 0.0, 0.0, 0.0
+fmt: db "content in reg=%d",0xa,0
 ;------------fine roba messa da me---
 
 %macro	start	0
@@ -205,6 +205,15 @@ xmmtemp: db 0.0, 0.0, 0.0, 0.0
 	vpop	xmm2
 	vpop	xmm1
 	vpop	xmm0
+%endmacro
+
+%macro printreg 1
+	pushad
+	push dword %1
+	push dword fmt
+	call printf
+	add esp,8
+	popad
 %endmacro
 
 ;------------fine roba messa da me-----
