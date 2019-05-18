@@ -1454,14 +1454,14 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 				float distance2=0;
 				rowDistance32Sdc(centroids,&distance,i,j,j_d,k,sub);
 				
-				
+				/*
 				for (int z=0; z<sub;z++){
 					//printf("C: %f, %f \n",centroids[j*k*sub+i*sub+z],centroids[j*k*sub+j_d*sub+z]);
 					distance2 += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
 				}
 				if(distance!=distance2)
 					printf("j %d, i %d, j_d %d ; distance C=%f, distance nasm=%f\n",j,i,j_d,distance2,distance);
-				
+				*/
 				//funzione NASM
 				//distance=rowdistance32(centroids[j*k*sub+i*sub],centroids[j*k*sub+j_d*sub],d);
 
