@@ -216,4 +216,3 @@ xmmtemp: db 0.0, 0.0, 0.0, 0.0
 	popad
 %endmacro
 
-
