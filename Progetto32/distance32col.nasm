@@ -4,9 +4,7 @@
 ; F. Angiulli
 ;
 
-
 %include "sseutils.nasm"
-
 
 section .data			; Sezione contenente dati inizializzati
 
@@ -86,11 +84,12 @@ fork:
 		;printregps  xmm1
 		subps		xmm0, xmm1
 		mulps		xmm0, xmm0		;tmp[i..i+p-1] rispetto al j-esimo centroide
+		;sqrtps		xmm0, xmm0
 		addps		xmm2, xmm0		; distance[i..i+p-1] += tmp
 		;printregps xmm2
 
 		add			ecx, dim		; k++
-		addps   	xmm7,[inizio]
+		;addps   	xmm7,[inizio]
 		cmp			ecx, edx		; (k < dimension) ?
 		jb			fork
 		

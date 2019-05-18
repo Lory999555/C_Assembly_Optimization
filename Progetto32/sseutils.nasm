@@ -23,12 +23,12 @@ dmask:	db		'%f ',0
 cr:		db		10,0
 br1:	db		'( ',0
 br2:	db		')',10,0
-;------------roba messa da me-----
+
+
 imask:	db		'%d',0
 align 16
 xmmtemp: db 0.0, 0.0, 0.0, 0.0
 fmt: db "content in reg=%d",0xa,0
-;------------fine roba messa da me---
 
 %macro	start	0
 		push	ebp
@@ -157,7 +157,7 @@ fmt: db "content in reg=%d",0xa,0
 		pop		edx
 		prints	br2
 %endmacro
-;------------roba messa da me-----
+
 
 %macro printregps 1
 		vpushax
@@ -216,4 +216,3 @@ fmt: db "content in reg=%d",0xa,0
 	popad
 %endmacro
 
-;------------fine roba messa da me-----
