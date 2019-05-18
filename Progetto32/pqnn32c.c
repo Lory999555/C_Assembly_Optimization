@@ -390,8 +390,10 @@ void printEq_col(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 
 
 extern void residual_nasm(float* res, float* ds,float* Cc,int* Cc_index, int n, int d);
-extern float rowdistance32(float * c1,float* c2,int d);
+extern void rowDistance32Adc(float* c,float* x,float* distance,int i,int j,int k,int sub);
+extern void rowDistance32Sdc(float* c,float* distance,int i,int j,int j_d,int k,int sub);
 extern void coldistance32(float * ds,float* c,float* distance,int i,int j,int d,int n);
+
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
@@ -771,6 +773,8 @@ void k_means_row(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			min_distance = FLT_MAX;//DBL_MAX;
 			for (i = 0; i < k; i++) {
 				distance = 0;
+
+				
 				for (j = 0; j < d ; j++){
 					//distance += pow(data[h*d+j] - c[i*d+j], 2);
 					distance += pow(data[h+j*n] - c[i*d+j], 2);
@@ -1343,9 +1347,18 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
+			//float distance2=0;
+			rowDistance32Adc(centroids,uj_x,&distance,i,j,k,sub);
+				
+			/*	
 			for (int z=0; z<sub ;z++){
+				//printf("C: %f, %f \n",uj_x[z],centroids[j*k*sub+i*sub+z]);
 				distance += pow(uj_x[z] - centroids[j*k*sub+i*sub+z], 2);
 			}
+			
+			if(distance!=distance2)
+			printf("j %d, i %d; distance C=%f, distance nasm=%f\n",j,i,distance2,distance);
+			*/	
 			result[j*k+i] = distance;
 			//printf("\n %f", distance);
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
@@ -1377,10 +1390,18 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 
 				
 				distance = 0;
+				
+				float distance2=0;
+				rowDistance32Sdc(centroids,&distance,i,j,j_d,k,sub);
+				
+				
 				for (int z=0; z<sub;z++){
-					distance += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
+					//printf("C: %f, %f \n",centroids[j*k*sub+i*sub+z],centroids[j*k*sub+j_d*sub+z]);
+					distance2 += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
 				}
-
+				if(distance!=distance2)
+					printf("j %d, i %d, j_d %d ; distance C=%f, distance nasm=%f\n",j,i,j_d,distance2,distance);
+				
 				//funzione NASM
 				//distance=rowdistance32(centroids[j*k*sub+i*sub],centroids[j*k*sub+j_d*sub],d);
 
@@ -1691,7 +1712,7 @@ void pqnn_search(params* input) {
 					//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
 					//per ogni sotto quantizzatore j e per ogni centroide Cji
 
-					//printf("ADC: scorrimento della Inverted List: %d\n",i_w);
+					//printf(": scorrimento della Inverted List: %d\n",i_w);
 					stored_distance=pre_adc(&res_x[i_w*input->d],Cp,input->d,input->m,input->k);
 
 					//adesso devo entrare nell'inverted list con il centroide w' in questione e calcolare 

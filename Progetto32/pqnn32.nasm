@@ -29,7 +29,7 @@
 ;
 
 ;%include "sseutils.nasm"
-%include "distance32col.nasm"
+
 
 section .data			; Sezione contenente dati inizializzati
 
