@@ -19,13 +19,15 @@ p		equ		4
 UNROLL		equ		4
 BLOCKSIZE	equ		32
 
+
+align 16
 zero:		dd		0.0
 
-align 16
-uno:		dd		1.0, 1.0, 1.0, 1.0
+;align 16
+;uno:		dd		1.0, 1.0, 1.0, 1.0
 
-align 16
-due:		dd		0.00001, 0.00001, 0.00001, 0.00001
+;align 16
+;due:		dd		0.00001, 0.00001, 0.00001, 0.00001
 
 section .bss			; Sezione contenente dati non inizializzati
 
@@ -46,8 +48,8 @@ updateCentroid:
 
 		mov 	edx,[ebp+dimension]		;d
 		    
-		xorps 	xmm7,xmm7
-		xorps 	xmm6,xmm6
+		;xorps 	xmm7,xmm7
+		;xorps 	xmm6,xmm6
 
 
 		mov		ebx, 0			; i = 0
@@ -56,18 +58,17 @@ fori:
 forj:		
 		;attenzione ad esi che viene usato dopo quindi se lo si modifica potrebbe non funzionare
         mov         esi,[ebp+counts]    ;counts
-		movss		xmm0,[esi+ebx]		;counts + i*4
-		
-        cmp         edi,[zero]           ; counts + i*4 != 0
-        jnz         else
+		movss		xmm1,[esi+ebx]		;counts + i*4
+        comiss      xmm1,[zero]           ; counts + i*4 != 0
+        jz         else
 
 		;printregps	xmm7
 		;addps		xmm7,[uno]
 
         ;movss       xmm1,[esi+ebx]      ;espando il counts[i] su xmm1
-		movss       xmm1,[esi+ebx]
+		;movss       xmm1,[esi+ebx]
         shufps      xmm1,xmm1,0   ;counts[i] ripetuto 4 volte
-		printregps	xmm1
+		;printregps	xmm1
         
       	mov 		esi,[ebp+centroids_1]		;centroids_1
 		mov			edi,edx		;d
@@ -76,11 +77,12 @@ forj:
         movaps      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
 
         divps       xmm0,xmm1       ;c1[i*d+j..i+*d+j+p-1]/counts[i]
-		printregps	xmm0
+		;addps		xmm6,[uno]
+		;printregps	xmm6
 
         mov         esi,[ebp+centroids]         ;centroids
         add         esi,edi         ;centroids + 4*i*d
-		movaps		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j = xmm0
+		movaps		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j <- xmm0
         jmp iter
 else:
 		;printregps	xmm6

@@ -206,3 +206,14 @@ xmmtemp: db 0.0, 0.0, 0.0, 0.0
 	vpop	xmm1
 	vpop	xmm0
 %endmacro
+
+%macro printreg 1
+	pushad
+	push dword %1
+	push dword fmt
+	call printf
+	add esp,8
+	popad
+%endmacro
+
+

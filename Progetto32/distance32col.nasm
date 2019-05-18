@@ -84,6 +84,7 @@ fork:
 		;printregps  xmm1
 		subps		xmm0, xmm1
 		mulps		xmm0, xmm0		;tmp[i..i+p-1] rispetto al j-esimo centroide
+		;sqrtps		xmm0, xmm0
 		addps		xmm2, xmm0		; distance[i..i+p-1] += tmp
 		;printregps xmm2
 

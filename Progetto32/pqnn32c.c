@@ -102,6 +102,8 @@ typedef struct {
 
 
 int p=4;
+int unroll=4;
+int stampe=1;
 
 //variabili utili per l'algoritmo esaustivo
 float * centroids;
@@ -393,6 +395,7 @@ extern void residual_nasm(float* res, float* ds,float* Cc,int* Cc_index, int n, 
 extern float rowdistance32(float * c1,float* c2,int d);
 extern void coldistance32(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
+extern void clearCentroids(float* counts,float* c1,int k,int d);
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
@@ -566,9 +569,14 @@ void interClusterCalc(float* MCD, float* centroids,float* stored_distance,int n,
 
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
 void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
-	
+
+
+	//stampe=0;
+	float tot=0.0;
+
 	/* output cluster label for each data point */
 	//int * labels = alloc_vector(n);
+	//t=pow(t,2);
 
 	//queste variabili sono da liberare alla fine del metodo!!!
 	float* min_distance = alloc_matrix(p,1);
@@ -590,6 +598,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 	/****
 	 ** initialization */
 	//printf("initilization\n");
+	
 	for (h = i = 0; i < k; h += n/k, i++) {
 		/* pick k points as initial centroids */
 		//printf("----h=%d-----i=%d-------\n",h,i);
@@ -599,6 +608,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			//printf("c[%d][%d] = data[%d][%d] ------>  %f  ||||  %f \n",i,j,h,j,c[i*d+j],data[h+j*n]);
 		}
 	}
+	
 	//printf("main loop\n");
 	/****
 	 ** main loop */
@@ -607,13 +617,29 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 		iter++;
 		/* save error from last step */
 		old_error = error, error = 0;
-		/* clear old counts and temp centroids */
+		//FARLO IN NASM
+		
+		
+		
+		clearCentroids(counts,c1,k,d);
+		
+		
+
+		/*
+		clock_t t_1 = clock();
 		for (i = 0; i < k;i++) {
 			counts[i] = 0;
 			for (j = 0; j < d; j++){
 				c1[i*d+j] = 0;
 			}
 		}
+		t_1 = clock() - t_1;
+		tot+=t_1;
+		//printf("\nclearCentroids C time = %0.10f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
+		*/
+		
+
+		
 		//printf("identify the closest cluster in %d iteration\n",iter);
 
 /**
@@ -636,18 +662,22 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 */
 		//convertire tutto in nasm
 		//versione nasm
+		
 		for (i = 0; i < n; i+=p) {  //per ogni punto del ds
 			//identify the closest cluster
+			
 			min_distance[0] = FLT_MAX;//DBL_MAX;
 			min_distance[1] = FLT_MAX;
 			min_distance[2] = FLT_MAX;
 			min_distance[3] = FLT_MAX;
 			
 			
+			
 			for (j = 0; j < k; j++) { // per ogni centroide
 
+				
 				coldistance32(data,centroids,distance,i,j,d,n);
-
+				
 
 				//printVectorfloat(distance,p);
 
@@ -658,10 +688,13 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 					}
 				}
 			}
+			
+		
 		
 			//printf("update size and temp centroid of the destination cluster for %d point\n",h);
-
+			
 			/* update size and temp centroid of the destination cluster */
+
 			for (j = 0; j < d; j++){
 				//c1[labels[h]*d+j] += data[h*d+j]; // c'era un +=
 				c1[labels[i]*d+j] += data[i+j*n];
@@ -678,33 +711,47 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			error += min_distance[1];
 			error += min_distance[2];
 			error += min_distance[3];
+			
 		}
-
-
-
+		
+		
 		updateCentroid(c,c1,counts,k,d);
-		printf("\n calcolati");
-
+		
+		//printf("\nNasm time = %0.10f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
+		
+		
+		
 		/*
+		clock_t t_1 = clock();
 		for (i = 0; i < k; i++) {
 			for (j = 0; j < d; j++) {
 
 
 				if(counts[i]!=0){
 					c[i*d+j] = c1[i*d+j] / counts[i];
-					printf("counts[%d]=%d ------ c[%d][%d] =  %f \n",i,counts[i],i,j,c[i*d+j]);
+					//printf("counts[%d]=%d ------ c[%d][%d] =  %f \n",i,counts[i],i,j,c[i*d+j]);
+
 				}else
 				{
 					c[i*d+j] =c1[i*d+j];
-					printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
+					//printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
 				}
 
 			}
-		}*/
+		}
+		t_1 = clock() - t_1;
+		//printf("\nC time = %0.10f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
+		tot+=t_1;
+		*/
+		
+		
 		
 		
 	}//while (fabs(error-old_error) > t); 
 	while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+
+	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
+
 
 	/****
 	 ** housekeeping */
@@ -1269,7 +1316,7 @@ MATRIX residuals_x(MATRIX x,MATRIX centroids,int* label, int n,int d){
 
 
 
-/*float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int k ){
+float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int k ){
 	float dis=0;
 	int i,j;
 	for(j=0; j< m; j++){
@@ -1288,7 +1335,7 @@ MATRIX residuals_x(MATRIX x,MATRIX centroids,int* label, int n,int d){
 	}
 	//printf("SDC\nold_dis = %f\ndis = %f\n" ,old_dis,dis);
 	return dis;
-}*/
+}
 
 //ancora da smaltire
 
@@ -1408,9 +1455,6 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 	return result;
 }
 
-
-//extern void pqnn32_index(params* input);
-//extern int* pqnn32_search(params* input);
 
 
 /*
@@ -2185,7 +2229,7 @@ int main(int argc, char** argv) {
 	// Salva gli ANN
 	//
 	
- 	if (input->ANN != NULL)
+ 	if (input->ANN != NULL & stampe==1)
  	{
  		//if (!input->silent && input->display) { se si discommenta ritorna "opzionale"
  			printf("\nANN:\n");
