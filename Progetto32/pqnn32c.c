@@ -104,6 +104,7 @@ typedef struct {
 int p=4;
 int unroll=4;
 int stampe=1;
+float tot=0.0;
 
 //variabili utili per l'algoritmo esaustivo
 float * centroids;
@@ -396,6 +397,8 @@ extern float rowdistance32(float * c1,float* c2,int d);
 extern void coldistance32(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 extern void clearCentroids(float* counts,float* c1,int k,int d);
+extern void assignValue(float* list,float value,int i);
+
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
@@ -572,15 +575,15 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 
 
 	//stampe=0;
-	float tot=0.0;
+
 
 	/* output cluster label for each data point */
 	//int * labels = alloc_vector(n);
 	//t=pow(t,2);
 
 	//queste variabili sono da liberare alla fine del metodo!!!
-	float* min_distance = alloc_matrix(p,1);
-	float* distance = alloc_matrix(p,1);
+	float* min_distance = alloc_matrix(p,unroll);
+	float* distance = alloc_matrix(p,unroll);
 	float offset;
 	int iter=0;
 	int h, i, j; /* loop counters, of course */
@@ -663,13 +666,13 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 		//convertire tutto in nasm
 		//versione nasm
 		
-		for (i = 0; i < n; i+=p) {  //per ogni punto del ds
+		for (i = 0; i < n; i+=p*unroll) {  //per ogni punto del ds
 			//identify the closest cluster
-			
-			min_distance[0] = FLT_MAX;//DBL_MAX;
-			min_distance[1] = FLT_MAX;
-			min_distance[2] = FLT_MAX;
-			min_distance[3] = FLT_MAX;
+			assignValue(min_distance,FLT_MAX,0);
+			assignValue(min_distance,FLT_MAX,i+p);
+			assignValue(min_distance,FLT_MAX,i+p*2);
+			assignValue(min_distance,FLT_MAX,i+p*3);
+
 			
 			
 			
@@ -677,12 +680,15 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 
 				
 				coldistance32(data,centroids,distance,i,j,d,n);
+				coldistance32(data,centroids,distance,i+p,j,n);
+				coldistance32(data,centroids,distance,i+p*2,j,n);
+				coldistance32(data,centroids,distance,i+p*3,j,n);
 				
 
 				//printVectorfloat(distance,p);
-
+				//for(int k2=0;k<unroll;k2++)
 				for(int k=0;k<p;k++){
-					if (distance[k] < min_distance[k]) {
+					if (distance[k/*+unroll*p*/] < min_distance[k/*+unroll*p*/]) {
 						labels[i+k] = j;
 						min_distance[k] = distance[k];
 					}
@@ -1478,8 +1484,13 @@ void pqnn_index(params* input) {
 		//quantizzare y in qc(y) = Ci , prima si crea il "quantizzatore" richiamando k-means
 		//qui dovremmo usare un sottoinsieme
 
-
+		//clock_t t_1 = clock();
 		MATRIX sub_set = extrac_col(input->ds,input->n,input->d,input->nr);
+		//t_1 = clock() - t_1;
+		//tot+=t_1;
+		//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
+
+
 		input->n = input->nr; // per non cambiare tutto dopo
 
 		//Creazione del quantizzatore Coarse e relativi Centroidi
@@ -1904,6 +1915,7 @@ void pqnn_search(params* input) {
 			float* result_dist=alloc_matrix(input->knn,1);
 
 			stored_distance=pre_adc(&input->qs[x*input->d],centroids,input->d,input->m,input->k);
+			
 			nn_dis = FLT_MAX;
 			//nn_dis = DBL_MAX;
 			for(y=0; y< input->n; y++){
