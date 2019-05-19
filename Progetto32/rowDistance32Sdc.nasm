@@ -52,44 +52,79 @@ global rowDistance32Sdc
         
         ;printreg ebx
         ;printreg eax
+        movaps xmm1,[ebx]                   ;c[j*k*sub+i*sub+0]
+        subps xmm1,[eax]                    ;c[j*k*sub+i*sub+0] - c[j*k*sub+j_d*sub+0]
+        mulps xmm1,xmm1                     ;(..)^2
+        ;printregps xmm1
+        mov edi,[ebp+subb]                     ;subb
+        mov ecx,dim
+        sub edi,ecx                          ;subb-4
 
-        xorps xmm5,xmm5                     ;distance=0 
-        ;printreg edi
-        mov esi,0                           ;z=0
+        mov esi,4                           ;z=4
     forj:
-        
-        movaps xmm0,[ebx+4*esi]             ;c[j*k*subb+i*subb+z] (prendo 4 elementi la volta)
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;movaps xmm0,[ebx+4*esi]             ;c[j*k*subb+i*subb+z] (prendo 4 elementi la volta)
         ;printregps xmm0
-
-        movaps xmm1,[eax+4*esi]             ;c[j*k*subb+j_d*subb+z]  (prendo 4 elementi la volta)
+        ;
+        ;movaps xmm1,[eax+4*esi]             ;c[j*k*subb+j_d*subb+z]  (prendo 4 elementi la volta)
         
         ;printregps xmm1
 
-        subps xmm0,xmm1                     ;c[j*k*subb+i*subb+z] - c[j*k*subb+j_d*subb+z]
+        ;subps xmm0,xmm1                     ;c[j*k*subb+i*subb+z] - c[j*k*subb+j_d*subb+z]
 
-        mulps xmm0,xmm0                     ;(...)^2
+        ;mulps xmm0,xmm0                     ;(...)^2
         
-        xorps xmm2,xmm2                     ;tmp_dist=0
-        movss xmm2,xmm5                     ;carico distance
+        ;xorps xmm2,xmm2                     ;tmp_dist=0
+        ;movss xmm2,xmm5                     ;carico distance
         ;printregps xmm2
-        haddps xmm2,xmm0                    ;sommo la nuova distanza con la vecchia distanza
+        ;haddps xmm2,xmm0                    ;sommo la nuova distanza con la vecchia distanza
 
-        haddps xmm2,xmm2
+        ;haddps xmm2,xmm2
 
-        haddps xmm2,xmm2                    ;avrò un vettore con 4 valori uguali
+        ;haddps xmm2,xmm2                    ;avrò un vettore con 4 valori uguali
 
         ;printregps xmm2
 
         ;movss [distance],xmm2
-        movss xmm5,xmm2                     ;carico uno dei valori di xmm2 in xmm5
+        ;movss xmm5,xmm2                     ;carico uno dei valori di xmm2 in xmm5
 
-        add esi,4
+        ;add esi,4
+        ;cmp esi,edi
+        ;jl forj
+    ciclo:
         cmp esi,edi
-        jl forj
+        jge fine
 
-        ;movss xmm1,[distance]
-        ;printregps xmm5
+        movaps xmm0,[ebx+4*esi]             ;c[j*k*sub+i*sub+z]
+        ;printregps xmm0
+        subps xmm0,[eax+4*esi]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
+        ;printregps xmm0
+        mulps xmm0,xmm0                     ;(..)^2
+        ;printregps xmm0
+        addps xmm1,xmm0                     ;distance+=(..)^2
+        ;printregps xmm1
+        add esi,4                           ;avanzo di indice
+
+        movaps xmm0,[ebx+4*esi]
+        ;printregps xmm0
+        subps xmm0,[eax+4*esi]
+        ;printregps xmm0
+        mulps xmm0,xmm0
+        ;printregps xmm0
+        addps xmm1,xmm0                     ;distance+=(..)^2
+        ;printregps xmm1
+        add esi,4
+
+        jmp ciclo
+    fine:
+        movaps xmm0,[ebx+4*esi] ;sommo gli ultimi elementi rimanenti
+        subps xmm0,[eax+4*esi]
+        mulps xmm0,xmm0
+        haddps xmm1,xmm0        ;merge di tutte le somme
+        haddps xmm1,xmm1        ;|
+        haddps xmm1,xmm1        ;|
+
         mov eax,[ebp+distance]
-        movss  [eax],xmm5,
+        movss  [eax],xmm1
 
         stop

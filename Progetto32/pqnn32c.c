@@ -397,6 +397,7 @@ extern void rowDistance32Sdc(float* c,float* distance,int i,int j,int j_d,int k,
 extern void coldistance32(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 extern void clearCentroids(float* counts,float* c1,int k,int d);
+extern void dist32(float * x,float * y,float* distance, int d);
 
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
@@ -474,9 +475,14 @@ MATRIX Uj_x(MATRIX qs, int j,int m,int n,int d){
 
 float dist(float * x,float * y, int d){
 	float distance = 0;
+	//float distance2=0;
+	dist32(x,y,&distance,d);
+	/*
 	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
+	*/
+	//printf("C: %f, nasm: %f \n",distance2,distance);
 	return distance;
 }
 
@@ -1407,7 +1413,7 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
-			//float distance2=0;
+			float distance2=0;
 			rowDistance32Adc(centroids,uj_x,&distance,i,j,k,sub);
 				
 			/*	
@@ -1449,12 +1455,11 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 				//result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
 
 				
-				distance = 0;
-				
-				float distance2=0;
+				distance = 0;				
 				rowDistance32Sdc(centroids,&distance,i,j,j_d,k,sub);
 				
 				/*
+				float distance2=0;
 				for (int z=0; z<sub;z++){
 					//printf("C: %f, %f \n",centroids[j*k*sub+i*sub+z],centroids[j*k*sub+j_d*sub+z]);
 					distance2 += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
