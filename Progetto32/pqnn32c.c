@@ -401,7 +401,7 @@ extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 extern void clearCentroids(float* counts,float* c1,int k,int d);
 extern void assignValue(float* list,float value,int i);
 extern void extr_col(float* ds, int n, int d, int nr, int divi, float* result);
-
+extern void dist32(float * x,float * y,float* distance, int d);
 
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
@@ -481,9 +481,14 @@ MATRIX Uj_x(MATRIX qs, int j,int m,int n,int d){
 
 float dist(float * x,float * y, int d){
 	float distance = 0;
+	//float distance2=0;
+	dist32(x,y,&distance,d);
+	/*
 	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
+	*/
+	//printf("C: %f, nasm: %f \n",distance2,distance);
 	return distance;
 }
 
@@ -1420,7 +1425,6 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
-			//float distance2=0;
 			rowDistance32Adc(centroids,uj_x,&distance,i,j,k,sub);
 				
 			/*	
@@ -1466,6 +1470,7 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 				rowDistance32Sdc(centroids,&distance,i,j,j_d,k,sub);
 				
 				/*
+				float distance2=0;
 				for (int z=0; z<sub;z++){
 					//printf("C: %f, %f \n",centroids[j*k*sub+i*sub+z],centroids[j*k*sub+j_d*sub+z]);
 					distance2 += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
@@ -1902,10 +1907,10 @@ void pqnn_search(params* input) {
 
 				tmp=0;
 				for(int j=0; j< input->m; j++){
-					clock_t t11 = clock();
+					//clock_t t11 = clock();
 					i=mapping(c_x[j],pq[j*input->n+y],input->k);
-					t11 = clock() - t11;
-					tot+=t11;
+					//t11 = clock() - t11;
+					//tot+=t11;
 					if (i!=0) {
 						tmp+= stored_distance[j*index+i];
 					}
@@ -2079,9 +2084,9 @@ int main(int argc, char** argv) {
 	input->m = 8;
 	input->k = 256;
 	//input->kc = 8192;
-	input->kc = 32;
+	input->kc = 128;
 	//input->w = 16;
-	input->w=8;
+	input->w=16;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -2225,7 +2230,7 @@ int main(int argc, char** argv) {
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
 
-	input->nr = input->n/20;
+	input->nr = input->n/5;
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data_row(fname, &input->nq, &input->d);
