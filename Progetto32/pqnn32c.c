@@ -655,7 +655,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 		
 
 		
-		//printf("identify the closest cluster in %d iteration\n",iter);
+		printf("identify the closest cluster in %d iteration\n",iter);
 
 		/**
 		for (h = 0; h < n; h++) {  //per ogni punto del ds
@@ -1500,6 +1500,8 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
  */
 void pqnn_index(params* input) {
 	int i,j;
+	
+	printDsQs(input->ds,input->qs,input->n,input->d,input->nq);
 
 	if(input->exaustive == 0){
 
@@ -1507,7 +1509,6 @@ void pqnn_index(params* input) {
 		//TEST 
 		//era per provare il kmeans1.c
 		//MATRIX Cc = randCentroid(input->ds,input->n,input->d,input->kc);
-		//printDsQs(input->ds,input->qs,input->n,input->d,input->nq);
 		//return;
 
 
@@ -1707,6 +1708,8 @@ void pqnn_search(params* input) {
 			//cerco di passarlgi solo il punto x in modo che i metodi possono preoccuparsi solo di
 			//ciclare su 128 dimensioni in quanto punto singolo. (sulle dimensioni in generale)
 			//int* label_w =  w_near_centroids(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
+
+
 			int* label_w = w_near_centroids(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
 
 			//test per il nuovo metodo w_near_centroids
@@ -1967,7 +1970,6 @@ void pqnn_search(params* input) {
 
 			//clock_t t11 = clock();
 			nn_dis = FLT_MAX;
-			//nn_dis = DBL_MAX;
 			for(y=0; y< input->n; y++){
 				//tmp = adc(stored_distance, y, input->k, input->m, input->n, pq);
 				tmp = 0;
@@ -2012,8 +2014,7 @@ void pqnn_search(params* input) {
 		}
 		
 	}
-	printf("\n tempo di calcolo per tot = %.10f secs\n",((float)tot)/CLOCKS_PER_SEC);
-	stampe=0;
+	
 
 	/*printf("\nACCESSI SDC : %d\n",accesso);
 	printf("\nACCESSI ADC : %d\n",accesso_1);
@@ -2081,12 +2082,12 @@ int main(int argc, char** argv) {
 	input->exaustive = 1;
 	input->symmetric = 1;
 	input->knn = 4;
-	input->m = 8;
-	input->k = 256;
+	input->m = 5;
+	input->k = 128;
 	//input->kc = 8192;
 	input->kc = 128;
 	//input->w = 16;
-	input->w=16;
+	input->w=4;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -2234,7 +2235,7 @@ int main(int argc, char** argv) {
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data_row(fname, &input->nq, &input->d);
-	//input->nq=input->nq/2 + 2;
+	input->nq=input->nq/2;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
@@ -2271,6 +2272,8 @@ int main(int argc, char** argv) {
 	clock_t t = clock();
 	pqnn_index(input);
 	t = clock() - t;
+	printf("\nINDEXING: tempo di calcolo per tot = %.10f secs\n",((float)tot)/CLOCKS_PER_SEC);
+
 	
 	if (!input->silent)
 		printf("\nIndexing time = %.3f secs\n", ((float)t)/CLOCKS_PER_SEC);
@@ -2286,6 +2289,7 @@ int main(int argc, char** argv) {
 	clock_t t_1 = clock();
 	pqnn_search(input);
 	t_1 = clock() - t_1;
+	printf("\nSEARCHING: tempo di calcolo per tot = %.10f secs\n",((float)tot)/CLOCKS_PER_SEC);
 	
 	if (!input->silent)
 		printf("\nSearching time = %.3f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
