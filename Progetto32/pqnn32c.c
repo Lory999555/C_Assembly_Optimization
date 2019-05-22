@@ -106,7 +106,7 @@ int unroll=4;
 int stampe=1;
 float tot=0.0;
 int pippo = 0;
-
+int mapping_n; 
 //variabili utili per l'algoritmo esaustivo
 float * centroids;
 int * pq; 
@@ -402,6 +402,7 @@ extern void clearCentroids(float* counts,float* c1,int k,int d);
 extern void assignValue(float* list,float value,int i);
 extern void extr_col(float* ds, int n, int d, int nr, int divi, float* result);
 extern void dist32(float * x,float * y,float* distance, int d);
+extern void mapping32(int i, int j, int n, int * indice, int index);
 
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
@@ -538,9 +539,12 @@ int centX(float * centroids, float * x, int k, int d){
 }**/
 
 
-int mapping(int i,int j,int n){
-	if(i == j ){
-		return 0;
+int mapping(int i,int j,int n, int index){
+	int indice = 0;
+	mapping32(i,j,n,&indice, index);
+	return indice;
+	/*if(i == j ){
+		return -1;
 	}
 	else if ( i > j ){
 		return (n*(n-1)/2) - (n-j)*((n-j)-1)/2 + i - j - 1;
@@ -548,10 +552,10 @@ int mapping(int i,int j,int n){
 		i=j;
 		j=tmp;
 		//free(&tmp); scoprire se ha senso farlo o no sulle variabili*/
-	}else
+	/*}else
 	{
 		return (n*(n-1)/2) - (n-i)*((n-i)-1)/2 + j - i - 1;
-	}
+	}*/
 	
 
 	//si può ottimizzare salvando una variabile dim
@@ -566,7 +570,7 @@ void interClusterCalc(float* MCD, float* centroids,float* stored_distance,int n,
 		tmp=0;
 		for(j = i+1; j < k; j++){
 			tmp = dist(&centroids[i*d],&centroids[j*d],d);
-			ind=mapping(i,j,k);
+			ind=mapping(i,j,k, mapping_n);
 			stored_distance[ind]=tmp;
 			if(MCD[i]==-1 || MCD[i] > 0.5*tmp){
 				MCD[i]==0.5*tmp;
@@ -979,7 +983,7 @@ void triangle_k_means(MATRIX data,float* stored_distance, int n, int d, int k, f
 
 		for (int i_c = 0; i_c < k; i_c++) {
 			if (i_c != currentCentroid){
-				int ind = mapping(labels[i],pos,k);
+				int ind = mapping(labels[i],pos,k, mapping_n);
 				if ( 0.5*ICD[ind] < min_distance)
 				{
 					distance = dist(&data[i*d],&centroids[i_c*d],d);
@@ -1348,8 +1352,8 @@ float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int 
 		//questo controllo è dovuto al fatto che la funzione mapping ritorna l'indice corretto quando è
 		//possibile altrimenti quando i==j torna direttamente 0 e a sto punto evito di accedere alla struttura
 		//i=mapping(c_x[j],labels[j][y],k);
-		i=mapping(c_x[j],labels[j*n+y],k);
-		if (i!=0) {
+		i=mapping(c_x[j],labels[j*n+y],k, mapping_n);
+		if (i!=-1) {
 			//dis+= stored_distance[j][i];
 			dis+= stored_distance[j*(k*(k-1)/2)+i];
 		}
@@ -1395,9 +1399,9 @@ float NE_sdc(int* c_x,float* stored_distance,int m, int* res,int k ){
 
 		//questo controllo è dovuto al fatto che la funzione mapping ritorna l'indice corretto quando è
 		//possibile altrimenti quando i==j torna direttamente 0 e a sto punto evito di accedere alla struttura
-		i=mapping(c_x[j],res[j],k);
+		i=mapping(c_x[j],res[j],k, mapping_n);
 		//printf(" i=%d  ------- c_x[%d]=%d -------- res[%d]=%d\n",i,j,c_x[j],j,res[j]);
-		if (i!=0) {
+		if (i!=-1) {
 			dis+= stored_distance[j*(k*(k-1)/2)+i];
 		}
 		//printf("\nold_dis = %f\ndis = %f\n c_x = %d , label[%d][%d] = %d , i=%d\n",old_dis,dis,c_x,j,y,labels[j][y],i);
@@ -1766,8 +1770,8 @@ void pqnn_search(params* input) {
 
 						tmp=0;
 						for(z=0; z < input->m; z++){
-							t=mapping(c_x[z],L_i[ind*nodo+1+z],input->k);
-							if (t!=0) {
+							t=mapping(c_x[z],L_i[ind*nodo+1+z],input->k, mapping_n);
+							if (t!=-1) {
 								tmp+= stored_distance[z*index+t];
 							}
 						}
@@ -1891,34 +1895,43 @@ void pqnn_search(params* input) {
 			float* result_dist=alloc_matrix(input->knn,1);
 			
 
-			//clock_t t11 = clock();
+			clock_t t11 = clock();
 			for(int j=0;j<input->m;j++){
 				uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centX(&centroids[j*input->k*input->d /input->m], uj_x, input->k, input->d/input->m);
 			}	
 			dealloc_matrix(uj_x);
-			//t11 = clock() - t11;
-			//tot+=t11;
+			t11 = clock() - t11;
+			tot+=t11;
 
 			//clock_t t11 = clock();
 			nn_dis = FLT_MAX;//DBL_MAX;
+			
 			for(y=0; y< input->n; y++){
 				//tmp = sdc(c_x,stored_distance, y, input->m, input->n, pq, input->k);
 
 				tmp=0;
 				for(int j=0; j< input->m; j++){
 					//clock_t t11 = clock();
-					i=mapping(c_x[j],pq[j*input->n+y],input->k);
+					i=mapping(c_x[j],pq[j*input->n+y],input->k, mapping_n);
 					//t11 = clock() - t11;
 					//tot+=t11;
-					if (i!=0) {
+					//pippo++;
+					if (i!=-1) {
 						tmp+= stored_distance[j*index+i];
 					}
 				}
-
+				//clock_t t11 = clock();
 				if(tmp < nn_dis){
 					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+					//t11 = clock() - t11;
+					//tot+=t11;
+					//pippo++;
+
 				}
+				//t11 = clock() - t11;
+				//tot+=t11;
+				//pippo++;
 
 			}//for y
 			//t11 = clock() - t11;
@@ -1951,6 +1964,7 @@ void pqnn_search(params* input) {
 		}
 		
 	}
+
 	if(input->exaustive==1 && input->symmetric==0){
 		float tmp,nn_dis;
 		int x,y,k;
@@ -1974,9 +1988,13 @@ void pqnn_search(params* input) {
 				for(int j=0; j < input->m; j++){
 					tmp+=stored_distance[j*input->k+pq[j*input->n+y]];
 				}
+				//clock_t t11 = clock();
 				if(tmp < nn_dis){
 					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
 				}
+				//t11 = clock() - t11;
+				//tot+=t11;
+				//pippo++;
 			}
 			//t11 = clock() - t11;
 			//tot+=t11;
@@ -2013,7 +2031,7 @@ void pqnn_search(params* input) {
 		
 	}
 	printf("\n tempo di calcolo per tot = %.10f secs\n",((float)tot)/CLOCKS_PER_SEC);
-	stampe=0;
+	stampe=1;
 
 	/*printf("\nACCESSI SDC : %d\n",accesso);
 	printf("\nACCESSI ADC : %d\n",accesso_1);
@@ -2065,9 +2083,6 @@ void pqnn_search(params* input) {
 
 
 int main(int argc, char** argv) {
-
-	
-	
 	char fname[256];
 	int i, j;
 	
@@ -2092,6 +2107,7 @@ int main(int argc, char** argv) {
 	input->tmax = 100;
 	input->silent = 0;
 	input->display = 0;
+	mapping_n = (input->k * (input->k-1)/2);
 
 	//
 	// Legge i valori dei parametri da riga comandi
@@ -2234,7 +2250,7 @@ int main(int argc, char** argv) {
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data_row(fname, &input->nq, &input->d);
-	//input->nq=input->nq/2 + 2;
+	input->nq=input->nq/2;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
