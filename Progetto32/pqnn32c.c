@@ -404,7 +404,8 @@ extern void clearCentroids(float* counts,float* c1,int k,int d);
 extern void assignValue(float* list,float value,int i);
 extern void extr_col(float* ds, int n, int d, int nr, int divi, float* result);
 extern void dist32(float * x,float * y,float* distance, int d);
-
+extern void distanceControl32(float * distance,float * min_distance,int *labels,int j,int i);
+//extern void updateSizeTemp32(float* c1,float* data,int* counts,float* error,int n,int d);
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
@@ -600,13 +601,12 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 	float* distance = alloc_matrix(p,unroll);
 	float offset;
 	int iter=0;
-	int h, i, j; /* loop counters, of course */
+	int h, i, j, k_p; /* loop counters, of course */
 	
 	/* size of each cluster */
 	float* counts = alloc_matrix(k,1);
 	//int* counts = alloc_vector(k);
 	float old_error, error = FLT_MAX;//DBL_MAX; /* sum of squared euclidean distance */
-	
 	MATRIX c = centroids;
 	
 	/* temp centroids */
@@ -687,7 +687,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			assignValue(min_distance,FLT_MAX,p*3);
 
 			
-			
+			clock_t t11 = clock();
 			for (j = 0; j < k; j++) { // per ogni centroide
 
 				
@@ -700,11 +700,15 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 				//printVectorfloat(distance,p);
 				//for(int k2=0;k<unroll;k2++)
 				
+				
+				distanceControl32(distance,min_distance,labels,j,i);
 
 
 
-
+				/*
 				for(int k=0;k<p*unroll;k+=p){
+					//printVectorfloat(distance,p*unroll);
+					//printVectorfloat(min_distance,p*unroll);
 					if (distance[k] < min_distance[k]) {
 						labels[i+k] = j;
 						min_distance[k] = distance[k];
@@ -721,19 +725,24 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 						labels[i+k+3] = j;
 						min_distance[k+3] = distance[k+3];
 					}
-				}
+				}*/
 				
 			}
+			t11 = clock() - t11;
+			tot+=t11;
 		
 			
 		
-		
+			
 			//printf("update size and temp centroid of the destination cluster for %d point\n",h);
-			
+			//updateSizeTemp32(c1,data,counts,error,n,d);
 			/* update size and temp centroid of the destination cluster */
+
 			
 			
+			//clock_t t11 = clock();
 			for (j = 0; j < d; j++){
+				//for(k=0; k<p*unroll; k+=p){
 				//c1[labels[h]*d+j] += data[h*d+j]; // c'era un +=
 				c1[labels[i]*d+j] += data[i+j*n];
 				c1[labels[i+1]*d+j] += data[i+1+j*n];
@@ -752,6 +761,10 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 				c1[labels[i+14]*d+j] += data[i+14+j*n];
 				c1[labels[i+15]*d+j] += data[i+15+j*n];
 			}
+			//t11 = clock() - t11;
+			//tot+=t11;
+
+
 			counts[labels[i]]++;
 			counts[labels[i+1]]++;
 			counts[labels[i+2]]++;
@@ -770,10 +783,12 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			counts[labels[i+15]]++;
 			/* update standard error */
 
+			
+
 			error += min_distance[0];
 			error += min_distance[1];
 			error += min_distance[2];
-			error += min_distance[3];
+			error += min_distance[3];				
 			error += min_distance[4];
 			error += min_distance[5];
 			error += min_distance[6];
@@ -786,10 +801,17 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			error += min_distance[13];
 			error += min_distance[14];
 			error += min_distance[15];
-			
-			
+
+			//t11 = clock() - t11;
+			//tot+=t11;
 		}
 		
+		
+
+		
+		
+	
+	
 		
 		updateCentroid(c,c1,counts,k,d);
 		
@@ -823,8 +845,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 		
 		
 		
-	}//while (fabs(error-old_error) > t); 
-	while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -1586,10 +1607,13 @@ void pqnn_index(params* input) {
 		//Creazione del quantizzatore Coarse e relativi Centroidi
 
 		//printDsQs(input->ds,sub_set,input->n,input->d,input->nr);
+		//clock_t t1 = clock();
 		Cc= alloc_matrix(input->kc,input->d);
 		Cc_index = alloc_vector(input->n);
 		//Cc_index=k_means(input->ds,input->n,input->d,input->kc,input->eps,Cc,input->tmin,input->tmax);
 		k_means_col(sub_set,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
+		//t1 = clock() - t1;
+		//tot+=t1;
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
@@ -1609,8 +1633,13 @@ void pqnn_index(params* input) {
 		printf("Quantizzazione dei residui\n");
 		//quantizzare r(y) con Qp, prima si crea il quantizzatore usando m volte k-means
 		//Cp = (float**)get_block(sizeof(float*),input->m);
+
+		//clock_t t11 = clock();
 		Cp = alloc_matrix(input->m,input->k * input->d / input->m);
 		Cp_index = productQuant(res,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
+		//t11 = clock() - t11;
+		//tot+=t11;
+
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		/*
 		for(int j= 0; j < input->m; j++)
@@ -1723,8 +1752,12 @@ void pqnn_index(params* input) {
 	}
 
 	if(input->exaustive == 1){
+		
+		//clock_t t00 = clock();
 		centroids = alloc_matrix(input->m,input->k * input->d / input->m);
 		pq = productQuant(input->ds, input->n, input->d, input->m, input->k, centroids, input->eps, input->tmin, input->tmax);
+		//t00 = clock() - t00;
+		//tot+=t00;
 		//printf("ho calcolato i centroidi (productQuant)\n");
 	}
 
