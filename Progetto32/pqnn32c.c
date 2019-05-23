@@ -105,7 +105,7 @@ int p=4;
 int unroll=4;
 int stampe=1;
 float tot=0.0;
-int pippo = 0;
+int cont = 0;
 int mapping_n; 
 //variabili utili per l'algoritmo esaustivo
 float * centroids;
@@ -540,7 +540,7 @@ int centX(float * centroids, float * x, int k, int d){
 	return initialCentroid;
 }**/
 
-
+//non lo usiamo più
 int mapping(int i,int j,int n, int index){
 	int indice = 0;
 	mapping32(i,j,n,&indice, index);
@@ -1412,7 +1412,7 @@ float sdc(int* c_x,float* stored_distance, int y, int m,int n, int* labels, int 
 		//questo controllo è dovuto al fatto che la funzione mapping ritorna l'indice corretto quando è
 		//possibile altrimenti quando i==j torna direttamente 0 e a sto punto evito di accedere alla struttura
 		//i=mapping(c_x[j],labels[j][y],k);
-		i=mapping(c_x[j],labels[j*n+y],k,mapping_n);
+		i=mapping(c_x[j],labels[j*n+y],k,mapping_n); //attenzione,se lo riutilizziamo dobbiamo togliere il mapping
 		if (i!=-1) {
 			//dis+= stored_distance[j][i];
 			dis+= stored_distance[j*(k*(k-1)/2)+i];
@@ -1459,7 +1459,7 @@ float NE_sdc(int* c_x,float* stored_distance,int m, int* res,int k ){
 
 		//questo controllo è dovuto al fatto che la funzione mapping ritorna l'indice corretto quando è
 		//possibile altrimenti quando i==j torna direttamente 0 e a sto punto evito di accedere alla struttura
-		i=mapping(c_x[j],res[j],k,mapping_n);
+		i=mapping(c_x[j],res[j],k,mapping_n);//attenzione,se lo riutilizziamo dobbiamo togliere il mapping
 		//printf(" i=%d  ------- c_x[%d]=%d -------- res[%d]=%d\n",i,j,c_x[j],j,res[j]);
 		if (i!=-1) {
 			dis+= stored_distance[j*(k*(k-1)/2)+i];
@@ -1519,6 +1519,32 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 per accedere alla distanza bisogna usare la funzione mapping che ritorna l'indice corretto
 trasformando opportunamente gli indici i,j*/
 float* pre_sdc(float* centroids,int d,int m, int k ){
+	int k_2 = k*k;
+	float* result= alloc_matrix(m,k_2);
+	int sub=d/m;
+	int i,j,c,j_d;
+	float distance;
+	for(j=0; j<m; j++){
+		for(i = 0; i < k; i++){
+			for(j_d = i+1; j_d < k;j_d++){
+				distance = 0;
+				rowDistance32Sdc(centroids,&distance,i,j,j_d,k,sub);
+				result[j*k_2+i*k+j_d]=distance;
+				result[j*k_2+j_d*k+i]=distance;
+				result[j*k_2+i*k+i]=0;			
+			}
+		}
+	}
+	/*for(int i=0; i<m; i++){
+		for(int j=0; j<k; j++){
+			for(int jj=0; jj<k;jj++ ){
+				printf("res[%d][%d][%d] = %f \n",i,j,jj,result[i*k_2+j*k+jj]);
+			}
+		}
+	}*/
+	return result;
+}
+/*float* pre_sdc(float* centroids,int d,int m, int k ){
 	//float** result=(float**)get_block(sizeof(float*),m);
 	float* result= alloc_matrix(m,k*(k-1)/2);
 	int sub=d/m;
@@ -1548,7 +1574,7 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 				//funzione NASM
 				//distance=rowdistance32(centroids[j*k*sub+i*sub],centroids[j*k*sub+j_d*sub],d);
 
-				result[j*(k*(k-1)/2)+c]=distance;
+	/*			result[j*(k*(k-1)/2)+c]=distance;
 				//printf("\ncalcolo della distanza C[%d][%d] e C[%d][%d] = %f\n",j,i,j,j_d,result[j][c]);
 				c++;
 			}
@@ -1556,8 +1582,15 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 
 		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 	}
+	for(int i=0; i<m; i++){
+		for(int j=0; j<k*(k-1)/2; j++){
+			printf("res[%d][%d] = %f \n",i,j,result[i*k*(k-1)/2+j]);
+			
+		}
+	}
 	return result;
-}
+}*/
+
 
 
 
@@ -1810,6 +1843,7 @@ void pqnn_search(params* input) {
 
 				if(input->symmetric==1)
 				{
+					int k_2 = input->k*input->k;
 					//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 					//clock_t t11 = clock();
 					for(int j=0;j<input->m;j++){
@@ -1828,23 +1862,21 @@ void pqnn_search(params* input) {
 					//variabile usata per non accedere continuamente in jump[C_i]*nodo
 					//sjump=jump[C_i]*nodo;
 					sbucket=bucket[C_i];
-					
-					
-					
-
+				
 					//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
 					for( ind = 0; ind < sbucket; ind++)
 					{	
-						
 						//printVector(&L_i[ind][1],input->m);
 						//tmp = NE_sdc(c_x,stored_distance, input->m, &L_i[ind*nodo +1],input->k);
 
 						tmp=0;
 						for(z=0; z < input->m; z++){
-							t=mapping(c_x[z],L_i[ind*nodo+1+z],input->k,mapping_n);
+							/*t=mapping(c_x[z],L_i[ind*nodo+1+z],input->k,mapping_n);
 							if (t!=-1) {
 								tmp+= stored_distance[z*mapping_n+t];
-							}
+							}*/
+							tmp+= stored_distance[z*k_2+c_x[z]*input->k+L_i[ind*nodo+1+z]];
+							//cont++;
 						}
 
 						if(tmp < nn_dis){							
@@ -1952,6 +1984,7 @@ void pqnn_search(params* input) {
 	if(input->exaustive==1 && input->symmetric==1){
 		printf("PRE-Calcolo le distanze (SIMMETRICO) tra Cji e Cji\n");
 		stored_distance=pre_sdc(centroids,input->d,input->m,input->k);
+		int k_2 = input->k * input->k;
 		int index=(input->k*(input->k-1)/2);
 
 
@@ -1985,13 +2018,8 @@ void pqnn_search(params* input) {
 
 				tmp=0;
 				for(int j=0; j< input->m; j++){
-					//clock_t t11 = clock();
-					i=mapping(c_x[j],pq[j*input->n+y],input->k,mapping_n);
-					//t11 = clock() - t11;
-					//tot+=t11;
-					if (i!=-1) {
-						tmp+= stored_distance[j*mapping_n+i];
-					}
+					tmp+= stored_distance[j*k_2+c_x[j]*input->k+pq[j*input->n+y]];
+					cont++;
 				}
 				//clock_t t11 = clock();
 				if(tmp < nn_dis){
@@ -2414,7 +2442,7 @@ int main(int argc, char** argv) {
 	printf("\nSEARCHING: tempo di calcolo per tot = %.10f secs\n",((float)tot)/CLOCKS_PER_SEC);
 
 	
-		//printf("---------------%d",pippo);
+	printf("---------------%d",cont);
 	//printDsQs(input->ds,NULL,input->n,input->d,0);
 	return 0;
 }
