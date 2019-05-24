@@ -494,18 +494,60 @@ float dist(float * x,float * y, int d){
 }
 
 int centX(float * centroids, float * x, int k, int d){	
-	float dis = dist(x, centroids, d);
+	float dis= 0;
 	int park = 0;
-	float tmp;
+	float* tmp = alloc_matrix(p,1);
+	tmp[0]=0;
+	tmp[1]=0;
+	tmp[2]=0;
+	tmp[3]=0;
+	dist32(x,centroids,&dis,d);
+	for(int i=0; i<k; i+=unroll){
+ 		dist32(x, &centroids[i*d], &tmp[0], d);
+		dist32(x, &centroids[(i+1)*d], &tmp[1], d);
+		dist32(x, &centroids[(i+2)*d], &tmp[2], d);
+		dist32(x, &centroids[(i+3)*d], &tmp[3], d);
+		
+		if( tmp[0] < dis){
+			dis = tmp[0];
+			park = i;
+		}
+		
+		if( tmp[1] < dis){
+			dis = tmp[1];
+			park = i+1;
+		}
+		
+		if( tmp[2] < dis){
+			dis = tmp[2];
+			park = i+2;
+		}
+		
+		if( tmp[3] < dis){
+			dis = tmp[3];
+			park = i+3;
+		}
+	}
+	return park;
+}
+
+/*int centX(float * centroids, float * x, int k, int d){	
+	//float dis = dist(x, centroids, d);
+	float dis= 0;
+	dist32(x,centroids,&dis,d);
+	int park = 0;
+	//float tmp;
+	float tmp=0;
 	for(int i=1; i<k; i++){
-		tmp = dist(x, &centroids[i*d], d);	
- 		if( tmp < dis){
+		//tmp = dist(x, &centroids[i*d], d);	
+ 		dist32(x, &centroids[i*d], &tmp, d);
+		if( tmp < dis){
 			dis = tmp;
 			park = i;
 		}
 	}
 	return park;
-}
+}*/
 
 /*
 int centX(float * centroids, float * x, int k, int d){	
@@ -1341,7 +1383,8 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	for(i = 0; i < w; i++)
 	{	
 		tmp = 0;
-		tmp=dist(x,&centroids[i*d],d);
+		dist32(x, &centroids[i*d], &tmp, d);
+		//tmp=dist(x,&centroids[i*d],d);
 		
 		/*for (int j=0; j<d;j++){
 			tmp += pow(x[j] - centroids[i*d+j], 2);
@@ -1367,7 +1410,8 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
 		//printf("la distanza max della struttura è = %f\n",max);
 		tmp = 0;
-		tmp=dist(x,&centroids[i*d],d);
+		dist32(x, &centroids[i*d], &tmp, d);
+		//tmp=dist(x,&centroids[i*d],d);
 		/*for (int j=0; j<d;j++){
 			tmp += pow(x[j] - centroids[i*d+j], 2);
 		}*/
@@ -1849,7 +1893,10 @@ void pqnn_search(params* input) {
 					for(int j=0;j<input->m;j++){
 						//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 						uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
+						clock_t t11 = clock();
 						c_x[j] = centX(&Cp[j*input->sub*input->k], uj_x, input->k, input->d/input->m);
+						t11 = clock() - t11;
+						tot+=t11;
 					}	
 					//t11 = clock() - t11;
 					//tot+=t11;
@@ -1911,21 +1958,27 @@ void pqnn_search(params* input) {
 					for( ind = 0; ind < sbucket; ind++)
 					{
 						//tmp = NE_adc(stored_distance, input->k, input->m, &L_i[ind*nodo +1]);
-						clock_t t11 = clock();
+						//clock_t t11 = clock();
 						tmp = 0;
 						for(int j=0; j < input->m; j++){
 							//old_dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 							tmp+=stored_distance[j*input->k+L_i[ind*nodo+1+j]];
 						}
-						t11 = clock() - t11;
-						tot+=t11;
-
+						//t11 = clock() - t11;
+						//tot+=t11;
+						//clock_t t11 = clock();
 						if(tmp < nn_dis){
+							//clock_t t11 = clock();
 							nn_dis=max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+							//t11 = clock() - t11;
+							//tot+=t11;
+							//cont++;
 							//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 							//nn_dis = tmp;
 							//result = L_i[ind][0];
 						}
+						//t11 = clock() - t11;
+						//tot+=t11;
 					}
 					
 				}
@@ -2019,7 +2072,7 @@ void pqnn_search(params* input) {
 				tmp=0;
 				for(int j=0; j< input->m; j++){
 					tmp+= stored_distance[j*k_2+c_x[j]*input->k+pq[j*input->n+y]];
-					cont++;
+					//cont++;
 				}
 				//clock_t t11 = clock();
 				if(tmp < nn_dis){
