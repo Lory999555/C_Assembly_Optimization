@@ -398,7 +398,7 @@ void printEq_col(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 extern void residual_nasm(float* res, float* ds,float* Cc,int* Cc_index, int n, int d);
 extern void rowDistance32Adc(float* c,float* x,float* distance,int i,int j,int k,int sub);
 extern void rowDistance32Sdc(float* c,float* distance,int i,int j,int j_d,int k,int sub);
-extern void coldistance32(float * ds,float* c,float* distance,int i,int j,int d,int n);
+extern void colDistance32(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 extern void clearCentroids(float* counts,float* c1,int k,int d);
 extern void assignValue(float* list,float value,int i);
@@ -702,10 +702,10 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			for (j = 0; j < k; j++) { // per ogni centroide
 
 				
-				coldistance32(data,centroids,distance,i,j,d,n);
-				coldistance32(data,centroids,&distance[p],i+p,j,d,n);
-				coldistance32(data,centroids,&distance[p*2],i+p*2,j,d,n);
-				coldistance32(data,centroids,&distance[p*3],i+p*3,j,d,n);
+				colDistance32(data,centroids,distance,i,j,d,n);
+				colDistance32(data,centroids,&distance[p],i+p,j,d,n);
+				colDistance32(data,centroids,&distance[p*2],i+p*2,j,d,n);
+				colDistance32(data,centroids,&distance[p*3],i+p*3,j,d,n);
 				
 
 				//printVectorfloat(distance,p);
@@ -1350,13 +1350,13 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 		//tmp=dist(x,&centroids[i],d);
 
 		tmp = 0;
-		float tmp2=0;
-		wncDist32(x,centroids,&tmp,d,i);
+		//float tmp2=0;
+		//wncDist32(x,centroids,&tmp,d,i);
 		for (int j=0; j<d;j++){
-			tmp2 += pow(x[j] - centroids[i*d+j], 2);
+			tmp += pow(x[j] - centroids[i*d+j], 2);
 			//printf("C: %d,%d x: %f, cent: %f\n",i,j,x[j],centroids[i*d+j]);
 		}
-		printf("C: %f, nasm %f\n",tmp2,tmp);
+		//printf("C: %f, nasm %f\n",tmp2,tmp);
 		result_w[i]=i;
 		result_dist[i]=tmp;
 		//piccola ottimizzazione, al posto di mantenere ordinata la struttura

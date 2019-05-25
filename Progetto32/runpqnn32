@@ -1,14 +1,16 @@
 nasm -f elf32 pqnn32.nasm
 nasm -f elf32 rowDistance32Sdc.nasm
 nasm -f elf32 rowDistance32Adc.nasm
-nasm -f elf32 distance32col.nasm
+nasm -f elf32 rowDistance32.nasm
+nasm -f elf32 colDistance32.nasm
 nasm -f elf32 updateCentroid.nasm
 nasm -f elf32 clearCentroids.nasm
 nasm -f elf32 assignValue.nasm
 nasm -f elf32 extrac_col.nasm
 nasm -f elf32 dist32.nasm
+nasm -f elf32 distanceControl32.nasm
 nasm -f elf32 wncDist32.nasm
 nasm -f elf32 mapping32.nasm
-gcc -g -O0 -m32 -msse wncDist32.o mapping32.o pqnn32.o assignValue.o dist32.o rowDistance32Adc.o extrac_col.o rowDistance32Sdc.o clearCentroids.o distance32col.o updateCentroid.o pqnn32c.c -o pqnn32c -lm
+gcc -g -O0 -m32 -msse rowDistance32.o wncDist32.o pqnn32.o distanceControl32.o mapping32.o assignValue.o dist32.o rowDistance32Adc.o extrac_col.o rowDistance32Sdc.o clearCentroids.o colDistance32.o updateCentroid.o pqnn32c.c -o pqnn32c -lm
 ./pqnn32c $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15 $16 $17 $18 $19 $20 $21 $22 $23 $24 $25 $26 $27 $28 $29 $30
 
