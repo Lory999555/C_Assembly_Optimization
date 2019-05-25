@@ -1350,13 +1350,13 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 		//tmp=dist(x,&centroids[i],d);
 
 		tmp = 0;
-		//float tmp2=0;
-		//wncDist32(x,centroids,&tmp,d,i);
+		float tmp2=0;
+		wncDist32(x,centroids,&tmp,d,i);
 		for (int j=0; j<d;j++){
 			tmp += pow(x[j] - centroids[i*d+j], 2);
 			//printf("C: %d,%d x: %f, cent: %f\n",i,j,x[j],centroids[i*d+j]);
 		}
-		//printf("C: %f, nasm %f\n",tmp2,tmp);
+		printf("C: %f, nasm %f\n",tmp2,tmp);
 		result_w[i]=i;
 		result_dist[i]=tmp;
 		//piccola ottimizzazione, al posto di mantenere ordinata la struttura
