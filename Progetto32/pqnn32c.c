@@ -52,7 +52,8 @@
 #define 	MATRIX		float*
 #define 	x_query 	input->qs
 #define     nodo		(input->m+1)
-#define 	BLOCKSIZE 	  16
+#define 	BLOCKSIZE 	16
+
 
 typedef struct {
 /*
@@ -103,6 +104,9 @@ typedef struct {
 
 int p=4;
 int unroll=4;
+int size=4*4;
+
+
 int stampe=1;
 float tot=0.0;
 int cont = 0;
@@ -601,8 +605,8 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 	//t=pow(t,2);
 
 	//queste variabili sono da liberare alla fine del metodo!!!
-	float* min_distance = alloc_matrix(BLOCKSIZE,1);
-	float* distance = alloc_matrix(BLOCKSIZE,BLOCKSIZE);
+	float* min_distance = alloc_matrix(size,1);
+	float* distance = alloc_matrix(size,1);
 	float offset;
 	int iter=0;
 	int h, i, j, k_p,b,z; /* loop counters, of course */
@@ -682,60 +686,56 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 		*/
 		//convertire tutto in nasm
 		//versione nasm
-		/*
-		for (i = 0; i < n; i+=p*unroll){  	//per ogni punto del ds
+		
+		for (i = 0; i < n; i+=size){  	//per ogni punto del ds
 			//identify the closest cluster
-			assignValue(min_distance,FLT_MAX,0);
-			assignValue(min_distance,FLT_MAX,p);
-			assignValue(min_distance,FLT_MAX,p*2);
-			assignValue(min_distance,FLT_MAX,p*3);
+			assignValue(min_distance,FLT_MAX,size);
 
-			
+			//printf("\n--------5----------");
 			//clock_t t11 = clock();
 			for (j = 0; j < k; j++){ // per ogni centroide
-
-
-					colDistance32(data,centroids,distance,i,j,d,n);
-					colDistance32(data,centroids,&distance[p],i+p,j,d,n);
-					colDistance32(data,centroids,&distance[p*2],i+p*2,j,d,n);
-					colDistance32(data,centroids,&distance[p*3],i+p*3,j,d,n);
-					
+				colDistance32(data,centroids,distance,i,j,d,n,0);
+				colDistance32(data,centroids,&distance[p],i+p,j,d,n,0);
+				colDistance32(data,centroids,&distance[p*2],i+p*2,j,d,n,0);
+				colDistance32(data,centroids,&distance[p*3],i+p*3,j,d,n,0);
 			}
 
 				
-				
+
+			printVectorfloat(distance,size);
+			printVectorfloat(min_distance,size);
 
 				//printVectorfloat(distance,p);
 				//for(int k2=0;k<unroll;k2++)
 				
-				
-				distanceControl32(distance,min_distance,labels,j,i);
+					
+			distanceControl32(distance,min_distance,labels,j,i);
 
 
 
-				
-				for(int k=0;k<p*unroll;k+=p){
-					//printVectorfloat(distance,p*unroll);
-					//printVectorfloat(min_distance,p*unroll);
-					if (distance[k] < min_distance[k]) {
-						labels[i+k] = j;
-						min_distance[k] = distance[k];
-					}
-					if (distance[k+1] < min_distance[k+1]) {
-						labels[i+k+1] = j;
-						min_distance[k+1] = distance[k+1];
-					}
-					if (distance[k+2] < min_distance[k+2]) {
-						labels[i+k+2] = j;
-						min_distance[k+2] = distance[k+2];
-					}
-					if (distance[k+3] < min_distance[k+3]) {
-						labels[i+k+3] = j;
-						min_distance[k+3] = distance[k+3];
-					}
+			/*
+			for(int k=0;k<p*unroll;k+=p){
+				//printVectorfloat(distance,p*unroll);
+				//printVectorfloat(min_distance,p*unroll);
+				if (distance[k] < min_distance[k]) {
+					labels[i+k] = j;
+					min_distance[k] = distance[k];
 				}
-				
-			}
+				if (distance[k+1] < min_distance[k+1]) {
+					labels[i+k+1] = j;
+					min_distance[k+1] = distance[k+1];
+				}
+				if (distance[k+2] < min_distance[k+2]) {
+					labels[i+k+2] = j;
+					min_distance[k+2] = distance[k+2];
+				}
+				if (distance[k+3] < min_distance[k+3]) {
+					labels[i+k+3] = j;
+					min_distance[k+3] = distance[k+3];
+				}
+			}*/
+			
+		
 			//t11 = clock() - t11;
 			//tot+=t11;
 		
@@ -746,8 +746,8 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			//updateSizeTemp32(c1,data,counts,error,n,d);
 			//update size and temp centroid of the destination cluster
 
-			
-			
+				
+				
 			//clock_t t11 = clock();
 			for (j = 0; j < d; j++){
 				//for(k=0; k<p*unroll; k+=p){
@@ -810,10 +810,13 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			error += min_distance[13];
 			error += min_distance[14];
 			error += min_distance[15];
+			//printf("\n--------4----------");
 
 			//t11 = clock() - t11;
 			//tot+=t11;
-		}*/
+		}
+
+		/*		CACHE-BLOCKING
 
 
 		for (i = 0; i < n; i+=BLOCKSIZE){  	//per ogni punto del ds
@@ -841,7 +844,9 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 					}
 					
 				}
-				/*
+				
+
+				//DA ELIMINARE
 				for(; b < d; b++){
 					for (z = 0; z < BLOCKSIZE; z++){ // per ogni centroide
 						colDistance32(data,centroids,&distance[z*BLOCKSIZE], i, j+z, d, n, b);
@@ -852,7 +857,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 						//printVectorfloat(distance,BLOCKSIZE*BLOCKSIZE);	
 						
 					}
-				}*/
+				}
 
 				//printVectorfloat(distance,BLOCKSIZE*BLOCKSIZE);	
 
@@ -923,7 +928,8 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			
 			//printf("update size and temp centroid of the destination cluster for %d point\n",h);
 			//updateSizeTemp32(c1,data,counts,error,n,d);
-			/* update size and temp centroid of the destination cluster */
+
+			//update size and temp centroid of the destination cluster
 
 			
 			
@@ -968,7 +974,7 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 			counts[labels[i+13]]++;
 			counts[labels[i+14]]++;
 			counts[labels[i+15]]++;
-			/* update standard error */
+			// update standard error
 
 			
 			error += min_distance[0];
@@ -993,15 +999,15 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 		}
 
 		
-		
+		*/
 
 		
 		
 	
 	
-		
+		//printf("\n--------2----------");
 		updateCentroid(c,c1,counts,k,d);
-		
+		//printf("\n--------3----------");
 		//printf("\nNasm time = %0.10f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
 		
 		
@@ -1031,33 +1037,16 @@ void k_means_col(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX 
 		
 		
 		
-		
+		//printf("\nNDONDO");
 	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
-
-	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
-
-
-	/****
-	 ** housekeeping */
-
-	/*for (i = 0; i < k; i++) {
-		if (!centroids) {
-			free(c[i]);
-		}
-		free(c1[i]);
-	}*/
+	printf("\nIIISLSKSLSO");
 	
-	//printf("housekeeping\n");
-	
-	/*for(int i=0; i< k; i++){
-		for(int j=0; j<d; j++){
-			printf("c[%d][%d] = %f\n",i,j,centroids[i*d+j]);
-		}
-	}*/
+	//printf("\n--------1----------");
 
 	dealloc_matrix(c1);
-
 	dealloc_matrix(counts);
+	dealloc_matrix(distance);
+	dealloc_matrix(min_distance);
 
 	//return labels;
 }//k_means
@@ -2572,7 +2561,7 @@ int main(int argc, char** argv) {
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data_row(fname, &input->nq, &input->d);
-	input->nq=input->nq/2;
+	//input->nq=input->nq/2;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	

@@ -17,7 +17,7 @@ i			equ		24
 dim		equ		4
 p		equ		4
 UNROLL		equ		4
-BLOCKSIZE	equ		16
+BLOCKSIZE	equ		32
 
 align 16
 inizio:		dd		1.0, 1.0, 1.0, 1.0
@@ -39,28 +39,20 @@ distanceControl32:
 		mov 	edx,[ebp+i]		;i
 		imul	edx,dim			;i*4
 
-
-
-		mov		ebx, 0			;z = 0
-		;imul	ebx,dim			;z*4
-forz:
 		mov		ecx, 0			; k = 0
+
+		
+
 fork:		
 		;printregps xmm7
 		mov 		esi,[ebp+distance]		;distance
-		mov			edi,ebx					;z
-		imul		edi,BLOCKSIZE*dim			;z*blocksize
-		add			esi,edi					;distance + z*blocksize
 		
 
-		movaps		xmm0, [ecx+esi]	; distance[z + k..k+3]
+		movaps		xmm0, [ecx+esi]	; distance[k..k+3]
 		;printregps  xmm0
 
 
 		mov 		esi,[ebp+min_distance]		
-		;mov			edi,ebx					;z
-		;imul		edi,BLOCKSIZE*dim			;z*blocksize
-		;add			esi,edi					;distance + z*blocksize
 
 		movaps		xmm1, [ecx+esi]			; min_distance[k..k+3]
 		;printregps	xmm1
@@ -76,19 +68,12 @@ fork:
 		add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
-		mov 		edi,ebx				;z*4
-		shr			edi,1
-		shr			edi,1
-		add			edi,[ebp+j]			;j+z
-		
+		mov			edi,[ebp+j]			;j
 		mov 		[eax+esi],edi		;label[i+k]=j
 		extractps	eax,xmm0,0			;
 
 		mov			edi,[ebp+min_distance]		;min_distance
-		;mov			esi,ebx					;z
-		;imul		esi,BLOCKSIZE*dim			;z*blocksize
-		;add			edi,esi					;distance + z*blocksize
-		mov			[edi+ecx],eax				;min_distance+4+k*4 
+		mov			[edi+ecx],eax				;min_distance+4+k*4
 
 if1:
 
@@ -103,12 +88,7 @@ if1:
 		add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
-		mov 		edi,ebx				;z*4
-		shr			edi,1
-		shr			edi,1
-		add			edi,[ebp+j]			;j+z
-
-
+		mov			edi,[ebp+j]			;j
 		;printregps	xmm2
 		add			esi,dim			;(i+k+1)*4
 		mov 		[eax+esi],edi		
@@ -117,9 +97,6 @@ if1:
 			
 		mov			edi,[ebp+min_distance]		;min_distance
 		add			edi,dim						;min_distance+4
-		;mov			esi,ebx					;z
-		;imul		esi,BLOCKSIZE*dim			;z*blocksize
-		;add			edi,esi					;distance + z*blocksize
 		mov			[edi+ecx],eax				;min_distance+4+k*4
 		;printregps	xmm2
 
@@ -136,19 +113,13 @@ if2:
 		add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
-		mov 		edi,ebx				;z*4
-		shr			edi,1
-		shr			edi,1
-		add			edi,[ebp+j]			;j+z
+		mov			edi,[ebp+j]			;j
 		add			esi,dim*2				;(i+k+2)*4
 		mov 		[eax+esi],edi		
 		extractps	eax,xmm0,2		
 
 		mov			edi,[ebp+min_distance]
 		add			edi,dim*2				;min_distance + (i+k+2)*4
-		;mov			esi,ebx					;z
-		;imul		esi,BLOCKSIZE*dim			;z*blocksize
-		;add			edi,esi					;distance + z*blocksize
 		mov			[edi+ecx],eax
 
 if3:
@@ -161,29 +132,19 @@ if3:
 		add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
-		mov 		edi,ebx				;z*4
-		shr			edi,1
-		shr			edi,1
-		add			edi,[ebp+j]			;j+z
+		mov			edi,[ebp+j]			;j
 		add			esi,dim*3				;(i+k+2)*4
 		mov 		[eax+esi],edi		
 		extractps	eax,xmm0,3	
 
 		mov			edi,[ebp+min_distance]
 		add			edi,dim*3				;min_distance + (i+k+2)*4
-		;mov			esi,ebx					;z
-		;imul		esi,BLOCKSIZE*dim			;z*blocksize
-		;add			edi,esi					;distance + z*blocksize
 		mov			[edi+ecx],eax
 		
 fine:
 		add			ecx, dim*p		; k+=p
 		cmp			ecx, p*UNROLL*dim		; (k < dimension) ?
 		jb			fork
-
-		add			ebx,dim
-		cmp			ebx,BLOCKSIZE*dim
-		jb 			forz
 		
 		pop	edi									; ripristina i registri da preservare
 		pop	esi
