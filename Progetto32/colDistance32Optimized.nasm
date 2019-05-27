@@ -123,8 +123,9 @@ fork:
 		movaps		[esi+32],xmm6
 		movaps		[esi+48],xmm7
 
-		;printregps		xmm2
 
+		;printregps		xmm2
+fine:
 		pop	edi									; ripristina i registri da preservare
 		pop	esi
 		pop	ebx
