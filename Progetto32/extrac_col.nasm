@@ -2,7 +2,7 @@
 
 section .data
 
-align 16
+
 dataset     equ 8
 
 n           equ 12

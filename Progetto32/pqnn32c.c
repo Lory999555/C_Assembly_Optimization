@@ -734,7 +734,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		old_error = error, error = 0;
 		
 		
-		
+	
 		clearCentroids(counts,c1,k,d);
 		
 		
@@ -781,7 +781,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 			//identify the closest cluster
 			assignValue(min_distance,FLT_MAX,size);
 			//printf("\n--------PRIMO ALIGNED-----%d-------------",i+size);
-
+			//printVectorfloat(min_distance,size);
 
 			
 			//clock_t t11 = clock();
@@ -3390,7 +3390,7 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 8000,128);
 	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
@@ -3399,7 +3399,7 @@ int main(int argc, char** argv) {
 	input->nr = input->n/5;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 2000,128);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 	
 	//input->nq=input->nq/2;

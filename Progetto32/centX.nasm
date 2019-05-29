@@ -2,13 +2,13 @@
 
 section .data
 	
-	align 16
+	
     cent	equ		8
-    align 16
+    
     xx      equ     12
     k       equ     16
     ddd       equ     20
-    align 16
+    
     tmp     equ     24  ;risultato di dist
     park    equ     28  ;risultato di centX
     dis     equ     32  ;dis temporanea
@@ -183,11 +183,11 @@ section .data
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-align 16
+
 x		    equ		20
-align 16
+
 y           equ     16
-align 16
+
 distance	equ		12
 dddd		    equ		8
 dim         equ     4

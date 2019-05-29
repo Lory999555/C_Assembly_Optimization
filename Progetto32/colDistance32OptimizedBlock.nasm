@@ -8,13 +8,13 @@
 
 section .data			; Sezione contenente dati inizializzati
 
-align 16
+
 dataset		equ		8
 
-align 16
+
 c		equ		12
 
-align 16
+
 distance		equ		16
 
 starti		equ		20
@@ -28,8 +28,6 @@ p		equ		4
 UNROLL		equ		4
 BLOCKSIZE	equ		32
 
-align 16
-inizio:		dd		1.0, 1.0, 1.0, 1.0
 
 section .bss			; Sezione contenente dati non inizializzati
 
