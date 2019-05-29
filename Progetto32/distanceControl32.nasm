@@ -2,13 +2,13 @@
 
 section .data			; Sezione contenente dati inizializzati
 
-align 16
+
 distance		equ		8
 
-align 16
+
 min_distance		equ		12
 
-align 16
+
 label		equ		16
 
 j			equ		20
@@ -19,8 +19,7 @@ p		equ		4
 UNROLL		equ		4
 BLOCKSIZE	equ		32
 
-align 16
-inizio:		dd		1.0, 1.0, 1.0, 1.0
+
 
 section .bss			; Sezione contenente dati non inizializzati
 
@@ -43,7 +42,7 @@ distanceControl32:
 
 		
 
-fork:		
+fork2:		
 		;printregps xmm7
 		mov 		esi,[ebp+distance]		;distance
 		
@@ -144,7 +143,7 @@ if3:
 fine:
 		add			ecx, dim*p		; k+=p
 		cmp			ecx, p*UNROLL*dim		; (k < dimension) ?
-		jb			fork
+		jb			fork2
 		
 		pop	edi									; ripristina i registri da preservare
 		pop	esi

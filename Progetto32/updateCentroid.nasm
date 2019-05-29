@@ -2,13 +2,13 @@
 
 section .data			; Sezione contenente dati inizializzati
 
-align 16
+
 centroids		equ		8
 
-align 16
+
 centroids_1		equ		12
 
-align 16
+
 counts		equ		16
 
 k		equ		20
@@ -55,7 +55,7 @@ updateCentroid:
 		mov		ebx, 0			; i = 0
 fori:		
 		mov		ecx, 0			; j = 0
-forj:		
+forjj:		
 		;attenzione ad esi che viene usato dopo quindi se lo si modifica potrebbe non funzionare
         mov         esi,[ebp+counts]    ;counts
 		movss		xmm1,[esi+ebx]		;counts + i*4
@@ -105,7 +105,7 @@ iter:
 
 		add		ecx, dim*p		; j+=p
 		cmp		ecx, esi		; (j < d) ?
-		jb		forj
+		jb		forjj
 		
 		add		ebx, dim		; i ++
 		cmp		ebx, eax		; (i < k) ?
