@@ -28,7 +28,7 @@ section .data
             mov     edi,    0
             ;printreg eax
             ;printreg ebx
-            ;printreg edx
+            printreg edx
             ;printreg ecx
             push    eax
             push    ebx
@@ -39,7 +39,8 @@ section .data
             pop     edx
             pop     ebx
             pop     eax
-
+            printreg edx
+            printreg [edx]
             mov     edx, [ebp+dis]
             xorps   xmm2, xmm2
             movss   xmm2, [edx]
@@ -53,6 +54,8 @@ section .data
             mov     ebx, esi 
             mov     ecx, [ebp+tmp]  ;tmp
             mov     edx, [ebp+ddd]
+            ;mov esi, [ecx]
+            printreg [ecx]
             ;printreg eax
             ;printreg ebx
             ;printreg ecx
@@ -66,6 +69,9 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+           ; mov esi, [ecx]
+            printreg ecx
+            printreg [ecx]
 
             mov     esi, [ebp+cent]
             mov     edx, edi
@@ -76,6 +82,8 @@ section .data
             mov     ebx, esi ;cent[0]
             mov     ecx, [ebp+tmp+4]
             mov     edx, [ebp+ddd]
+            ;mov esi, [ecx]
+            printreg [ecx]
             ;printreg eax
             ;printreg ebx
             ;printreg ecx
@@ -89,6 +97,8 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            ;mov esi, [ecx]
+            printreg [ecx]
 
             mov     esi, [ebp+cent]
             mov     edx, edi
@@ -196,7 +206,7 @@ dist32:
         push    ebp
         mov     ebp,esp
         push    edi
-        push    esi
+        ;push    esi
         mov eax,[ebp+distance]
         mov ebx,[ebp+dddd]
         ;printreg ebx
@@ -248,8 +258,9 @@ dist32:
         ;printreg edx
         
         movss   [edx],xmm1        ;carico il nuovo valore di distance
-        ;printreg edx
-        pop     esi
+        printreg edx
+        printregps xmm1
+        ;pop     esi
         pop     edi
         pop     ebp
         ret

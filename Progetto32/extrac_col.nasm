@@ -38,14 +38,16 @@ extr_col:
 
 forj:   
         mov     ebx, 0      ; i = 0
-        mov     ecx, 0      ; h = 0
+        ;mov     ecx, 0      ; h = 0
      
 fori:
         mov     esi, [ebp+dataset]  ;dataset
         mov     edi, [ebp+n]    ; n
         imul    edi, eax        ; n*j
-        add     edi, ecx        ; h+n*j
-        imul    edi, dim        ;;; 4 ( h+n*j)
+        ;add     edi, ecx        ; h+n*j
+        add     edi, ebx        ; i+n*j
+
+        imul    edi, dim        ;;; 4 ( h+n*j);;; 4*(i+n*j)
         add     esi, edi        ; dataset + h+n*j
         movss   xmm1, [esi]     ; ds[h+n*j]
 
@@ -61,9 +63,9 @@ fori:
         add     ebx, 1
         
         mov     esi, [ebp+nr]
-        mov edi, [ebp+divi]
-        add     ecx, edi        ; h+=n/nr
-        ;imul    esi, dim        ; nr*4
+        ;mov edi, [ebp+divi]
+        ;add     ecx, edi        ; h+=n/nr
+        
         
         cmp     ebx, esi        ; i < nr
         jb      fori
