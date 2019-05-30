@@ -28,7 +28,7 @@
 ;     nasm -f elf64 pqnn32.nasm 
 ;
 
-%dnclude "sseutils64.nasm"
+%include "sseutils64.nasm"
 
 section .data			; Sezione contenente dati inizializzati
 
@@ -87,54 +87,54 @@ global pqnn64_search
 
 
 pqnn64_index:
-		; ------------------------------------------------------------
-		; Sequenza di ingresso nella funzione
-		; ------------------------------------------------------------
-		push		rbp				; salva il Base Pointer
-		mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
-		pushaq						; salva i registri generali
+	; ------------------------------------------------------------
+	; Sequenza di ingresso nella funzione
+	; ------------------------------------------------------------
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
 
-		; ------------------------------------------------------------
-		; I paramentri sono passati nei registri
-		; ------------------------------------------------------------
-		; rdi = indirizzo della struct input
-		
+	; ------------------------------------------------------------
+	; I paramentri sono passati nei registri
+	; ------------------------------------------------------------
+	; rdi = indirizzo della struct input
+	
 
-		
-		
-		; ------------------------------------------------------------
-		; Sequenza di uscita dalla funzione
-		; ------------------------------------------------------------
-		
-		popaq						; ripristina i registri generali
-		mov		rsp, rbp			; ripristina lo Stack Pointer
-		pop		rbp				; ripristina il Base Pointer
-		ret						; torna alla funzione C chiamante
+	
+	
+	; ------------------------------------------------------------
+	; Sequenza di uscita dalla funzione
+	; ------------------------------------------------------------
+	
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante
 
-		
-		
+	
+	
 pqnn64_search:
-		; ------------------------------------------------------------
-		; Sequenza di ingresso nella funzione
-		; ------------------------------------------------------------
-		push		rbp				; salva il Base Pointer
-		mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
-		pushaq						; salva i registri generali
+	; ------------------------------------------------------------
+	; Sequenza di ingresso nella funzione
+	; ------------------------------------------------------------
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
 
-		; ------------------------------------------------------------
-		; I paramentri sono passati nei registri
-		; ------------------------------------------------------------
-		; rdi = indirizzo della struct input
-		
+	; ------------------------------------------------------------
+	; I paramentri sono passati nei registri
+	; ------------------------------------------------------------
+	; rdi = indirizzo della struct input
+	
 
-		
-		
-		; ------------------------------------------------------------
-		; Sequenza di uscita dalla funzione
-		; ------------------------------------------------------------
-		
-		popaq						; ripristina i registri generali
-		mov		rsp, rbp			; ripristina lo Stack Pointer
-		pop		rbp				; ripristina il Base Pointer
-		ret						; torna alla funzione C chiamante
-		
+	
+	
+	; ------------------------------------------------------------
+	; Sequenza di uscita dalla funzione
+	; ------------------------------------------------------------
+	
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante
+	

@@ -1,4 +1,4 @@
-;%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 
 
@@ -9,7 +9,7 @@ c2		equ		12
 dim		equ		16
 dist    equ     20
 
-p		equ		4
+p		equ		8
 UNROLL		equ		4
 BLOCKSIZE	equ		32
 

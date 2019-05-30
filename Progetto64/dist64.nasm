@@ -1,4 +1,4 @@
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data
 

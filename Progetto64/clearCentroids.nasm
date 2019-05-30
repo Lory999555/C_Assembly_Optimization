@@ -1,4 +1,4 @@
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data			; Sezione contenente dati inizializzati
 
@@ -12,7 +12,7 @@ k		equ		16
 dimension		equ		20
 
 dim		equ		4
-p		equ		4
+p		equ		8
 UNROLL		equ		4
 BLOCKSIZE	equ		32
 

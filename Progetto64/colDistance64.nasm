@@ -4,7 +4,7 @@
 ; F. Angiulli
 ;
 
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data			; Sezione contenente dati inizializzati
 
@@ -23,7 +23,7 @@ dimension		equ		28
 n			equ		32
 
 dim		equ		4
-p		equ		4
+p		equ		8
 UNROLL		equ		4
 BLOCKSIZE	equ		32
 

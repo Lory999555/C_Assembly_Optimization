@@ -1,14 +1,14 @@
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data
 i equ 8
 j equ 12
 n equ 16
 
-align 16
+
 indice equ 20
 
-align 16
+
 index equ 24
 
 section .bss

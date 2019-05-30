@@ -1,4 +1,4 @@
-global residual_nasm
+%include "sseutils64.nasm"
 
 res			equ		8
 ds			equ		12
@@ -13,6 +13,9 @@ section .bss			; Sezione contenente dati non inizializzati
 
 section .text			; Sezione contenente il codice macchina
 		
+
+global residual_nasm
+
 residual_nasm:
 	push		ebp							; salva il Base Pointer
 	mov			ebp, esp					; il Base Pointer punta al Record di Attivazione corrente
