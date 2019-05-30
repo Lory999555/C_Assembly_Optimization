@@ -13,8 +13,6 @@ result      equ 28
 
 dim         equ 4
 
-inizio:     dd  1.0, 1.0, 1.0, 1.0
-
 section .bss            ; Sezione contenente dati non inizializzati
 
 section .text			; Sezione contenente il codice macchina

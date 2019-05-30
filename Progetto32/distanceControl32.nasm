@@ -43,7 +43,7 @@ distanceControl32:
 
 		
 
-fork:		
+fork2:		
 		;printregps xmm7
 		mov 		esi,[ebp+distance]		;distance
 		
@@ -144,7 +144,7 @@ if3:
 fine:
 		add			ecx, dim*p		; k+=p
 		cmp			ecx, p*UNROLL*dim		; (k < dimension) ?
-		jb			fork
+		jb			fork2
 		
 		pop	edi									; ripristina i registri da preservare
 		pop	esi
