@@ -461,19 +461,19 @@ extern void rowDistance64Sdc(float* c,float* distance,int i,int j,int j_d,int k,
 extern void colDistance64Sing(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void colDistance64U(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void colDistance64A(float * ds,float* c,float* distance,int i,int j,int d,int n);
-extern void colDistance64Block(float * ds,float* c,float* distance,int i,int j,int d,int n,int b);
+//extern void colDistance64Block(float * ds,float* c,float* distance,int i,int j,int d,int n,int b);
 extern void	colDistance64OptimizedU(float* data,float* centroids,float* distance,int i,int j,int d,int n);
 extern void	colDistance64OptimizedA(float* data,float* centroids,float* distance,int i,int j,int d,int n);
 extern void distanceControl64Sing(float * distance,float * min_distance,int *labels,int j,int i);
 extern void distanceControl64(float * distance,float * min_distance,int *labels,int j,int i);
-extern void distanceControl64Block(float * distance,float * min_distance,int *labels,int j,int i);
+//extern void distanceControl64Block(float * distance,float * min_distance,int *labels,int j,int i);
 extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 extern void clearCentroids(float* counts,float* c1,int k,int d);
 extern void assignValue(float* list,float value,int i);
 extern void extr_col(float* ds, int n, int d, int nr, int divi, float* result);
 extern void dist64(float * x,float * y,float* distance, int d);
-extern void mapping64(int i, int j, int n, int * indice, int index);
-extern void cent_X(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
+//extern void mapping64(int i, int j, int n, int * indice, int index);
+//extern void cent_X(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
@@ -552,20 +552,20 @@ MATRIX Uj_x(MATRIX qs, int j,int m,int n,int d){
 	}
 	return uj;
 }
-
+/*
 float dist(float * x,float * y, int d){
 	float distance = 0;
 	//float distance2=0;
-	dist32(x,y,&distance,d);
+	dist64(x,y,&distance,d);
 	/*
 	for (int i=0; i<d;i++){
 	    distance += pow(x[i] - y[i], 2);
 	}
-	*/
+	
 	//printf("C: %f, nasm: %f \n",distance2,distance);
 	return distance;
 }
-
+*/
 int centX(float * centroids, float * x, int k, int d){	
 	/*float dis;
 	int park = 0;
@@ -2077,7 +2077,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
 		//printf("la distanza max della struttura è = %f\n",max);
 		tmp = 0;
-		dist32(x, &centroids[i*d], &tmp, d);
+		dist64(x, &centroids[i*d], &tmp, d);
 		//tmp=dist(x,&centroids[i*d],d);
 		/*for (int j=0; j<d;j++){
 			tmp += pow(x[j] - centroids[i*d+j], 2);

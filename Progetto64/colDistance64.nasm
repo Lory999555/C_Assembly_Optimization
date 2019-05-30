@@ -4,7 +4,7 @@
 ; F. Angiulli
 ;
 
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data			; Sezione contenente dati inizializzati
 
@@ -23,7 +23,7 @@ dimension		equ		28
 n			equ		32
 
 dim		equ		4
-p		equ		4
+p		equ		8
 UNROLL		equ		4
 BLOCKSIZE	equ		32
 
@@ -33,16 +33,15 @@ section .bss			; Sezione contenente dati non inizializzati
 
 section .text			; Sezione contenente il codice macchina
 
-global	colDistance32A
-global	colDistance32U
+global	colDistance64A
+global	colDistance64U
 
-colDistance32A:
+colDistance64A:
 
-	push		ebp							; salva il Base Pointer
-	mov			ebp, esp					; il Base Pointer punta al Record di Attivazione corrente
-	push		ebx							; salva i registri da preservare
-	push		esi
-	push		edi
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
+
 
 	mov		eax, [ebp+starti]	; i = starti
 	imul	eax, dim		; i= i*4
@@ -97,21 +96,18 @@ fork3:
 	movaps		[esi], xmm2	; dist[i..i+p-1]  = distance[i..i+p-1] 
 	;printregps		xmm2
 
-	pop	edi									; ripristina i registri da preservare
-	pop	esi
-	pop	ebx
-	mov	esp, ebp							; ripristina lo Stack Pointer
-	pop	ebp									; ripristina il Base Pointer
-	ret										; torna alla funzione C chiamante
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante
 
 
-colDistance32U:
 
-	push		ebp							; salva il Base Pointer
-	mov			ebp, esp					; il Base Pointer punta al Record di Attivazione corrente
-	push		ebx							; salva i registri da preservare
-	push		esi
-	push		edi
+colDistance64U:
+
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
 
 	mov		eax, [ebp+starti]	; i = starti
 	imul	eax, dim		; i= i*4
@@ -166,9 +162,7 @@ forkk3:
 	movaps		[esi], xmm2	; dist[i..i+p-1]  = distance[i..i+p-1] 
 	;printregps		xmm2
 
-	pop	edi									; ripristina i registri da preservare
-	pop	esi
-	pop	ebx
-	mov	esp, ebp							; ripristina lo Stack Pointer
-	pop	ebp									; ripristina il Base Pointer
-	ret										; torna alla funzione C chiamante
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante

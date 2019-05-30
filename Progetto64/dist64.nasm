@@ -1,4 +1,4 @@
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data
 
@@ -20,10 +20,12 @@ section .bss
 
 section .text
 
-global dist32
+global dist64
 
-dist32:
-    start
+dist64:
+    push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
 
     mov eax,[ebp+x]
     mov ebx,[ebp+y]

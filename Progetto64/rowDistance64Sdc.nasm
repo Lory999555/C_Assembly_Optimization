@@ -1,4 +1,4 @@
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data
 	
@@ -24,7 +24,10 @@ global rowDistance32Sdc
 
 rowDistance32Sdc:
 
-    start
+    push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
+    
     mov ecx,[ebp+c]
     mov eax,[ebp+k]
     mov edi,[ebp+subb]
