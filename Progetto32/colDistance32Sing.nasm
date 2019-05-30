@@ -8,13 +8,13 @@
 
 section .data			; Sezione contenente dati inizializzati
 
-align 16
+
 dataset		equ		8
 
-align 16
+
 c		equ		12
 
-align 16
+
 distance		equ		16
 
 starti		equ		20

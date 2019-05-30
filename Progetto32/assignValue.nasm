@@ -2,7 +2,7 @@
 
 section .data			; Sezione contenente dati inizializzati
 
-align 16
+
 list		equ		8
 
 value       equ		12
