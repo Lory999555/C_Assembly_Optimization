@@ -62,7 +62,7 @@ forj11:
 	mov			edi,edx		;d
 	imul		edi, ebx		; 4*i*d
 	add			esi, edi		;centroids_1 + 4*i*d
-	movaps      [ecx+esi],xmm1      ;centroids_1 + 4*i*d + 4*j <- 0;
+	movups      [ecx+esi],xmm1      ;centroids_1 + 4*i*d + 4*j <- 0;
 	;printreg	esi
 	;printreg	ecx 
 
