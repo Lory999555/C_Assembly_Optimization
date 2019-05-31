@@ -21,7 +21,6 @@ BLOCKSIZE	equ		32
 
 
 
-zero:		dd		0.0
 
 ;align 16
 ;uno:		dd		1.0, 1.0, 1.0, 1.0
@@ -41,72 +40,76 @@ updateCentroid:
 	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
 	pushaq						; salva i registri generali
 
-	mov     eax,[ebp+k]     ;k
-	imul	eax,dim			;k*4
+	;mov     rcx,[rbp+k]     ;k
+	imul	rcx,dim			;k*4
 
-	mov 	edx,[ebp+dimension]		;d
+	;mov 	r8,[rbp+dimension]		;d
 		
-	;xorps 	xmm7,xmm7
+	vxorps 	ymm15,ymm15
 	;xorps 	xmm6,xmm6
 
 
-	mov		ebx, 0			; i = 0
+	mov		rbx, 0			; i = 0
 fori:		
-	mov		ecx, 0			; j = 0
+	mov		r13, 0			; j = 0
 forj:		
-	;attenzione ad esi che viene usato dopo quindi se lo si modifica potrebbe non funzionare
-	mov         esi,[ebp+counts]    ;counts
-	movss		xmm1,[esi+ebx]		;counts + i*4
-	comiss      xmm1,[zero]           ; counts + i*4 != 0
+	;attenzione ad r11 che viene usato dopo quindi se lo si modifica potrebbe non funzionare
+	;mov         r11,[rbp+counts]    ;counts
+
+	vmovss		xmm1,[rdx+rbx]		;counts + i*4
+	vcomiss     xmm1,xmm15          ; counts + i*4 != 0
 	jz         else
 
 	;printregps	xmm7
 	;addps		xmm7,[uno]
 
-	;movss       xmm1,[esi+ebx]      ;espando il counts[i] su xmm1
-	;movss       xmm1,[esi+ebx]
-	shufps      xmm1,xmm1,0   ;counts[i] ripetuto 4 volte
+	;movss       xmm1,[r11+rbx]      ;espando il counts[i] su xmm1
+	;movss       xmm1,[r11+rbx]
+	vbroadcastss ymm1,[rdx+rbx]   ;counts[i] ripetuto 8 volte
 	;printregps	xmm1
 	
-	mov 		esi,[ebp+centroids_1]		;centroids_1
-	mov			edi,edx		;d
-	imul		edi, ebx		; 4*i*d
-	add			esi, edi		;centroids_1 + 4*i*d
-	movaps      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
+	;mov 		r11,[rbp+centroids_1]		;centroids_1
+	mov 		r11,rsi		;centroids_1
+	mov			r10,r8		;d
+	imul		r10, rbx		; 4*i*d
+	add			r11, r10		;centroids_1 + 4*i*d
+	vmovaps      ymm0,[r13+r11]      ;centroids_1 + 4*i*d + 4*j. prendo 8 elementi (e dimensioni)
 
-	divps       xmm0,xmm1       ;c1[i*d+j..i+*d+j+p-1]/counts[i]
+	vdivps       ymm0,ymm1       ;c1[i*d+j..i+*d+j+p-1]/counts[i]
 	;addps		xmm6,[uno]
 	;printregps	xmm6
 
-	mov         esi,[ebp+centroids]         ;centroids
-	add         esi,edi         ;centroids + 4*i*d
-	movaps		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j <- xmm0
+	;mov         r11,[rbp+centroids]         ;centroids
+	mov         r11,rdi         ;centroids
+	add         r11,r10         ;centroids + 4*i*d
+	vmovaps		[r13+r11], ymm0	        ; centroids + 4*i*d + 4*j <- xmm0
 	jmp iter
 else:
 	;printregps	xmm6
 	;addps		xmm6,[due]
 
-	mov 		esi,[ebp+centroids_1]		;centroids_1
-	mov			edi,edx		;d
-	imul		edi, ebx		; 4*i*d
-	add			esi, edi		;centroids_1 + 4*i*d
-	movaps      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
+	;mov 		r11,[rbp+centroids_1]		;centroids_1
+	mov 		r11,rsi		;centroids_1
+	mov			r10,r8		;d
+	imul		r10, rbx		; 4*i*d
+	add			r11, r10		;centroids_1 + 4*i*d
+	vmovaps      ymm0,[r13+r11]      ;centroids_1 + 4*i*d + 4*j. prendo 8 elementi (e dimensioni)
 
 
-	mov         esi,[ebp+centroids]         ;centroids
-	add         esi,edi         ;centroids + 4*i*d
-	movaps		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j = xmm0
+	mov         r11,rdi         ;centroids
+	add         r11,r10         ;centroids + 4*i*d
+	vmovaps		[r13+r11], ymm0	        ; centroids + 4*i*d + 4*j = xmm0
 
 iter:
-	mov 	esi,edx			;d
-	imul	esi,dim			;d*4
+	mov 	r11,r8			;d
+	imul	r11,dim			;d*4
 
-	add		ecx, dim*p		; j+=p
-	cmp		ecx, esi		; (j < d) ?
+	add		r13, dim*p		; j+=p
+	cmp		r13, r11		; (j < d) ?
 	jb		forj
 	
-	add		ebx, dim		; i ++
-	cmp		ebx, eax		; (i < k) ?
+	add		rbx, dim		; i ++
+	cmp		rbx, rcx		; (i < k) ?
 	jb		fori
 
 	popaq						; ripristina i registri generali

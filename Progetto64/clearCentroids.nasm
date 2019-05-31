@@ -3,25 +3,6 @@
 section .data			; Sezione contenente dati inizializzati
 
 
-counts		equ		8
-
-
-centroids_1		equ		12
-
-k		equ		16
-dimension		equ		20
-
-dim		equ		4
-p		equ		8
-UNROLL		equ		4
-BLOCKSIZE	equ		32
-
-
-zero:		dd		0.0
-
-align 16
-zero_v:     dd      0.0,0.0,0.0,0.0
-
 
 ;align 16
 ;uno:		dd		1.0, 1.0, 1.0, 1.0
@@ -41,39 +22,39 @@ clearCentroids:
 	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
 	pushaq						; salva i registri generali
 
-	mov     eax,[ebp+k]     ;k
-	imul	eax,dim			;k*4
+	;mov     	rax,[rbp+k]     ;k
+	imul		rdx,4			;k*4
 
-	mov 	edx,[ebp+dimension]		;d
+	;mov 		r12,[rbp+dimension]		;d
 		
 	;xorps 	xmm7,xmm7
 	;xorps 	xmm6,xmm6
-	movss   xmm0,[zero]
-	movaps   xmm1,[zero_v]
+	vxorps  	ymm0,ymm0
+	vxorps   	ymm1,ymm1
 
 
-	mov		ebx, 0			; i = 0
+	mov			rbx, 0			; i = 0
 fori:		
-	mov     esi,[ebp+counts]
-	movss   [ebx+esi],xmm0
-	mov		ecx, 0			; j = 0
-forj:		
+	;mov     	r11,[rbp+counts]
+	vmovss   	[rbx+rdi],xmm0
+	mov			r13, 0			; j = 0
+forjclear:		
 
-	mov 		esi,[ebp+centroids_1]		;centroids_1
-	mov			edi,edx		;d
-	imul		edi, ebx		; 4*i*d
-	add			esi, edi		;centroids_1 + 4*i*d
-	movaps      [ecx+esi],xmm1      ;centroids_1 + 4*i*d + 4*j <- 0;
+	;mov 		r11,[rbp+centroids_1]		;centroids_1
+	mov			r10,rcx		;d
+	imul		r10, rbx		; 4*i*d
+	add			r10,rsi		;centroids_1 + 4*i*d
+	vmovaps      [r13+r10],ymm1      ;centroids_1 + 4*i*d + 4*j <- 0;
 
-	mov 	esi,edx			;d
-	imul	esi,dim			;d*4
+	mov 	r11,rcx			;d
+	imul	r11,4			;d*4
 
-	add		ecx, dim*p		; j+=p
-	cmp		ecx, esi		; (j < d) ?
-	jb		forj
+	add		r13, 32		; j+=p
+	cmp		r13, r11		; (j < d) ?
+	jb		forjclear
 	
-	add		ebx, dim		; i ++
-	cmp		ebx, eax		; (i < k) ?
+	add		rbx, 4		; i ++
+	cmp		rbx, rdx		; (i < k) ?
 	jb		fori
 
 	popaq						; ripristina i registri generali

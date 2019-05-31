@@ -20,9 +20,9 @@ section .bss
     
 section .text
 
-global rowDistance32Sdc
+global rowDistance64Sdc
 
-rowDistance32Sdc:
+rowDistance64Sdc:
 
     push		rbp				; salva il Base Pointer
 	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente

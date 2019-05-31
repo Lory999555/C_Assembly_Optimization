@@ -552,7 +552,7 @@ MATRIX Uj_x(MATRIX qs, int j,int m,int n,int d){
 	//}
 	return uj;
 }
-
+/*
 float dist(float * x,float * y, int d){
 	float distance = 0;
 	//d=11;
@@ -564,8 +564,10 @@ float dist(float * x,float * y, int d){
 	}
 	
 	printf("C: %f, nasm: %f \n",distance2,distance);
-	*/return distance;
+	return distance;
 }
+*/
+
 /*int centX_A(float * centroids, float * x, int k, int d){	
 	//printf("eicionvilrwnviorwnivnrwiovniorwnviorwnvlrwnvinrwoinviorwnvirw");
 	/*float dis;
@@ -687,13 +689,13 @@ int centXU(float * centroids, float * x, int k, int d){
 	}
 	return initialCentroid;
 }**/
-
+/*
 //non lo usiamo più
 int mapping(int i,int j,int n, int index){
 	/*int indice = 0;
 	mapping32(i,j,n,&indice, index);
-	return indice;*/
-
+	return indice;
+	//
 
 	if(i == j ){
 		return -1;
@@ -709,7 +711,7 @@ int mapping(int i,int j,int n, int index){
 	//si può ottimizzare salvando una variabile dim
 	//che cmq serve anche per allocare le matrici
 	
-}
+}*/
 
 /*
 void interClusterCalc(float* MCD, float* centroids,float* stored_distance,int n,int d,int k){
@@ -2429,7 +2431,6 @@ float* pre_adcA(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
-			distance2=0;
 			//rowDistance32Adc(centroids,uj_x,&distance,i,j,k,sub);
 			rowDistance32AdcA(centroids,uj_x,&distance,i,j,k,sub);
 			//printf("_________________________________%d\n",sub);	
@@ -2471,7 +2472,6 @@ float* pre_adcU(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
-			distance2=0;
 			//rowDistance32Adc(centroids,uj_x,&distance,i,j,k,sub);
 			rowDistance32AdcU(centroids,uj_x,&distance,i,j,k,sub);
 			//printf("_________________________________%d\n",sub);	
@@ -3828,9 +3828,9 @@ int main(int argc, char** argv) {
 	input->m = 8;
 	input->k = 256;
 	//input->kc = 8192;
-	input->kc = 128;
+	input->kc = 256;
 	//input->w = 16;
-	input->w=4;
+	input->w=16;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -3989,7 +3989,7 @@ int main(int argc, char** argv) {
 	input->qs = load_data_row_p(fname, &input->nq, &input->d, 2000,128);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 	
-	input->nq=input->nq/2;
+	//input->nq=input->nq/2;
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
