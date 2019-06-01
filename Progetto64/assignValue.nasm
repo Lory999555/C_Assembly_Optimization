@@ -41,9 +41,9 @@ fori:
         ;mov         edi,[rbp+list]      ;list
 
         vmovaps      [rax+rdi],ymm0      ;list + i*4 <- value
-
-		add			rax,dim*p			;i + p
-		cmp			rax,rbx				; i < n
+		;printregyps	ymm0
+		add			rax,32			;i + p
+		cmp			rax,rdx				; i < n
 		jb			fori
 
 		popaq						; ripristina i registri generali

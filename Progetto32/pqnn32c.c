@@ -401,6 +401,7 @@ void printVector(int * v,int n){
 	for(i=0;i<n;i++){
 		printf("v[%d] = %d\n",i,v[i]);
 	}
+	printf("\n");
 }
 
 void printVectorfloat(float * v,int n){
@@ -408,6 +409,7 @@ void printVectorfloat(float * v,int n){
 	for(i=0;i<n;i++){
 		printf("\nv[%d] = %f",i,v[i]);
 	}
+	printf("\n");
 }
 
 //print per testare il metodo Uj
@@ -839,8 +841,8 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//colDistance32Optimized(data,centroids,&distance[size],i,j+1,d,n);
 				//colDistance32Optimized(data,centroids,&distance[size*2],i,j+2,d,n);
 				//colDistance32Optimized(data,centroids,&distance[size*3],i,j+3,d,n);
-				printf("\n-----DISTANCEOPT---------------%d----------------------\n",j);
-				printVectorfloat(distance,size);
+				//printf("\n-----DISTANCEOPT---------------%d----------------------\n",j);
+				//printVectorfloat(distance,size);
 				/*
 				colDistance32(data,centroids,distance,i,j,d,n);
 				colDistance32(data,centroids,&distance[p],i+p,j,d,n);
@@ -864,8 +866,8 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//distanceControl32(&distance[size*3],min_distance,labels,j+3,i);
 				//distanceControl32Block(distance,min_distance,labels,j,i);
 
-				printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
-				printVectorfloat(min_distance,size);
+				//printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
+				//printVectorfloat(min_distance,size);
 
 
 
@@ -1268,8 +1270,8 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//colDistance32Optimized(data,centroids,&distance[size],i,j+1,d,n);
 				//colDistance32Optimized(data,centroids,&distance[size*2],i,j+2,d,n);
 				//colDistance32Optimized(data,centroids,&distance[size*3],i,j+3,d,n);
-				printf("\n-----DISTANCEOPT---------------%d----------------------\n",j);
-				printVectorfloat(distance,size);
+				//printf("\n-----DISTANCEOPT---------------%d----------------------\n",j);
+				//printVectorfloat(distance,size);
 				/*
 				colDistance32(data,centroids,distance,i,j,d,n);
 				colDistance32(data,centroids,&distance[p],i+p,j,d,n);
@@ -1293,8 +1295,8 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//distanceControl32(&distance[size*3],min_distance,labels,j+3,i);
 				//distanceControl32Block(distance,min_distance,labels,j,i);
 
-				printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
-				printVectorfloat(min_distance,size);
+				//printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
+				//printVectorfloat(min_distance,size);
 
 
 

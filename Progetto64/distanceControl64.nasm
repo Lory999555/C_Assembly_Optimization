@@ -46,18 +46,31 @@ fork2:
 	
 
 	vmovaps			ymm0, [r13+rdi]	; distance[k..k+7]
+	vmovaps			ymm1, [r13+rsi]			; min_distance[k..k+7]
 	;printregps  xmm0
-	vextractf128	xmm4,ymm0,1
+	
+	;printregyps	ymm1
 
 
 
 	;mov 		r11,[rbp+min_distance]		
 
-	vmovaps			ymm1, [r13+rsi]			; min_distance[k..k+7]
+	
+
 	;printregps	xmm1
-	vmovaps			ymm2,ymm0		;sarà la maschera
-	vcmpnltps		ymm2,ymm1		;>= in modo da farmi dare 0 dove mi serve
+	;vmovaps			ymm2,ymm0		;sarà la maschera
+	;vxorps			ymm2,ymm2
+	vcmpnltps		ymm2,ymm0,ymm1		;>= in modo da farmi dare 0 dove mi serve
+
+	vextractf128	xmm4,ymm0,1
 	vextractf128	xmm3,ymm2,1
+
+	;printregyps	ymm0
+	;printregyps	ymm4
+	;printregyps	ymm1
+	;printregyps	ymm2
+	;printregyps	ymm3
+	
 
 
 	extractps	rax,xmm2,0
@@ -70,11 +83,12 @@ fork2:
 	;mov 		rax,[rbp+label]		
 	;mov		rax,[r10]		;label
 	;mov		r10,[rbp+j]			;j
-	mov 		[rdx+r11],rcx		;label[i+k]=j
+	mov 		[rdx+r11],ecx		;label[i+k]=j
 	extractps	rax,xmm0,0			;
+	;printregyps	ymm0
 
 	;mov			r10,[rbp+min_distance]		;min_distance
-	mov			[rsi+r13],rax				;min_distance+4+k*4
+	mov			[rsi+r13],eax				;min_distance+4+k*4
 
 if1:
 
@@ -92,13 +106,13 @@ if1:
 	;mov			r10,[rbp+j]			;j
 	;printregps	xmm2
 	add			r11,dim			;(i+k+1)*4
-	mov 		[rdx+r11],rcx		
+	mov 		[rdx+r11],ecx		
 	extractps	rax,xmm0,1		
 	;printregps	xmm2
 		
 	;mov			r10,[rbp+min_distance]		;min_distance
 	;add			r10,dim						;min_distance+4
-	mov			[rsi+4+r13],rax				;min_distance+4+k*4
+	mov			[rsi+4+r13],eax				;min_distance+4+k*4
 	;printregps	xmm2
 
 
@@ -116,12 +130,12 @@ if2:
 	;mov			rax,[r10]		;label
 	;mov			r10,[rbp+j]			;j
 	add			r11,dim*2				;(i+k+2)*4
-	mov 		[rdx+r11],rcx		
+	mov 		[rdx+r11],ecx		
 	extractps	rax,xmm0,2		
 
 	;mov			r10,[rbp+min_distance]
 	;add			r10,dim*2				;min_distance + (i+k+2)*4
-	mov			[rsi+8+r13],rax
+	mov			[rsi+8+r13],eax
 
 if3:
 	extractps	rax,xmm2,3
@@ -136,12 +150,12 @@ if3:
 	;mov			r10,[rbp+j]			;j
 
 	add			r11,dim*3				;(i+k+2)*4
-	mov 		[rdx+r11],rcx		
+	mov 		[rdx+r11],ecx		
 	extractps	rax,xmm0,3	
 
 	;mov			r10,[rbp+min_distance]
 	;add			r10,dim*3				;min_distance + (i+k+2)*4
-	mov			[rsi+12+r13],rax
+	mov			[rsi+12+r13],eax
 
 if4:
 
@@ -156,11 +170,11 @@ if4:
 	;mov		rax,[r10]		;label
 	;mov		r10,[rbp+j]			;j
 	add			r11,dim*4				;(i+k+4)*4
-	mov 		[rdx+r11],rcx		;label[i+k]=j
+	mov 		[rdx+r11],ecx		;label[i+k]=j
 	extractps	rax,xmm4,0			;
 
 	;mov			r10,[rbp+min_distance]		;min_distance
-	mov			[rsi+16+r13],rax				;min_distance+4+k*4
+	mov			[rsi+16+r13],eax				;min_distance+4+k*4
 
 if5:
 
@@ -178,13 +192,13 @@ if5:
 	;mov			r10,[rbp+j]			;j
 	;printregps	xmm2
 	add			r11,dim*5			;(i+k+1)*4
-	mov 		[rdx+r11],rcx		
+	mov 		[rdx+r11],ecx		
 	extractps	rax,xmm4,1		
 	;printregps	xmm2
 		
 	;mov			r10,[rbp+min_distance]		;min_distance
 	;add			r10,dim						;min_distance+4
-	mov			[rsi+20+r13],rax				;min_distance+4+k*4
+	mov			[rsi+20+r13],eax				;min_distance+4+k*4
 	;printregps	xmm2
 
 
@@ -202,12 +216,12 @@ if6:
 	;mov			rax,[r10]		;label
 	;mov			r10,[rbp+j]			;j
 	add			r11,dim*6				;(i+k+2)*4
-	mov 		[rdx+r11],rcx		
+	mov 		[rdx+r11],ecx		
 	extractps	rax,xmm4,2		
 
 	;mov			r10,[rbp+min_distance]
 	;add			r10,dim*2				;min_distance + (i+k+2)*4
-	mov			[rsi+24+r13],rax
+	mov			[rsi+24+r13],eax
 
 if7:
 	extractps	rax,xmm3,3
@@ -221,12 +235,13 @@ if7:
 	;mov			rax,[r10]		;label
 	;mov			r10,[rbp+j]			;j
 	add			r11,dim*7				;(i+k+2)*4
-	mov 		[rdx+r11],rcx		
+	mov 		[rdx+r11],ecx		
 	extractps	rax,xmm4,3	
+
 
 	;mov			r10,[rbp+min_distance]
 	;add			r10,dim*3				;min_distance + (i+k+2)*4
-	mov			[rsi+28+r13],rax
+	mov			[rsi+28+r13],eax
 	
 fine:
 	add			r13, 32		; k+=p
