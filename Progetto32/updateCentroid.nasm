@@ -74,7 +74,7 @@ forjj:
 		mov			edi,edx		;d
 		imul		edi, ebx		; 4*i*d
 		add			esi, edi		;centroids_1 + 4*i*d
-        movaps      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
+        movups      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
 
         divps       xmm0,xmm1       ;c1[i*d+j..i+*d+j+p-1]/counts[i]
 		;addps		xmm6,[uno]
@@ -82,7 +82,7 @@ forjj:
 
         mov         esi,[ebp+centroids]         ;centroids
         add         esi,edi         ;centroids + 4*i*d
-		movaps		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j <- xmm0
+		movups		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j <- xmm0
         jmp iter
 else:
 		;printregps	xmm6
@@ -92,12 +92,12 @@ else:
 		mov			edi,edx		;d
 		imul		edi, ebx		; 4*i*d
 		add			esi, edi		;centroids_1 + 4*i*d
-        movaps      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
+        movups      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
 
 
         mov         esi,[ebp+centroids]         ;centroids
         add         esi,edi         ;centroids + 4*i*d
-        movaps		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j = xmm0
+        movups		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j = xmm0
 
 iter:
 		mov 	esi,edx			;d

@@ -29,7 +29,8 @@ section .data
             ;printreg eax
             ;printreg ebx
             printreg edx
-            ;printreg ecx
+            mov esi, [edx]
+            printreg esi
             push    eax
             push    ebx
             push    edx
@@ -39,8 +40,9 @@ section .data
             pop     edx
             pop     ebx
             pop     eax
-            printreg edx
-            printreg [edx]
+            mov esi, [edx]
+            printreg esi
+            printreg [ecx]
             mov     edx, [ebp+dis]
             xorps   xmm2, xmm2
             movss   xmm2, [edx]
@@ -55,60 +57,7 @@ section .data
             mov     ecx, [ebp+tmp]  ;tmp
             mov     edx, [ebp+ddd]
             ;mov esi, [ecx]
-            printreg [ecx]
-            ;printreg eax
-            ;printreg ebx
-            ;printreg ecx
-            ;printreg edx
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            call    dist32
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
-           ; mov esi, [ecx]
-            printreg ecx
-            printreg [ecx]
-
-            mov     esi, [ebp+cent]
-            mov     edx, edi
-            add     edx, 1
-            imul     edx, [ebp+ddd]
-            imul     edx, dim1
-            add     esi, edx
-            mov     ebx, esi ;cent[0]
-            mov     ecx, [ebp+tmp+4]
-            mov     edx, [ebp+ddd]
-            ;mov esi, [ecx]
-            printreg [ecx]
-            ;printreg eax
-            ;printreg ebx
-            ;printreg ecx
-            ;printreg edx
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            call    dist32
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
-            ;mov esi, [ecx]
-            printreg [ecx]
-
-            mov     esi, [ebp+cent]
-            mov     edx, edi
-            add     edx, 2
-            imul     edx, [ebp+ddd]
-            imul     edx, dim1
-            add     esi, edx
-            mov     ebx, esi ;cent[0]
-            mov     ecx, [ebp+tmp+8]
-            mov     edx, [ebp+ddd]
+            ;printreg esi
             ;printreg eax
             ;printreg ebx
             ;printreg ecx
@@ -123,57 +72,11 @@ section .data
             pop     ebx
             pop     eax
 
-            mov     esi, [ebp+cent]
-            mov     edx, edi
-            add     edx, 3
-            imul     edx, [ebp+ddd]
-            imul     edx, dim1
-            add     esi, edx
-            mov     ebx, esi ;cent[0]
-            mov     ecx, [ebp+tmp+12]
-            mov     edx, [ebp+ddd]
-            ;printreg eax
-            ;printreg ebx
-            ;printreg ecx
-            ;printreg edx
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            ;printreg    edi
-            call    dist32
-            ;printreg    edi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+            mov esi, [ecx]
+            ;printreg esi
+            ;printreg [ecx]
 
-            mov     ecx, [ebp+tmp]
             xorps   xmm1, xmm1
-            movss   xmm1, [ecx]
-            comiss  xmm1, xmm2
-            jge      avanti
-            movss   xmm2, xmm1
-            mov     esi, [ebp+park]
-            mov     [esi], edi
-        avanti:
-            mov     ecx, [ebp+tmp+4]
-            movss   xmm1, [ecx]
-            comiss  xmm1, xmm2
-            jge      avanti2
-            movss   xmm2, xmm1
-            mov     esi, [ebp+park]
-            mov     [esi], edi
-        avanti2:
-            mov     ecx, [ebp+tmp+8]
-            movss   xmm1, [ecx]
-            comiss  xmm1, xmm2
-            jge      avanti3
-            movss   xmm2, xmm1
-            mov     esi, [ebp+park]
-            mov     [esi], edi
-        avanti3:
-            mov     ecx, [ebp+tmp+12]
             movss   xmm1, [ecx]
             comiss  xmm1, xmm2
             jge      avanti4
@@ -181,7 +84,7 @@ section .data
             mov     esi, [ebp+park]
             mov     [esi], edi
         avanti4:
-            add     edi,4 ;;;;;;;;;;;;;;;;;;farlo generale con unroll
+            add     edi,1 ;;;;;;;;;;;;;;;;;;farlo generale con unroll
             mov     esi, [ebp+k]
             cmp      edi, esi
             jb      fori
@@ -210,7 +113,7 @@ dist32:
         mov eax,[ebp+distance]
         mov ebx,[ebp+dddd]
         ;printreg ebx
-        ;printreg eax
+        printreg eax
         mov eax,[ebp+x]
         mov ebx,[ebp+y]
         ;printreg ebx
@@ -258,8 +161,9 @@ dist32:
         ;printreg edx
         
         movss   [edx],xmm1        ;carico il nuovo valore di distance
-        printreg edx
         printregps xmm1
+        printreg edx
+        printreg [edx]
         ;pop     esi
         pop     edi
         pop     ebp
