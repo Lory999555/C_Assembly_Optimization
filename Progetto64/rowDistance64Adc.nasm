@@ -8,7 +8,6 @@ c		equ		8
 
 x   equ     12
 
-
 distance		equ		16
 
 i		equ		20

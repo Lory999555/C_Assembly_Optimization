@@ -10,11 +10,7 @@ section .data			; Sezione contenente dati inizializzati
 
 
 dataset		equ		8
-
-
 c		equ		12
-
-
 distance		equ		16
 
 starti		equ		20
