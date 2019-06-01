@@ -220,7 +220,7 @@ if7:
 	;mov 		rax,[rbp+label]		
 	;mov			rax,[r10]		;label
 	;mov			r10,[rbp+j]			;j
-	add			r11,dim*3				;(i+k+2)*4
+	add			r11,dim*7				;(i+k+2)*4
 	mov 		[rdx+r11],rcx		
 	extractps	rax,xmm4,3	
 

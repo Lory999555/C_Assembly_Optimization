@@ -57,7 +57,7 @@ fork1:
 	mov 		r10,r9		;d
 	imul		r10,r8		; 4*j*d
 	add			r12, r10		; centroids + 4*j*d
-	vmovss		xmm8, [r13+r12]	; C[j][k] = C[4*k+4*j*d]
+	vbroadcastss	ymm8, [r13+r12]	; C[j][k] = C[4*k+4*j*d]
 	
 	mov 		r12,rdi		;dataset
 	mov			r10,r15		;n
@@ -75,7 +75,7 @@ fork1:
 	
 
 
-	vshufps		ymm8, ymm8, 0
+	;vshufps		ymm8, ymm8, 0
 	;printregps  xmm1
 	vsubps		ymm0, ymm8
 	vsubps		ymm1, ymm8
