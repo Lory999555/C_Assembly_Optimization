@@ -69,12 +69,6 @@ fork1:
 	vmovaps		ymm2, [rcx+r12+64]	;
 	vmovaps		ymm3, [rcx+r12+96]	;
 
-
-
-
-	
-
-
 	vshufps		ymm8, ymm8, 0
 	;printregps  xmm1
 	vsubps		ymm0, ymm8

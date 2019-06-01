@@ -26,13 +26,13 @@ br1:	db		'( ',0
 br2:	db		')',10,0
 ;------------roba messa da me-----
 imask:	db		'%d',0
-align 16
+align 32
 xmmtemp: db 0.0, 0.0, 0.0, 0.0
 
 align 32
 ymmtemp: db 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
-fmt: db "content in reg=%f",0xa,0
+fmt:    db "reg=%ld", 10, 0
 ;------------fine roba messa da me---
 
 
@@ -159,7 +159,7 @@ fmt: db "content in reg=%f",0xa,0
 		vpushay
 		mov		rax, 1
 		mov		rdi, dmask
-		cvtss2sd	xmm0, [%1]
+		movss	xmm0, [%1]
 		call		printf
 		vpopay
 		popaq
@@ -305,10 +305,10 @@ fmt: db "content in reg=%f",0xa,0
 
 %macro vprintreg 1
 	pushaq
-	vpush dword %1
-	vpush dword fmt
+	mov rdi, fmt
+	mov rsi, %1
+	mov rax,0
 	call printf
-	vadd rsp,8
 	popaq
 %endmacro
 
