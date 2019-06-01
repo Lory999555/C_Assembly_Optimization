@@ -13,30 +13,22 @@
 /*
  
  Software necessario per l'esecuzione:
-
      NASM (www.nasm.us)
      GCC (gcc.gnu.org)
-
  entrambi sono disponibili come pacchetti software 
  installabili mediante il packaging tool del sistema 
  operativo; per esempio, su Ubuntu, mediante i comandi:
-
      sudo apt-get install nasm
      sudo apt-get install gcc
-
  potrebbe essere necessario installare le seguenti librerie:
-
      sudo apt-get install lib32gcc-4.8-dev (o altra versione)
      sudo apt-get install libc6-dev-i386
-
  Per generare il file eseguibile:
-
  nasm -f ef32 pqnn32.nasm && gcc -O0 -m32 -msse pqnn32.o pqnn32c.c -o pqnn32c && ./pqnn32c
  
  oppure
  
  ./runpqnn32
-
 */
 
 #include <float.h>
@@ -224,7 +216,6 @@ void dealloc_matrix(MATRIX mat) {
 	
 	*n = rows;
 	*d = cols;
-
 	return data;
 }*/
 
@@ -814,7 +805,6 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		for (h = 0; h < n; h++) {  //per ogni punto del ds
 			//identify the closest cluster
 			min_distance = FLT_MAX;//DBL_MAX;
-
 			for (i = 0; i < k; i++) { // per ogni centroide
 				distance = 0;
 				for (j = 0; j < d ; j++){  //per ogni dim
@@ -826,7 +816,6 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 					min_distance = distance;
 				}
 			}
-
 		*/
 		//convertire tutto in nasm
 		//versione nasm
@@ -1657,18 +1646,14 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		clock_t t_1 = clock();
 		for (i = 0; i < k; i++) {
 			for (j = 0; j < d; j++) {
-
-
 				if(counts[i]!=0){
 					c[i*d+j] = c1[i*d+j] / counts[i];
 					//printf("counts[%d]=%d ------ c[%d][%d] =  %f \n",i,counts[i],i,j,c[i*d+j]);
-
 				}else
 				{
 					c[i*d+j] =c1[i*d+j];
 					//printf("NO ---> c[%d][%d] =  %f \n",i,j,c[i*d+j]);
 				}
-
 			}
 		}
 		t_1 = clock() - t_1;
@@ -2086,7 +2071,7 @@ int* productQuantU(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,
  * In questo caso si è scelto di non mantenere ordinata la struttura ma
  * di utilizzare una variabile per mantenere il massimo corrente in modo
  * da utilizzarla come filtro per risparmiare accessi in memoria
- * si cercano di mantenere i nomi utilizzati nell'algortimo w_nearest_centroids
+ * si cercano di mantenere i nomi utilizzati nell'algortimo w_nest_centroids
  * se full == true allora la struttura si comporta come previsto se invece la variabile full
  * è false allora il metodo per,finchè non sarà completamente popoalta, carica la struttura
  * con gli elementi e ritorna il massimo 
@@ -2150,7 +2135,6 @@ w numero di centroidi "vicini" da analizzare*/
 	float * result_dist=alloc_matrix(w,1);
 	float tmp=0;
 	float max=0;
-
 	//riempo i primi w posti con i primi w centroidi e le relative distanze
 	printf("riempo i primi w posti\n");
 	for(i = 0; i < w; i++)
@@ -2165,7 +2149,6 @@ w numero di centroidi "vicini" da analizzare*/
 			max = tmp;
 		}
 	}
-
 	int new_i;
 	float new_max;
 	bool trovato;
@@ -2176,7 +2159,6 @@ w numero di centroidi "vicini" da analizzare*/
 		tmp=dist(x,&centroids[i],d);
 		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
 		//printf("la distanza max della struttura è = %f\n",max);
-
 		if(tmp < max){
 			new_max=tmp;
 			//bisogna inserire ed aggiornare la struttura
@@ -2189,7 +2171,6 @@ w numero di centroidi "vicini" da analizzare*/
 					result_w[j]=i;
 					trovato=true;
 					//printVector(result_w,w);
-
 				}else if (result_dist[j] > new_max)
 				{
 					new_max = result_dist[j];
@@ -2200,7 +2181,6 @@ w numero di centroidi "vicini" da analizzare*/
 			trovato=false;
 			
 		}
-
 	}
 	dealloc_matrix(result_dist);
 	return result_w;
@@ -2233,6 +2213,8 @@ int * w_near_centroidsA(MATRIX x,MATRIX centroids,int n,int d,int w){
 			max = tmp;
 		}
 	}
+	
+	
 
 	int new_i;
 	//	float new_max;
@@ -2571,7 +2553,6 @@ float* pre_sdcU(float* centroids,int sub,int m, int k ){
 			for(j_d = i+1; j_d < k;j_d++){
 				//result[j][c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
 				//result[j*(k*(k-1)/2)+c] = dist(&centroids[j*k*sub+i*sub], &centroids[j*k*sub+j_d*sub],sub);
-
 				
 				distance = 0;
 				rowDistance32Sdc(centroids,&distance,i,j,j_d,k,sub);
@@ -2593,7 +2574,6 @@ float* pre_sdcU(float* centroids,int sub,int m, int k ){
 				c++;
 			}
 		}
-
 		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 	}
 	for(int i=0; i<m; i++){
@@ -3683,7 +3663,7 @@ void pqnn_search(params* input) {
 				//printf("\n query# %d result#%d ",i,k_nn[j]*5);
 				//printVectorfloat(result_dist,input->knn);
 			}
-
+			
 			//pulizia del max_heap (sarebbe buono capire se conviene deallocarli solo alla fine 
 			//oppure ogni volta che dobbiamo "resettarli")
 			dealloc_vector(k_nn);
@@ -4520,6 +4500,7 @@ int main(int argc, char** argv) {
 	input->tmax = 100;
 	input->silent = 0;
 	input->display = 0;
+	input->nr=input->n/20;
 
 	
 
