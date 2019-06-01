@@ -24,15 +24,14 @@ section .bss			; Sezione contenente dati non inizializzati
 
 section .text			; Sezione contenente il codice macchina
 
-global	distanceControl32Block
+global	distanceControl64Block
 
-distanceControl32Block:
+distanceControl64Block:
 
-	push		ebp							; salva il Base Pointer
-	mov			ebp, esp					; il Base Pointer punta al Record di Attivazione corrente
-	push		ebx							; salva i registri da preservare
-	push		esi
-	push		edi
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
+
 
 	mov 	edx,[ebp+i]		;i
 	imul	edx,dim			;i*4
@@ -183,9 +182,7 @@ fine:
 	cmp			ebx,UNROLL*dim
 	jb 			forz
 	
-	pop	edi									; ripristina i registri da preservare
-	pop	esi
-	pop	ebx
-	mov	esp, ebp							; ripristina lo Stack Pointer
-	pop	ebp									; ripristina il Base Pointer
-	ret										; torna alla funzione C chiamante
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante

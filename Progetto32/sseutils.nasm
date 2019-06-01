@@ -28,7 +28,7 @@ br2:	db		')',10,0
 imask:	db		'%d',0
 align 16
 xmmtemp: db 0.0, 0.0, 0.0, 0.0
-fmt: db "content in reg=%d",0xa,0
+fmt: db "content in reg=%f",0xa,0
 
 %macro	start	0
 		push	ebp

@@ -31,6 +31,8 @@ xmmtemp: db 0.0, 0.0, 0.0, 0.0
 
 align 32
 ymmtemp: db 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+
+fmt: db "content in reg=%f",0xa,0
 ;------------fine roba messa da me---
 
 
@@ -300,5 +302,15 @@ ymmtemp: db 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 	vpopx	xmm1
 	vpopx	xmm0
 %endmacro
+
+%macro vprintreg 1
+	pushaq
+	vpush dword %1
+	vpush dword fmt
+	call printf
+	vadd rsp,8
+	popaq
+%endmacro
+
 
 ;------------fine roba messa da me-----

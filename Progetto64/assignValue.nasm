@@ -45,9 +45,7 @@ fori:
 		cmp			eax,ebx				; i < n
 		jb			fori
 
-		pop	        edi									; ripristina i registri da preservare
-		pop	        esi
-		pop	        ebx
-		mov	        esp, ebp							; ripristina lo Stack Pointer
-		pop	        ebp									; ripristina il Base Pointer
-		ret										; torna alla funzione C chiamante
+		popaq						; ripristina i registri generali
+		mov		rsp, rbp			; ripristina lo Stack Pointer
+		pop		rbp				; ripristina il Base Pointer
+		ret						; torna alla funzione C chiamante

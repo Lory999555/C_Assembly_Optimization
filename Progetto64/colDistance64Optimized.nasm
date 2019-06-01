@@ -30,16 +30,15 @@ section .bss			; Sezione contenente dati non inizializzati
 
 section .text			; Sezione contenente il codice macchina
 
-global	colDistance32OptimizedA
-global	colDistance32OptimizedU
+global	colDistance64OptimizedA
+global	colDistance64OptimizedU
 
-colDistance32OptimizedA:
+colDistance64OptimizedA:
 
-	push		ebp							; salva il Base Pointer
-	mov			ebp, esp					; il Base Pointer punta al Record di Attivazione corrente
-	push		ebx							; salva i registri da preservare
-	push		esi
-	push		edi
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
+
 
 	mov		eax, [ebp+starti]	; i = starti
 	imul	eax, dim		; i= i*4
@@ -119,21 +118,18 @@ fork1:
 
 
 	;printregps		xmm2
-	pop	edi									; ripristina i registri da preservare
-	pop	esi
-	pop	ebx
-	mov	esp, ebp							; ripristina lo Stack Pointer
-	pop	ebp									; ripristina il Base Pointer
-	ret										; torna alla funzione C chiamante
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante
 
 
-colDistance32OptimizedU:
 
-	push		ebp							; salva il Base Pointer
-	mov			ebp, esp					; il Base Pointer punta al Record di Attivazione corrente
-	push		ebx							; salva i registri da preservare
-	push		esi
-	push		edi
+colDistance64OptimizedU:
+
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
 
 	mov		eax, [ebp+starti]	; i = starti
 	imul	eax, dim		; i= i*4
@@ -213,9 +209,7 @@ forkk1:
 
 
 	;printregps		xmm2
-	pop	edi									; ripristina i registri da preservare
-	pop	esi
-	pop	ebx
-	mov	esp, ebp							; ripristina lo Stack Pointer
-	pop	ebp									; ripristina il Base Pointer
-	ret										; torna alla funzione C chiamante
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante

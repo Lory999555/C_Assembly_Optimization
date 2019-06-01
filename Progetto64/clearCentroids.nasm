@@ -37,11 +37,9 @@ global	clearCentroids
 
 clearCentroids:
 
-	push		ebp							; salva il Base Pointer
-	mov			ebp, esp					; il Base Pointer punta al Record di Attivazione corrente
-	push		ebx							; salva i registri da preservare
-	push		esi
-	push		edi
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
 
 	mov     eax,[ebp+k]     ;k
 	imul	eax,dim			;k*4
@@ -78,9 +76,7 @@ forj:
 	cmp		ebx, eax		; (i < k) ?
 	jb		fori
 
-	pop	edi									; ripristina i registri da preservare
-	pop	esi
-	pop	ebx
-	mov	esp, ebp							; ripristina lo Stack Pointer
-	pop	ebp									; ripristina il Base Pointer
-	ret										; torna alla funzione C chiamante
+	popaq						; ripristina i registri generali
+	mov		rsp, rbp			; ripristina lo Stack Pointer
+	pop		rbp				; ripristina il Base Pointer
+	ret						; torna alla funzione C chiamante

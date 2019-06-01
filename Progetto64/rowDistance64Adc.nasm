@@ -27,7 +27,10 @@ global rowDistance32Adc
 
 rowDistance32Adc:
 
-    start
+    push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
+    
     mov ecx,[ebp+c]
     mov ebx,[ebp+k]
     mov edi,[ebp+subb]
