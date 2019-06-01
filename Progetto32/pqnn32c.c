@@ -544,7 +544,7 @@ MATRIX Uj_x(MATRIX qs, int j,int m,int n,int d){
 	//}
 	return uj;
 }
-
+/*
 float dist(float * x,float * y, int d){
 	float distance = 0;
 	//d=11;
@@ -556,8 +556,10 @@ float dist(float * x,float * y, int d){
 	}
 	
 	printf("C: %f, nasm: %f \n",distance2,distance);
-	*/return distance;
+	return distance;
 }
+*/
+
 /*int centX_A(float * centroids, float * x, int k, int d){	
 	//printf("eicionvilrwnviorwnivnrwiovniorwnviorwnvlrwnvinrwoinviorwnvirw");
 	/*float dis;
@@ -679,13 +681,13 @@ int centXU(float * centroids, float * x, int k, int d){
 	}
 	return initialCentroid;
 }**/
-
+/*
 //non lo usiamo più
 int mapping(int i,int j,int n, int index){
 	/*int indice = 0;
 	mapping32(i,j,n,&indice, index);
-	return indice;*/
-
+	return indice;
+	//
 
 	if(i == j ){
 		return -1;
@@ -701,7 +703,7 @@ int mapping(int i,int j,int n, int index){
 	//si può ottimizzare salvando una variabile dim
 	//che cmq serve anche per allocare le matrici
 	
-}
+}*/
 
 /*
 void interClusterCalc(float* MCD, float* centroids,float* stored_distance,int n,int d,int k){
@@ -1266,8 +1268,8 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//colDistance32Optimized(data,centroids,&distance[size],i,j+1,d,n);
 				//colDistance32Optimized(data,centroids,&distance[size*2],i,j+2,d,n);
 				//colDistance32Optimized(data,centroids,&distance[size*3],i,j+3,d,n);
-				//printf("\n-----DISTANCEOPT---------------%d----------------------\n",j);
-				//printVectorfloat(distance,size);
+				printf("\n-----DISTANCEOPT---------------%d----------------------\n",j);
+				printVectorfloat(distance,size);
 				/*
 				colDistance32(data,centroids,distance,i,j,d,n);
 				colDistance32(data,centroids,&distance[p],i+p,j,d,n);
@@ -1291,8 +1293,8 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//distanceControl32(&distance[size*3],min_distance,labels,j+3,i);
 				//distanceControl32Block(distance,min_distance,labels,j,i);
 
-				//printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
-				//printVectorfloat(min_distance,size);
+				printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
+				printVectorfloat(min_distance,size);
 
 
 
@@ -2412,7 +2414,6 @@ float* pre_adcA(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
-			distance2=0;
 			//rowDistance32Adc(centroids,uj_x,&distance,i,j,k,sub);
 			rowDistance32AdcA(centroids,uj_x,&distance,i,j,k,sub);
 			//printf("_________________________________%d\n",sub);	
@@ -2454,7 +2455,6 @@ float* pre_adcU(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
-			distance2=0;
 			//rowDistance32Adc(centroids,uj_x,&distance,i,j,k,sub);
 			rowDistance32AdcU(centroids,uj_x,&distance,i,j,k,sub);
 			//printf("_________________________________%d\n",sub);	
@@ -2947,6 +2947,7 @@ void pqnn_index(params* input) {
 		//t00 = clock() - t00;
 		//tot+=t00;
 		//printf("ho calcolato i centroidi (productQuant)\n");
+		printCentroids(centroids,pq,input->n,input->d,input->k);
 	}
 	else if(input->exaustive == 1 && nmod4==false)
 	{
@@ -2956,6 +2957,7 @@ void pqnn_index(params* input) {
 		//t00 = clock() - t00;
 		//tot+=t00;
 		//printf("ho calcolato i centroidi (productQuant)\n");
+		printCentroids(centroids,pq,input->n,input->d,input->k);
 	}
 	
 
@@ -3095,6 +3097,238 @@ void pqnn_search(params* input) {
 	else if(input->exaustive==0 && input->symmetric==1 && submod4 == true && dmod4 == false){
 		printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
 		stored_distance=pre_sdcA(Cp,input->sub,input->m,input->k);
+	
+		//per ogni punto per query set
+		int i,i_w,ind,result,sjump,sbucket;
+		c_x=alloc_vector(input->m);
+		for(i=0;i< input->nq;i++){
+			
+			//printf("calcolo dei w centroidi più vicini alla query X = %d\n",i);
+			//printX(x_query,i,input->d);
+			//calcolo dei w centroidi più vicini a x
+			//cerco di passarlgi solo il punto x in modo che i metodi possono preoccuparsi solo di
+			//ciclare su 128 dimensioni in quanto punto singolo. (sulle dimensioni in generale)
+			//int* label_w =  w_near_centroids(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
+
+			//clock_t t11 = clock();
+			int* label_w = w_near_centroidsU(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
+			//t11 = clock() - t11;
+			//tot+=t11;
+			//test per il nuovo metodo w_near_centroids
+			//printVector(label_w,input->w);
+			//printVector(label_w_2,input->w);
+
+
+			// per ogni centroide vicino appiclo la ricerca
+			
+			//calcolo tutti i residui r(x) con i centroidi in w
+			//printf("calcolo dei residui r(x) con tutti i centroidi w\n");
+			//clock_t t11 = clock();
+			float* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
+			//t11 = clock() - t11;
+			//tot+=t11;
+			//funzione NASM per il calcolo dei residui
+
+
+			//da testare meglio per vedere se
+			//effettivamente funziona
+
+			//allocazioni per ottenere un MaxHeap che interagisca con il metodo max_heap
+			int * k_nn=alloc_vector(input->knn);
+			float * result_dist=alloc_matrix(input->knn,1);
+			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
+			int C_i, z, t;
+			int* L_i;
+			//printDsQs(res_x,NULL,input->w,input->d,0);
+			for(i_w = 0 ; i_w < input->w ; i_w++){
+				int k_2 = input->k*input->k;
+				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
+				//clock_t t11 = clock();
+				for(int j=0;j<input->m;j++){
+					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
+					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
+					//clock_t t11 = clock();
+					c_x[j] = centXA(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
+					//t11 = clock() - t11;
+					//tot+=t11;
+				}	
+				//t11 = clock() - t11;
+				//tot+=t11;
+				
+				dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
+				//centroide più vicino associato al punto
+				C_i= label_w[i_w];
+				L_i = IL[C_i];
+
+				//variabile usata per non accedere continuamente in jump[C_i]*nodo
+				//sjump=jump[C_i]*nodo;
+				sbucket=bucket[C_i];
+			
+				//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
+				for( ind = 0; ind < sbucket; ind++)
+				{	
+					//printVector(&L_i[ind][1],input->m);
+					//tmp = NE_sdc(c_x,stored_distance, input->m, &L_i[ind*nodo +1],input->k);
+
+					tmp=0;
+					for(z=0; z < input->m; z++){
+						/*t=mapping(c_x[z],L_i[ind*nodo+1+z],input->k,mapping_n);
+						if (t!=-1) {
+							tmp+= stored_distance[z*mapping_n+t];
+						
+						}*/
+						tmp+= stored_distance[z*k_2+c_x[z]*input->k+L_i[ind*nodo+1+z]];
+						//cont++;
+					}
+
+					if(tmp < nn_dis){							
+						nn_dis=max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
+						//nn_dis = tmp;
+						//result = L_i[ind][0];
+					}
+				}
+			}
+			//printVectorfloat(Cc,input->kc*input->d);
+			
+			//salvarsi i k valori che minimizzano la distanza(con il MAXHEAP) non ordinato
+			//printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", i, result);
+			for(int j = 0; j < input->knn; j++)
+			{
+				input->ANN[i*input->knn+j]=k_nn[j];
+				//printf("\n query# %d result#%d ",i,k_nn[j]*5);
+				//printVectorfloat(result_dist,input->knn);
+			}
+
+			//pulizia del max_heap (sarebbe buono capire se conviene deallocarli solo alla fine 
+			//oppure ogni volta che dobbiamo "resettarli")
+			dealloc_vector(k_nn);
+			dealloc_matrix(result_dist);
+			c_max_heap=0;
+			pre_max_heap=0;
+			
+			//printf("\n x=%d 	y=%d	dist=%f\n",i,result,nn_dis);
+		}
+	}
+	else if(input->exaustive==0 && input->symmetric==1 && submod4 == false && dmod4 == true){
+		printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
+		stored_distance=pre_sdcU(Cp,input->sub,input->m,input->k);
+	
+		//per ogni punto per query set
+		int i,i_w,ind,result,sjump,sbucket;
+		c_x=alloc_vector(input->m);
+		for(i=0;i< input->nq;i++){
+			
+			//printf("calcolo dei w centroidi più vicini alla query X = %d\n",i);
+			//printX(x_query,i,input->d);
+			//calcolo dei w centroidi più vicini a x
+			//cerco di passarlgi solo il punto x in modo che i metodi possono preoccuparsi solo di
+			//ciclare su 128 dimensioni in quanto punto singolo. (sulle dimensioni in generale)
+			//int* label_w =  w_near_centroids(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
+
+			//clock_t t11 = clock();
+			int* label_w = w_near_centroidsA(&x_query[i*input->d],Cc,input->kc,input->d,input->w);
+			//t11 = clock() - t11;
+			//tot+=t11;
+			//test per il nuovo metodo w_near_centroids
+			//printVector(label_w,input->w);
+			//printVector(label_w_2,input->w);
+
+
+			// per ogni centroide vicino appiclo la ricerca
+			
+			//calcolo tutti i residui r(x) con i centroidi in w
+			//printf("calcolo dei residui r(x) con tutti i centroidi w\n");
+			//clock_t t11 = clock();
+			float* res_x= residuals_x(&x_query[i*input->d],Cc,label_w,input->w,input->d);
+			//t11 = clock() - t11;
+			//tot+=t11;
+			//funzione NASM per il calcolo dei residui
+
+
+			//da testare meglio per vedere se
+			//effettivamente funziona
+
+			//allocazioni per ottenere un MaxHeap che interagisca con il metodo max_heap
+			int * k_nn=alloc_vector(input->knn);
+			float * result_dist=alloc_matrix(input->knn,1);
+			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
+			int C_i, z, t;
+			int* L_i;
+			//printDsQs(res_x,NULL,input->w,input->d,0);
+			for(i_w = 0 ; i_w < input->w ; i_w++){
+				int k_2 = input->k*input->k;
+				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
+				//clock_t t11 = clock();
+				for(int j=0;j<input->m;j++){
+					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
+					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
+					//clock_t t11 = clock();
+					c_x[j] = centXU(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
+					//t11 = clock() - t11;
+					//tot+=t11;
+				}	
+				//t11 = clock() - t11;
+				//tot+=t11;
+				
+				dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
+				//centroide più vicino associato al punto
+				C_i= label_w[i_w];
+				L_i = IL[C_i];
+
+				//variabile usata per non accedere continuamente in jump[C_i]*nodo
+				//sjump=jump[C_i]*nodo;
+				sbucket=bucket[C_i];
+			
+				//calcolo tutte le distanze tra res(x) e le Cji presenti nella inverted List
+				for( ind = 0; ind < sbucket; ind++)
+				{	
+					//printVector(&L_i[ind][1],input->m);
+					//tmp = NE_sdc(c_x,stored_distance, input->m, &L_i[ind*nodo +1],input->k);
+
+					tmp=0;
+					for(z=0; z < input->m; z++){
+						/*t=mapping(c_x[z],L_i[ind*nodo+1+z],input->k,mapping_n);
+						if (t!=-1) {
+							tmp+= stored_distance[z*mapping_n+t];
+						
+						}*/
+						tmp+= stored_distance[z*k_2+c_x[z]*input->k+L_i[ind*nodo+1+z]];
+						//cont++;
+					}
+
+					if(tmp < nn_dis){							
+						nn_dis=max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
+						//nn_dis = tmp;
+						//result = L_i[ind][0];
+					}
+				}
+			}
+			//printVectorfloat(Cc,input->kc*input->d);
+			
+			//salvarsi i k valori che minimizzano la distanza(con il MAXHEAP) non ordinato
+			//printf("per il punto x in posizione %d, il nn è la y in posizione %d \n", i, result);
+			for(int j = 0; j < input->knn; j++)
+			{
+				input->ANN[i*input->knn+j]=k_nn[j];
+				//printf("\n query# %d result#%d ",i,k_nn[j]*5);
+				//printVectorfloat(result_dist,input->knn);
+			}
+
+			//pulizia del max_heap (sarebbe buono capire se conviene deallocarli solo alla fine 
+			//oppure ogni volta che dobbiamo "resettarli")
+			dealloc_vector(k_nn);
+			dealloc_matrix(result_dist);
+			c_max_heap=0;
+			pre_max_heap=0;
+			
+			//printf("\n x=%d 	y=%d	dist=%f\n",i,result,nn_dis);
+		}
+	}
+	else if(input->exaustive==0 && input->symmetric==1 && submod4 == false && dmod4 == false){
+		printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
+		stored_distance=pre_sdcU(Cp,input->sub,input->m,input->k);
 	
 		//per ogni punto per query set
 		int i,i_w,ind,result,sjump,sbucket;
@@ -4258,9 +4492,9 @@ int main(int argc, char** argv) {
 	input->m = 8;
 	input->k = 256;
 	//input->kc = 8192;
-	input->kc = 128;
+	input->kc = 256;
 	//input->w = 16;
-	input->w=4;
+	input->w=16;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -4414,10 +4648,10 @@ int main(int argc, char** argv) {
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
 
-	input->nr = input->n/5;
+	input->nr = input->n/2;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 16000,256);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 8000,256);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)

@@ -33,114 +33,204 @@ distanceControl64:
 	pushaq						; salva i registri generali
 
 
-	mov 	edx,[ebp+i]		;i
-	imul	edx,dim			;i*4
+	;mov 	r8,[rbp+i]		;i
+	imul	r8,dim			;i*4
 
-	mov		ecx, 0			; k = 0
+	mov		r13, 0			; k = 0
 
 	
 
 fork2:		
 	;printregps xmm7
-	mov 		esi,[ebp+distance]		;distance
+	;mov 		r11,[rbp+distance]		;distance
 	
 
-	movaps		xmm0, [ecx+esi]	; distance[k..k+3]
+	vmovaps			ymm0, [r13+rdi]	; distance[k..k+7]
 	;printregps  xmm0
+	vextractf128	xmm4,ymm0,1
 
 
-	mov 		esi,[ebp+min_distance]		
 
-	movaps		xmm1, [ecx+esi]			; min_distance[k..k+3]
+	;mov 		r11,[rbp+min_distance]		
+
+	vmovaps			ymm1, [r13+rsi]			; min_distance[k..k+7]
 	;printregps	xmm1
-	movaps		xmm2,xmm0		;sarà la maschera
-	cmpnltps	xmm2,xmm1		;>= in modo da farmi dare 0 dove mi serve
+	vmovaps			ymm2,ymm0		;sarà la maschera
+	vcmpnltps		ymm2,ymm1		;>= in modo da farmi dare 0 dove mi serve
+	vextractf128	xmm3,ymm2,1
 
-	extractps	eax,xmm2,0
-	cmp			eax,0
+
+	extractps	rax,xmm2,0
+	cmp			rax,0
 	jne			if1
 
-	mov			esi,edx			;i*4
-	mov 		edi,ecx			;k*4
-	add 		esi,edi			;i*4+k*4
-	mov 		eax,[ebp+label]		
-	;mov			eax,[edi]		;label
-	mov			edi,[ebp+j]			;j
-	mov 		[eax+esi],edi		;label[i+k]=j
-	extractps	eax,xmm0,0			;
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov		rax,[r10]		;label
+	;mov		r10,[rbp+j]			;j
+	mov 		[rdx+r11],rcx		;label[i+k]=j
+	extractps	rax,xmm0,0			;
 
-	mov			edi,[ebp+min_distance]		;min_distance
-	mov			[edi+ecx],eax				;min_distance+4+k*4
+	;mov			r10,[rbp+min_distance]		;min_distance
+	mov			[rsi+r13],rax				;min_distance+4+k*4
 
 if1:
 
-	extractps	eax,xmm2,1
-	cmp			eax,0
+	extractps	rax,xmm2,1
+	cmp			rax,0
 	jne			if2
-	;printreg	eax	
+	;printreg	rax	
 
 	;printregps	xmm2
-	mov			esi,edx			;i*4
-	mov 		edi,ecx			;k*4
-	add 		esi,edi			;i*4+k*4
-	mov 		eax,[ebp+label]		
-	;mov			eax,[edi]		;label
-	mov			edi,[ebp+j]			;j
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov			rax,[r10]		;label
+	;mov			r10,[rbp+j]			;j
 	;printregps	xmm2
-	add			esi,dim			;(i+k+1)*4
-	mov 		[eax+esi],edi		
-	extractps	eax,xmm0,1		
+	add			r11,dim			;(i+k+1)*4
+	mov 		[rdx+r11],rcx		
+	extractps	rax,xmm0,1		
 	;printregps	xmm2
 		
-	mov			edi,[ebp+min_distance]		;min_distance
-	add			edi,dim						;min_distance+4
-	mov			[edi+ecx],eax				;min_distance+4+k*4
+	;mov			r10,[rbp+min_distance]		;min_distance
+	;add			r10,dim						;min_distance+4
+	mov			[rsi+4+r13],rax				;min_distance+4+k*4
 	;printregps	xmm2
 
 
 if2:
 
-	extractps	eax,xmm2,2
-	cmp			eax,0
+	extractps	rax,xmm2,2
+	cmp			rax,0
 	jne			if3
 	
 	;printregps	xmm1
-	mov			esi,edx			;i*4
-	mov 		edi,ecx			;k*4
-	add 		esi,edi			;i*4+k*4
-	mov 		eax,[ebp+label]		
-	;mov			eax,[edi]		;label
-	mov			edi,[ebp+j]			;j
-	add			esi,dim*2				;(i+k+2)*4
-	mov 		[eax+esi],edi		
-	extractps	eax,xmm0,2		
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov			rax,[r10]		;label
+	;mov			r10,[rbp+j]			;j
+	add			r11,dim*2				;(i+k+2)*4
+	mov 		[rdx+r11],rcx		
+	extractps	rax,xmm0,2		
 
-	mov			edi,[ebp+min_distance]
-	add			edi,dim*2				;min_distance + (i+k+2)*4
-	mov			[edi+ecx],eax
+	;mov			r10,[rbp+min_distance]
+	;add			r10,dim*2				;min_distance + (i+k+2)*4
+	mov			[rsi+8+r13],rax
 
 if3:
-	extractps	eax,xmm2,3
-	cmp			eax,0
+	extractps	rax,xmm2,3
+	cmp			rax,0
+	jne			if4
+	;printregps	xmm1
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov			rax,[r10]		;label
+	;mov			r10,[rbp+j]			;j
+
+	add			r11,dim*3				;(i+k+2)*4
+	mov 		[rdx+r11],rcx		
+	extractps	rax,xmm0,3	
+
+	;mov			r10,[rbp+min_distance]
+	;add			r10,dim*3				;min_distance + (i+k+2)*4
+	mov			[rsi+12+r13],rax
+
+if4:
+
+	extractps	rax,xmm3,0
+	cmp			rax,0
+	jne			if5
+
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov		rax,[r10]		;label
+	;mov		r10,[rbp+j]			;j
+	add			r11,dim*4				;(i+k+4)*4
+	mov 		[rdx+r11],rcx		;label[i+k]=j
+	extractps	rax,xmm4,0			;
+
+	;mov			r10,[rbp+min_distance]		;min_distance
+	mov			[rsi+16+r13],rax				;min_distance+4+k*4
+
+if5:
+
+	extractps	rax,xmm3,1
+	cmp			rax,0
+	jne			if6
+	;printreg	rax	
+
+	;printregps	xmm2
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov			rax,[r10]		;label
+	;mov			r10,[rbp+j]			;j
+	;printregps	xmm2
+	add			r11,dim*5			;(i+k+1)*4
+	mov 		[rdx+r11],rcx		
+	extractps	rax,xmm4,1		
+	;printregps	xmm2
+		
+	;mov			r10,[rbp+min_distance]		;min_distance
+	;add			r10,dim						;min_distance+4
+	mov			[rsi+20+r13],rax				;min_distance+4+k*4
+	;printregps	xmm2
+
+
+if6:
+
+	extractps	rax,xmm3,2
+	cmp			rax,0
+	jne			if7
+	
+	;printregps	xmm1
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov			rax,[r10]		;label
+	;mov			r10,[rbp+j]			;j
+	add			r11,dim*6				;(i+k+2)*4
+	mov 		[rdx+r11],rcx		
+	extractps	rax,xmm4,2		
+
+	;mov			r10,[rbp+min_distance]
+	;add			r10,dim*2				;min_distance + (i+k+2)*4
+	mov			[rsi+24+r13],rax
+
+if7:
+	extractps	rax,xmm3,3
+	cmp			rax,0
 	jne			fine
 	;printregps	xmm1
-	mov			esi,edx			;i*4
-	mov 		edi,ecx			;k*4
-	add 		esi,edi			;i*4+k*4
-	mov 		eax,[ebp+label]		
-	;mov			eax,[edi]		;label
-	mov			edi,[ebp+j]			;j
-	add			esi,dim*3				;(i+k+2)*4
-	mov 		[eax+esi],edi		
-	extractps	eax,xmm0,3	
+	mov			r11,r8			;i*4
+	mov 		r10,r13			;k*4
+	add 		r11,r10			;i*4+k*4
+	;mov 		rax,[rbp+label]		
+	;mov			rax,[r10]		;label
+	;mov			r10,[rbp+j]			;j
+	add			r11,dim*3				;(i+k+2)*4
+	mov 		[rdx+r11],rcx		
+	extractps	rax,xmm4,3	
 
-	mov			edi,[ebp+min_distance]
-	add			edi,dim*3				;min_distance + (i+k+2)*4
-	mov			[edi+ecx],eax
+	;mov			r10,[rbp+min_distance]
+	;add			r10,dim*3				;min_distance + (i+k+2)*4
+	mov			[rsi+28+r13],rax
 	
 fine:
-	add			ecx, dim*p		; k+=p
-	cmp			ecx, p*UNROLL*dim		; (k < dimension) ?
+	add			r13, 32		; k+=p
+	cmp			r13, 128		; (k < dimension) ?
 	jb			fork2
 	
 	popaq						; ripristina i registri generali
