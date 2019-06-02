@@ -410,6 +410,7 @@ void printVector(int * v,int n){
 	for(i=0;i<n;i++){
 		printf("v[%d] = %d\n",i,v[i]);
 	}
+	printf("\n");
 }
 
 void printVectorfloat(float * v,int n){
@@ -417,6 +418,7 @@ void printVectorfloat(float * v,int n){
 	for(i=0;i<n;i++){
 		printf("\nv[%d] = %f",i,v[i]);
 	}
+	printf("\n");
 }
 
 //print per testare il metodo Uj
@@ -460,7 +462,8 @@ void printEq_col(MATRIX m1, MATRIX m2, int m1_n,int m1_d,int m2_n,int m2_d){
 extern void rowDistance64AdcA(float* c,float* x,float* distance,int i,int j,int k,int sub);
 extern void rowDistance64AdcU(float* c,float* x,float* distance,int i,int j,int k,int sub);
 
-extern void rowDistance64Sdc(float* c,float* distance,int i,int j,int j_d,int k,int sub);
+extern void rowDistance64SdcA(float* c,float* distance,int i,int j,int j_d,int k,int sub);
+extern void rowDistance64SdcU(float* c,float* distance,int i,int j,int j_d,int k,int sub);
 
 extern void colDistance64Sing(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void colDistance64U(float * ds,float* c,float* distance,int i,int j,int d,int n);
@@ -785,6 +788,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 			//identify the closest cluster
 			assignValue(min_distance,&max_f,size);
 			//printf("\n--------PRIMO ALIGNED-----%d-------------",i+size);
+			//printVectorfloat(min_distance,size);
 
 
 			
@@ -982,7 +986,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		for (; i <= n-p; i+=p){  	//per ogni punto del ds
 			//identify the closest cluster
 			assignValue(min_distance,&max_f,p);
-			printf("\n------SECONDO ALIGNED-------%d-------------",i+p);
+			//printf("\n------SECONDO ALIGNED-------%d-------------",i+p);
 
 
 			
@@ -2330,11 +2334,11 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 		for(i = 0; i < k; i++){
 			//result[j*k+i] = dist(uj_x, &centroids[j*k*sub+i*sub],sub);
 			distance = 0;
-			float distance2=0;
+			//float distance2=0;
 			//printf("sub %d\n",sub);
 			rowDistance64AdcA(centroids,uj_x,&distance,i,j,k,sub);
 				
-			
+			/*
 			for (int z=0; z<sub ;z++){
 				//printf("C: %f, %f \n",uj_x[z],centroids[j*k*sub+i*sub+z]);
 				distance2 += pow(uj_x[z] - centroids[j*k*sub+i*sub+z], 2);
@@ -2342,7 +2346,7 @@ float* pre_adc(MATRIX x, float* centroids,int d,int m, int k ){
 			
 			if(distance!=distance2)
 			printf("j %d, i %d; distance C=%f, distance nasm=%f\n",j,i,distance2,distance);
-			
+			*/
 			result[j*k+i] = distance;
 			//printf("\n %f", distance);
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
@@ -2370,7 +2374,16 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 		for(i = 0; i < k; i++){
 			for(j_d = i+1; j_d < k;j_d++){
 				distance = 0;
-				rowDistance64Sdc(centroids,&distance,i,j,j_d,k,sub);
+				rowDistance64SdcA(centroids,&distance,i,j,j_d,k,sub);
+				/*
+				float distance2=0;
+				for (int z=0; z<sub;z++){
+					//printf("C: %f, %f \n",centroids[j*k*sub+i*sub+z],centroids[j*k*sub+j_d*sub+z]);
+					distance2 += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
+				}
+				if(distance!=distance2)
+					printf("sub= %d ,j %d, i %d, j_d %d ; distance C=%f, distance nasm=%f\n",sub,j,i,j_d,distance2,distance);
+				*/
 				result[j*k_2+i*k+j_d]=distance;
 				result[j*k_2+j_d*k+i]=distance;
 				result[j*k_2+i*k+i]=0;			
@@ -2405,15 +2418,7 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 				distance = 0;
 				rowDistance32Sdc(centroids,&distance,i,j,j_d,k,sub);
 				
-				/*
-				float distance2=0;
-				for (int z=0; z<sub;z++){
-					//printf("C: %f, %f \n",centroids[j*k*sub+i*sub+z],centroids[j*k*sub+j_d*sub+z]);
-					distance2 += pow(centroids[j*k*sub+i*sub+z] - centroids[j*k*sub+j_d*sub+z], 2);
-				}
-				if(distance!=distance2)
-					printf("j %d, i %d, j_d %d ; distance C=%f, distance nasm=%f\n",j,i,j_d,distance2,distance);
-				*/
+				
 				//funzione NASM
 				//distance=rowdistance32(centroids[j*k*sub+i*sub],centroids[j*k*sub+j_d*sub],d);
 

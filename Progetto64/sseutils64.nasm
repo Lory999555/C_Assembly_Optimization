@@ -26,14 +26,14 @@ br1:	db		'( ',0
 br2:	db		')',10,0
 ;------------roba messa da me-----
 imask:	db		'%d',0
-align 32
+align 16
 xmmtemp: db 0.0, 0.0, 0.0, 0.0
 
 align 32
 ymmtemp: db 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
 fmt:    db "reg=%ld", 10, 0
-;------------fine roba messa da me---
+;------------fine roba messa da me---ù
 
 
 %macro	vpush	1
@@ -159,7 +159,7 @@ fmt:    db "reg=%ld", 10, 0
 		vpushay
 		mov		rax, 1
 		mov		rdi, dmask
-		movss	xmm0, [%1]
+		cvtss2sd	xmm0, [%1]
 		call		printf
 		vpopay
 		popaq
@@ -302,13 +302,14 @@ fmt:    db "reg=%ld", 10, 0
 	vpopx	xmm1
 	vpopx	xmm0
 %endmacro
-
 %macro vprintreg 1
 	pushaq
+	vpushay
 	mov rdi, fmt
 	mov rsi, %1
 	mov rax,0
 	call printf
+	vpopay
 	popaq
 %endmacro
 
