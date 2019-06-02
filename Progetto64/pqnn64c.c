@@ -479,7 +479,9 @@ extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 extern void clearCentroids(float* counts,float* c1,int k,int d);
 extern void assignValue(float* list,float* value,int i);
 extern void extr_col(float* ds, int n, int d, int nr, int divi, float* result);
-extern void dist64(float * x,float * y,float* distance, int d);
+extern void dist64A(float * x,float * y,float* distance, int d);
+extern void dist64U(float * x,float * y,float* distance, int d);
+
 //extern void mapping64(int i, int j, int n, int * indice, int index);
 //extern void cent_X(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
 
@@ -581,14 +583,21 @@ int centX(float * centroids, float * x, int k, int d){
 	cent_X(centroids,x,k,d,tmp,&park,&dis);
 	*/
 	float dis;
+	float dis2=0;
 	int park = 0;
 	float* tmp = alloc_matrix(unroll,1);
-	dist64(x,centroids,&dis,d);
+	dist64U(x,centroids,&dis,d);
+	/*
+	for(int i=0;i<d;i++){
+		dis2+=pow(x[i]-centroids[i],2);
+	}
+	printf("d: %d, C: %f, nasm: %f \n",d,dis2,dis);
+	*/
 	for(int i=0; i<k; i+=unroll){
- 		dist64(x, &centroids[i*d], &tmp[0], d);
-		dist64(x, &centroids[(i+1)*d], &tmp[1], d);
-		dist64(x, &centroids[(i+2)*d], &tmp[2], d);
-		dist64(x, &centroids[(i+3)*d], &tmp[3], d);
+ 		dist64A(x, &centroids[i*d], &tmp[0], d);
+		dist64A(x, &centroids[(i+1)*d], &tmp[1], d);
+		dist64A(x, &centroids[(i+2)*d], &tmp[2], d);
+		dist64A(x, &centroids[(i+3)*d], &tmp[3], d);
 		
 		if( tmp[0] < dis){
 			dis = tmp[0];
@@ -695,7 +704,7 @@ void interClusterCalc(float* MCD, float* centroids,float* stored_distance,int n,
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
 void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
 
-	printf("\n--------ALIGNED------------------");
+	printf("\n--------ALIGNED------------------\n");
 	//stampe=0;
 
 
@@ -1182,7 +1191,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 
 void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
 
-	printf("\n--------UNALIGNED------------------");
+	printf("\n--------UNALIGNED------------------\n");
 	//stampe=0;
 
 
@@ -2182,7 +2191,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 	for(i = 0; i < w; i++)
 	{	
 		tmp = 0;
-		dist64(x, &centroids[i*d], &tmp, d);
+		dist64A(x, &centroids[i*d], &tmp, d);
 		//tmp=dist(x,&centroids[i*d],d);
 		
 		/*for (int j=0; j<d;j++){
@@ -2209,7 +2218,7 @@ int * w_near_centroids(MATRIX x,MATRIX centroids,int n,int d,int w){
 		//printf("\nil centroide num[%d] con X dista = %f\n",i,tmp);
 		//printf("la distanza max della struttura è = %f\n",max);
 		tmp = 0;
-		dist64(x, &centroids[i*d], &tmp, d);
+		dist64A(x, &centroids[i*d], &tmp, d);
 		//tmp=dist(x,&centroids[i*d],d);
 		/*for (int j=0; j<d;j++){
 			tmp += pow(x[j] - centroids[i*d+j], 2);
@@ -2376,7 +2385,7 @@ float* pre_sdc(float* centroids,int d,int m, int k ){
 		for(i = 0; i < k; i++){
 			for(j_d = i+1; j_d < k;j_d++){
 				distance = 0;
-				rowDistance64SdcA(centroids,&distance,i,j,j_d,k,sub);
+				rowDistance64SdcU(centroids,&distance,i,j,j_d,k,sub);
 				/*
 				float distance2=0;
 				for (int z=0; z<sub;z++){
@@ -2494,7 +2503,7 @@ void pqnn_index(params* input) {
 		k_means_colA(sub_set,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//t1 = clock() - t1;
 		//tot+=t1;
-		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
@@ -2522,11 +2531,12 @@ void pqnn_index(params* input) {
 
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		//printf("\n\n------------------CENTROIDIPRODUCT---------------------\n");
-
+		/*
 		for(int j= 0; j < input->m; j++)
 		{
 			printCentroids(&Cp[j],&Cp_index[j],input->n,input->d/input->m,input->k);
 		}
+		*/
 		
 		
 
@@ -2663,7 +2673,7 @@ void pqnn_index(params* input) {
 		k_means_colU(sub_set,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//t1 = clock() - t1;
 		//tot+=t1;
-		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
@@ -2691,12 +2701,12 @@ void pqnn_index(params* input) {
 
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		//printf("\n\n------------------CENTROIDIPRODUCT---------------------\n");
-
+		/*
 		for(int j= 0; j < input->m; j++)
 		{
 			printCentroids(&Cp[j],&Cp_index[j],input->n,input->d/input->m,input->k);
 		}
-		
+		*/
 		
 
 		printf("Creazione della Inverted List\n");
@@ -3424,7 +3434,7 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 10003,300);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 10000,300);
 	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;

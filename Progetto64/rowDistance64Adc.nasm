@@ -159,7 +159,7 @@ cicloU:
     ;printregps ymm1
     add r12,8                           ;avanzo di indice
 
-    vmovaps ymm0,[rsi+4*r12]             ;uj_x[z]
+    vmovups ymm0,[rsi+4*r12]             ;uj_x[z]
     ;printregps ymm0
     vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
     ;printregps ymm0
@@ -192,13 +192,13 @@ resto2U:
 ciclo3U:
     cmp r12, r11
     je  fineU
-    vmovss xmm0,[rsi+4*r12]             ;uj_x[z]
+    vmovss xmm7,[rsi+4*r12]             ;uj_x[z]
     ;printregps ymm0
-    vsubss xmm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    vsubss xmm7,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
     ;printregps ymm0
-    vmulss xmm0,xmm0                     ;(..)^2
+    vmulss xmm7,xmm7                     ;(..)^2
     ;printregps ymm0
-    vaddss xmm2,xmm0                     ;distance+=(..)^2
+    vaddps ymm2,ymm7                     ;distance+=(..)^2
     ;printregps ymm1
     add r12,1                           ;avanzo di indice
     jmp ciclo3U

@@ -23,8 +23,8 @@ global dist32A
 	dist32A:
         start
 
-    mov eax,[ebp+x]
-    mov ebx,[ebp+y]
+        mov eax,[ebp+x]
+        mov ebx,[ebp+y]
 
         movaps xmm1,[eax] ;x[0]
         subps xmm1,[ebx]  ;x[0]-y[0]
@@ -76,7 +76,7 @@ global dist32A
         sub edi, 4
     ciclo2:
         cmp esi, edi
-        jg  resto2
+        jg  fine
         movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
         subps xmm0,[ebx+4*esi]
         mulps xmm0,xmm0
@@ -84,17 +84,6 @@ global dist32A
         add esi, 4
         jmp ciclo2
 
-    resto2:
-        mov edi, [ebp+d]
-    ciclo3:
-        cmp esi, edi
-        je  fine
-        movss xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-        subss xmm0,[ebx+4*esi]
-        mulss xmm0,xmm0
-        addss xmm2, xmm0
-        add esi, 1
-        jmp ciclo3
     fine:
         haddps xmm1,xmm2        ;merge di tutte le somme
         haddps xmm1,xmm1        ;|

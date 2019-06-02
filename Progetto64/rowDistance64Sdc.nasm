@@ -137,7 +137,7 @@ global rowDistance64SdcU
     vmovups ymm1,[rdx]                   ;c[j*k*sub+i*sub+0]
     vsubps ymm1,[r8]                    ;c[j*k*sub+i*sub+0] - c[j*k*sub+j_d*sub+0]
     vmulps ymm1,ymm1                     ;(..)^2
-    printregyps ymm1
+    ;printregyps ymm1
     ;mov rdi,dim
     sub r11,16                          ;subb-16
 
@@ -189,11 +189,11 @@ resto2U:
 ciclo3U:
     cmp r12, r11
     je  fineU
-    vmovss xmm0,[rdx+4*r12] ;sommo gli ultimi elementi rimanenti
-    vsubss xmm0,[r8+4*r12]
-    vmulss xmm0,xmm0
-    vaddss xmm2, xmm0
-    printregyps ymm2
+    vmovss xmm7,[rdx+4*r12] ;sommo gli ultimi elementi rimanenti
+    vsubss xmm7,[r8+4*r12]
+    vmulss xmm7,xmm7
+    vaddps ymm2, ymm7
+    ;printregyps ymm2
     add r12, 1
     jmp ciclo3U
 fineU:    
