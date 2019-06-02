@@ -124,7 +124,7 @@ colDistance64OptimizedU:
 	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
 	pushaq						; salva i registri generali
 
-		mov			r15,[rbp+n]		;n
+	mov			r15,[rbp+n]		;n
 
 	;mov		rcx, [rbp+starti]	; i = starti
 	imul	rcx, dim		; i= i*4
@@ -150,7 +150,7 @@ forkk1:
 	mov 		r10,r9		;d
 	imul		r10,r8		; 4*j*d
 	add			r12, r10		; centroids + 4*j*d
-	vmovss		xmm4, [r13+r12]	; C[j][k] = C[4*k+4*j*d]
+	vbroadcastss	ymm8, [r13+r12]	; C[j][k] = C[4*k+4*j*d]
 	
 	mov 		r12,rdi		;dataset
 	mov			r10,r15		;n
@@ -168,12 +168,12 @@ forkk1:
 	
 
 
-	vshufps		ymm4, ymm4, 0
+	;vshufps		ymm4, ymm4, 0
 	;printregps  xmm1
-	vsubps		ymm0, ymm4
-	vsubps		ymm1, ymm4
-	vsubps		ymm2, ymm4
-	vsubps		ymm3, ymm4
+	vsubps		ymm0, ymm8
+	vsubps		ymm1, ymm8
+	vsubps		ymm2, ymm8
+	vsubps		ymm3, ymm8
 
 	vmulps		ymm0, ymm0		;tmp[i..i+p-1] rispetto al j-r12mo centroide
 	vmulps		ymm1, ymm1

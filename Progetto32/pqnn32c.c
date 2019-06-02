@@ -734,7 +734,7 @@ void interClusterCalc(float* MCD, float* centroids,float* stored_distance,int n,
 //kmeans modificato in modo da prendere due "MATRIX" e usando l'alloc del prof con l'allineamento.
 void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
 
-	//printf("\n--------ALIGNED------------------");
+	printf("\n--------ALIGNED------------------");
 	//stampe=0;
 
 
@@ -997,7 +997,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				colDistance32(data,centroids,&distance[p*3],i+p*3,j,d,n);*/
 
 				//printf("\n---------DISTANCESTA-----------%d----------------------\n",j);
-				//printVectorfloat(distance,size*unroll);
+				//printVectorfloat(distance,p);
 
 				
 				
@@ -1014,7 +1014,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//distanceControl32Block(distance,min_distance,labels,j,i);
 
 				//printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
-				//printVectorfloat(min_distance,size);
+				//printVectorfloat(min_distance,p);
 
 
 
@@ -1156,7 +1156,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 
 void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX centroids,int t_min,int t_max) {
 
-	//printf("\n--------UNALIGNED------------------");
+	printf("\n--------UNALIGNED------------------");
 	//stampe=0;
 
 
@@ -1279,7 +1279,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				colDistance32(data,centroids,&distance[p*3],i+p*3,j,d,n);*/
 
 				//printf("\n---------DISTANCESTA-----------%d----------------------\n",j);
-				//printVectorfloat(distance,size*unroll);
+				//printVectorfloat(distance,size);
 
 				
 				
@@ -1407,7 +1407,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 
 
 			
-			//clock_t t11 = clock();
+			clock_t t11 = clock();
 			
 			for (j = 0; j < k; j++){ // per ogni centroide
 
@@ -1426,7 +1426,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				colDistance32(data,centroids,&distance[p*3],i+p*3,j,d,n);*/
 
 				//printf("\n---------DISTANCESTA-----------%d----------------------\n",j);
-				//printVectorfloat(distance,size*unroll);
+				//printVectorfloat(distance,p);
 
 				
 				
@@ -1443,7 +1443,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//distanceControl32Block(distance,min_distance,labels,j,i);
 
 				//printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
-				//printVectorfloat(min_distance,size);
+				//printVectorfloat(min_distance,p);
 
 
 
@@ -1543,7 +1543,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				colDistance32(data,centroids,&distance[p*3],i+p*3,j,d,n);*/
 
 				//printf("\n---------DISTANCESTA-----------%d----------------------\n",j);
-				//printVectorfloat(distance,size*unroll);
+				//printVectorfloat(distance,1);
 
 				if (distance[0] < min_distance[0]) {
 					labels[i] = j;
@@ -1564,7 +1564,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 				//distanceControl32Block(distance,min_distance,labels,j,i);
 
 				//printf("\n-------MINDISTANCE-------------%d----------------------\n",j);
-				//printVectorfloat(min_distance,size);
+				//printVectorfloat(min_distance,1);
 
 
 
@@ -2634,7 +2634,7 @@ void pqnn_index(params* input) {
 		k_means_colA(sub_set,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//t1 = clock() - t1;
 		//tot+=t1;
-		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
@@ -2662,12 +2662,12 @@ void pqnn_index(params* input) {
 
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		//printf("\n\n------------------CENTROIDIPRODUCT---------------------\n");
-		/*
+		
 		for(int j= 0; j < input->m; j++)
 		{
 			printCentroids(&Cp[j],&Cp_index[j],input->n,input->d/input->m,input->k);
 		}
-		*/
+		
 		
 
 		printf("Creazione della Inverted List\n");
@@ -2803,7 +2803,7 @@ void pqnn_index(params* input) {
 		k_means_colU(sub_set,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax);
 		//t1 = clock() - t1;
 		//tot+=t1;
-		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
+		printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
 		printf("Calcolo dei residui\n");
 		//calcolo dei redisui r(y) = y - Ci , qui potrei anche usare il sub_set ma secondo
@@ -2831,12 +2831,12 @@ void pqnn_index(params* input) {
 
 		//Cp_index = productQuant(input->ds,input->n,input->d,input->m,input->k,Cp,input->eps,input->tmin,input->tmax);
 		//printf("\n\n------------------CENTROIDIPRODUCT---------------------\n");
-		/*
+		
 		for(int j= 0; j < input->m; j++)
 		{
 			printCentroids(&Cp[j],&Cp_index[j],input->n,input->d/input->m,input->k);
 		}
-		*/
+		
 		
 
 		printf("Creazione della Inverted List\n");
@@ -4644,16 +4644,16 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 16000,256);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 10003,300);
 	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
-
+	stampe=0;
 	input->nr = input->n/2;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 8000,256);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 5000,300);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)

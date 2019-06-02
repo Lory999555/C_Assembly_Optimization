@@ -9,18 +9,8 @@
 section .data			; Sezione contenente dati inizializzati
 
 
-dataset		equ		8
 
-
-c		equ		12
-
-
-distance		equ		16
-
-starti		equ		20
-startj		equ		24
-dimension		equ		28
-n			equ		32
+n			equ		16
 
 dim		equ		4
 p		equ		8
@@ -42,58 +32,52 @@ colDistance64Sing:
 	pushaq						; salva i registri generali
 
 
-	mov		eax, [ebp+starti]	; i = starti
-	imul	eax, dim		; i= i*4
+	mov			r15,[rbp+n]		;n
+	
+	;mov		rcx, [rbp+starti]	; i = starti
+	imul	rcx, dim		; i= i*4
 
-	mov		ebx, [ebp+startj]		; j = startj
-	imul	ebx,dim		;j=j*4
+	;mov		r8, [rbp+startj]		; j = startj
+	imul	r8,dim		;j=j*4
 
-	mov 	edx,[ebp+dimension]		;d
-	imul	edx,dim		;d*4
+	mov 	r14,r9		;d
+	imul	r14,dim		;d*4
 
-	;movaps		xmm0, [C+eax+edi]	; c0 = C[i..i+p-1][j]  = C[dim*(i+j*n)..dim*(i+j*n+p-1)]		
-	mov		ecx, 0			; k = 0
+	;movaps		xmm0, [C+rcx+r10]	; c0 = C[i..i+p-1][j]  = C[dim*(i+j*n)..dim*(i+j*n+p-1)]		
+	mov		r13, 0			; k = 0
 
-	xorps xmm2,xmm2		; xmm2=0;
-	;xorps xmm7,xmm7
+	vxorps 	ymm4,ymm4
+
 
 fork4:		
+
+	mov 		r12,rdi		;dataset
+	mov			r10,r15		;n
+	imul		r10, r13		; 4*k*n
+	add			r12, r10		;dataset + 4*k*n
+	vmovss		xmm0, [rcx+r12]	; DS[i..i+p-1][k] = DS[4*i+4*k*n..4*(i+*k*n+p-1)]
+
+
 	;printregps  xmm2
-	mov 		esi,[ebp+dataset]		;dataset
-	mov			edi,[ebp+n]		;n
-	imul		edi, ecx		; 4*k*n
-	add			esi, edi		;dataset + 4*k*n
-
-	movss		xmm0, [eax+esi]	; DS[i..i+p-1][k] = DS[4*i+4*k*n..4*(i+*k*n+p-1)]
-	;printregps  xmm0
-
-
-	mov 		esi,[ebp+c]		;centroids
-	mov 		edi,[ebp+dimension]		;d
-	imul		edi,ebx		; 4*j*d
-	add			esi, edi		; centroids + 4*j*d
-
-	
-	movss		xmm1, [ecx+esi]	; C[j][k] = C[4*k+4*j*d]
+	mov 		r12,rsi		;centroids
+	mov 		r10,r9		;d
+	imul		r10,r8		; 4*j*d
+	add			r12, r10		; centroids + 4*j*d
+	vmovss		xmm3, [r13+r12]	; C[j][k] = C[4*k+4*j*d]
 	
 
 
+	vsubss		xmm0, xmm3
+	vmulss		xmm0, xmm0		;tmp[i..i+p-1] rispetto al j-r12mo centroide
+	vaddss		xmm4, xmm0		; distance[i..i+p-1] += tmp
 
-	;printregps  xmm1
-	subss		xmm0, xmm1
-	mulss		xmm0, xmm0		;tmp[i..i+p-1] rispetto al j-esimo centroide
-	;sqrtps		xmm0, xmm0
-	addss		xmm2, xmm0		; distance[i..i+p-1] += tmp
-	;printregps xmm2
-
-	add			ecx, dim		; k++
+	add			r13, dim		; k++
 	;addps   	xmm7,[inizio]
-	cmp			ecx, edx		; (k < dimension) ?
+	cmp			r13, r14		; (k < dimension) ?
 	jb			fork4
 	
-	mov			esi,[ebp+distance]
-	movss		[esi], xmm2	; dist[i..i+p-1]  = distance[i..i+p-1] 
-	;printregps		xmm2
+	vmovss		[rdx], xmm4
+
 
 	popaq						; ripristina i registri generali
 	mov		rsp, rbp			; ripristina lo Stack Pointer

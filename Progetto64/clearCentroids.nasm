@@ -44,7 +44,7 @@ forjclear:
 	mov			r10,rcx		;d
 	imul		r10, rbx		; 4*i*d
 	add			r10,rsi		;centroids_1 + 4*i*d
-	vmovaps      [r13+r10],ymm1      ;centroids_1 + 4*i*d + 4*j <- 0;
+	vmovups      [r13+r10],ymm1      ;centroids_1 + 4*i*d + 4*j <- 0;
 
 	mov 	r11,rcx			;d
 	imul	r11,4			;d*4

@@ -73,7 +73,7 @@ forj:
 	mov			r10,r8		;d
 	imul		r10, rbx		; 4*i*d
 	add			r11, r10		;centroids_1 + 4*i*d
-	vmovaps      ymm0,[r13+r11]      ;centroids_1 + 4*i*d + 4*j. prendo 8 elementi (e dimensioni)
+	vmovups      ymm0,[r13+r11]      ;centroids_1 + 4*i*d + 4*j. prendo 8 elementi (e dimensioni)
 
 	vdivps       ymm0,ymm1       ;c1[i*d+j..i+*d+j+p-1]/counts[i]
 	;addps		xmm6,[uno]
@@ -82,7 +82,7 @@ forj:
 	;mov         r11,[rbp+centroids]         ;centroids
 	mov         r11,rdi         ;centroids
 	add         r11,r10         ;centroids + 4*i*d
-	vmovaps		[r13+r11], ymm0	        ; centroids + 4*i*d + 4*j <- xmm0
+	vmovups		[r13+r11], ymm0	        ; centroids + 4*i*d + 4*j <- xmm0
 	jmp iter
 else:
 	;printregps	xmm6
@@ -93,12 +93,12 @@ else:
 	mov			r10,r8		;d
 	imul		r10, rbx		; 4*i*d
 	add			r11, r10		;centroids_1 + 4*i*d
-	vmovaps      ymm0,[r13+r11]      ;centroids_1 + 4*i*d + 4*j. prendo 8 elementi (e dimensioni)
+	vmovups      ymm0,[r13+r11]      ;centroids_1 + 4*i*d + 4*j. prendo 8 elementi (e dimensioni)
 
 
 	mov         r11,rdi         ;centroids
 	add         r11,r10         ;centroids + 4*i*d
-	vmovaps		[r13+r11], ymm0	        ; centroids + 4*i*d + 4*j = xmm0
+	vmovups		[r13+r11], ymm0	        ; centroids + 4*i*d + 4*j = xmm0
 
 iter:
 	mov 	r11,r8			;d
