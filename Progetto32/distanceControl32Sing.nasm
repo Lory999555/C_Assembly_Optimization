@@ -60,7 +60,7 @@ distanceControl32Sing:
 
 		mov			esi,edx			;i*4
 		;mov 		edi,ecx			;k*4
-		add 		esi,edi			;i*4+k*4
+		;add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
 		mov			edi,[ebp+j]			;j
