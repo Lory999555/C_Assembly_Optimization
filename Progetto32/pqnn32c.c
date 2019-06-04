@@ -476,7 +476,9 @@ extern void extr_col(float* ds, int n, int d, int nr, int divi, float* result);
 extern void dist32A(float * x,float * y,float* distance, int d);
 extern void dist32U(float * x,float * y,float* distance, int d);
 extern void mapping32(int i, int j, int n, int * indice, int index);
-extern void cent_X(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
+extern void cent_XA(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
+extern void cent_XU(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
+//extern void w_near(float* x, float* cent, float* tmp, int d, int* result_w, float* result_dist, int w, int n, float* max);
 
 /**metodo per estrapolare in maniera semi-casuale nr elementi da
  * un dataset */
@@ -619,29 +621,32 @@ float dist(float * x,float * y, int d){
 int centXA(float * centroids, float * x, int k, int d){	
 	/*float dis;
 	int park = 0;
-	float* tmp = alloc_matrix(unroll,1);
-	cent_X(centroids,x,k,d,tmp,&park,&dis);
-	*/
+	//float* tmp = alloc_matrix(unroll,1);
+	float tmp = 0;
+	cent_XA(centroids,x,k,d,&tmp,&park,&dis);*/
 	float dis;
 	int park = 0;
 	float tmp = 0;
 	dist32A(x,centroids,&dis,d);
+	//printf("\nsssssss %f\n", dis);
 	for( int i=0; i<k; i++){
  		dist32A(x, &centroids[i*d], &tmp, d);
-		
+		//printf("\nsssssss %f\n", tmp);
 		if( tmp < dis){
 			dis = tmp;
 			park = i;
 		}
+		//printf(".......%d\n",park);
 	}
 	return park;
 }
 int centXU(float * centroids, float * x, int k, int d){	
-	/*float dis;
+	float dis;
 	int park = 0;
 	float* tmp = alloc_matrix(unroll,1);
-	cent_X(centroids,x,k,d,tmp,&park,&dis);
-	*/
+	cent_XU(centroids,x,k,d,tmp,&park,&dis);
+	/*
+
 	float dis;
 	int park = 0;
 	float tmp = 0;
@@ -653,7 +658,7 @@ int centXU(float * centroids, float * x, int k, int d){
 			dis = tmp;
 			park = i;
 		}
-	}
+	}*/
 	return park;
 }
 
@@ -2089,7 +2094,7 @@ int* productQuantU(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,
  * è false allora il metodo per,finchè non sarà completamente popoalta, carica la struttura
  * con gli elementi e ritorna il massimo 
  **/
-float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,bool full){
+void max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,bool full, float* result){
 	//accesso_2++;
 	float new_max;
 	if (full==true || c_max_heap == dim) { // dovrebbe andar bene anche solo con ==
@@ -2112,7 +2117,7 @@ float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,b
 				new_max = result_dist[j];
 			}	
 		}
-		return new_max;
+		result[0] = new_max;
 	}
 	else
 	{
@@ -2126,10 +2131,10 @@ float max_heap(int* index,float* result_dist,int y,float tmp,float max,int dim,b
 		c_max_heap++;
 		
 		if (c_max_heap==dim) {
-			return pre_max_heap;
+			result[0] = pre_max_heap;
 		}else
 		{
-			return max;
+			result[0] = max;
 		}
 	}
 
@@ -2210,29 +2215,36 @@ int * w_near_centroidsA(MATRIX x,MATRIX centroids,int n,int d,int w){
 	float * result_dist=alloc_matrix(w,1);
 	float tmp=0;
 	float max=0;
-
+	int new_i;
+	//w_near(x, centroids,&tmp,d,result_w,result_dist, w, n, &max);
 	//riempo i primi w posti con i primi w centroidi e le relative distanze
 	//printf("riempo i primi w posti\n");
-	for(i = 0; i < w; i++)
-	{	
+	for(i = 0; i < w; i++){	
 		tmp = 0;
 		dist32A(x, &centroids[i*d], &tmp, d);
 		//tmp=dist(x,&centroids[i*d],d);
-		
-		/*for (int j=0; j<d;j++){
-			tmp += pow(x[j] - centroids[i*d+j], 2);
-		}*/
+		//printf("----------------%f\n",tmp);
+		//for (int j=0; j<d;j++){
+		//	tmp += pow(x[j] - centroids[i*d+j], 2);
+		//}
+		//printf("--------%d\n-^-%d\n",&result_w[i],i);
 		result_w[i]=i;
 		result_dist[i]=tmp;
 		//piccola ottimizzazione, al posto di mantenere ordinata la struttura
 		//uso un "max" se le distanze che calcolo sono più piccole allora dovrà 
 		//entrare nella struttura altrimenti no.
 		if (max < tmp) {
+			//printf("---%f\n",max);
 			max = tmp;
+			//printf("--^--%f\n",max);
 		}
+		//printf("--%d\n",i);
 	}
-
-	int new_i;
+	//printf("..%f\n",max);
+	/*for(int i=0; i<w; i++){
+		printf("res_w=%d\nresd=%f\n",result_w[i],result_dist[i]);
+	}*/
+	
 	//	float new_max;
 	//	bool trovato;
 	//n qui simboleggia il numero dei centroidi
@@ -2245,25 +2257,23 @@ int * w_near_centroidsA(MATRIX x,MATRIX centroids,int n,int d,int w){
 		tmp = 0;
 		dist32A(x, &centroids[i*d], &tmp, d);
 		//tmp=dist(x,&centroids[i*d],d);
-		/*for (int j=0; j<d;j++){
-			tmp += pow(x[j] - centroids[i*d+j], 2);
-		}*/
-		
+		//for (int j=0; j<d;j++){
+		//	tmp += pow(x[j] - centroids[i*d+j], 2);
+		//}
 		if(tmp < max){
-	//			new_max=tmp;
+			//	new_max=tmp;
 			//bisogna inserire ed aggiornare la struttura
-			max=max_heap(result_w,result_dist,i,tmp,max,w,true);
-	//			max = new_max;
-	//			trovato=false;
+			max_heap(result_w,result_dist,i,tmp,max,w,true, &max);
+			//	max = new_max;
+	        //	trovato=false;
 			
 		}
 
 	}
 	dealloc_matrix(result_dist);
 	return result_w;
-
-
 }
+
 int * w_near_centroidsU(MATRIX x,MATRIX centroids,int n,int d,int w){
 	int i,j;
 	int * result_w=alloc_vector(w);
@@ -2312,7 +2322,7 @@ int * w_near_centroidsU(MATRIX x,MATRIX centroids,int n,int d,int w){
 		if(tmp < max){
 	//			new_max=tmp;
 			//bisogna inserire ed aggiornare la struttura
-			max=max_heap(result_w,result_dist,i,tmp,max,w,true);
+			max_heap(result_w,result_dist,i,tmp,max,w,true, &max);
 	//			max = new_max;
 	//			trovato=false;
 			
@@ -3084,7 +3094,7 @@ void pqnn_search(params* input) {
 					}
 
 					if(tmp < nn_dis){							
-						nn_dis=max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false, &nn_dis);
 						//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 						//nn_dis = tmp;
 						//result = L_i[ind][0];
@@ -3200,7 +3210,7 @@ void pqnn_search(params* input) {
 					}
 
 					if(tmp < nn_dis){							
-						nn_dis=max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false, &nn_dis);
 						//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 						//nn_dis = tmp;
 						//result = L_i[ind][0];
@@ -3316,7 +3326,7 @@ void pqnn_search(params* input) {
 					}
 
 					if(tmp < nn_dis){							
-						nn_dis=max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false, &nn_dis);
 						//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 						//nn_dis = tmp;
 						//result = L_i[ind][0];
@@ -3432,7 +3442,7 @@ void pqnn_search(params* input) {
 					}
 
 					if(tmp < nn_dis){							
-						nn_dis=max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist,L_i[ind*nodo],tmp,nn_dis,input->knn,false, &nn_dis);
 						//printf("\n nn_dis = %f  per il punto y = %d\n\n",nn_dis,L_i[ind][0]);
 						//nn_dis = tmp;
 						//result = L_i[ind][0];
@@ -3536,7 +3546,7 @@ void pqnn_search(params* input) {
 
 					if(tmp < nn_dis){
 						//clock_t t11 = clock();
-						nn_dis=max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false,&nn_dis);
 						//t11 = clock() - t11;
 						//tot+=t11;
 						//cont++;
@@ -3646,7 +3656,7 @@ void pqnn_search(params* input) {
 
 					if(tmp < nn_dis){
 						//clock_t t11 = clock();
-						nn_dis=max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false, &nn_dis);
 						//t11 = clock() - t11;
 						//tot+=t11;
 						//cont++;
@@ -3756,7 +3766,7 @@ void pqnn_search(params* input) {
 
 					if(tmp < nn_dis){
 						//clock_t t11 = clock();
-						nn_dis=max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false, &nn_dis);
 						//t11 = clock() - t11;
 						//tot+=t11;
 						//cont++;
@@ -3866,7 +3876,7 @@ void pqnn_search(params* input) {
 
 					if(tmp < nn_dis){
 						//clock_t t11 = clock();
-						nn_dis=max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false);
+						max_heap(k_nn,result_dist, L_i[ind*nodo],tmp,nn_dis,input->knn,false, &nn_dis);
 						//t11 = clock() - t11;
 						//tot+=t11;
 						//cont++;
@@ -3971,7 +3981,7 @@ void pqnn_search(params* input) {
 				}
 				//clock_t t11 = clock();
 				if(tmp < nn_dis){
-					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+					max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false, &nn_dis);
 					//t11 = clock() - t11;
 					//tot+=t11;
 					//pippo++;
@@ -4041,7 +4051,7 @@ void pqnn_search(params* input) {
 				}
 				//clock_t t11 = clock();
 				if(tmp < nn_dis){
-					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+					max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false, &nn_dis);
 					//t11 = clock() - t11;
 					//tot+=t11;
 					//pippo++;
@@ -4101,7 +4111,7 @@ void pqnn_search(params* input) {
 				
 				//clock_t t11 = clock();
 				if(tmp < nn_dis){
-					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+					max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false, &nn_dis);
 				}
 				//t11 = clock() - t11;
 				//tot+=t11;
@@ -4169,7 +4179,7 @@ void pqnn_search(params* input) {
 				
 				//clock_t t11 = clock();
 				if(tmp < nn_dis){
-					nn_dis = max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false);
+					max_heap(k_nn,result_dist,y,tmp,nn_dis,input->knn,false, &nn_dis);
 				}
 				//t11 = clock() - t11;
 				//tot+=t11;
@@ -4278,9 +4288,9 @@ int main(int argc, char** argv) {
 	input->m = 8;
 	input->k = 256;
 	//input->kc = 8192;
-	input->kc = 128;
+	input->kc = 256;
 	//input->w = 16;
-	input->w=4;
+	input->w=16;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -4433,10 +4443,10 @@ int main(int argc, char** argv) {
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
 
-	input->nr = input->n/5;
+	input->nr = input->n/2;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 16000,256);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 8000,256);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
