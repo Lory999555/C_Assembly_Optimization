@@ -4249,7 +4249,8 @@ void pqnn_index(params* input) {
 		printf("Fine index\n");
 
 
-	}else if(input->exaustive == 0 && nmod4noex==false){
+	}
+	else if(input->exaustive == 0 && nmod4noex==false){
 
 
 		//TEST 
@@ -4422,7 +4423,6 @@ void pqnn_index(params* input) {
 
 
 	}
-
 	else if(input->exaustive == 1 && nmod4==true){
 		
 		//clock_t t00 = clock();
