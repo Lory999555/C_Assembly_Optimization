@@ -3888,7 +3888,7 @@ float* pre_adcA(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 	float* result= alloc_matrix(m,k);
 	//int sub=d/m;
 	int i,j;
-	float distance,distance2;
+	float distance;
 	MATRIX uj_x;
 	for(j=0; j<m; j++){
 		//clock_t t11 = clock();
@@ -3918,9 +3918,10 @@ float* pre_adcA(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
-
+		dealloc_matrix(uj_x);
 		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 	}
+	
 	return result;
 }
 
@@ -4473,9 +4474,13 @@ void pqnn_search(params* input) {
 	if(input->exaustive==0 && input->symmetric==1 && submod4 == true && dmod4 == true){
 		printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
 		stored_distance=pre_sdcA(Cp,input->sub,input->m,input->k);
-	
 		//per ogni punto per query set
 		int i,i_w,ind,result,sjump,sbucket;
+		int * k_nn;
+		float * result_dist;
+		float tmp,nn_dis;
+		int C_i, z, t;
+		int* L_i;
 		c_x=alloc_vector(input->m);
 		for(i=0;i< input->nq;i++){
 			
@@ -4510,11 +4515,10 @@ void pqnn_search(params* input) {
 			//effettivamente funziona
 
 			//allocazioni per ottenere un MaxHeap che interagisca con il metodo max_heap
-			int * k_nn=alloc_vector(input->knn);
-			float * result_dist=alloc_matrix(input->knn,1);
-			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
-			int C_i, z, t;
-			int* L_i;
+			k_nn=alloc_vector(input->knn);
+			result_dist=alloc_matrix(input->knn,1);
+			nn_dis = FLT_MAX;//DBL_MAX;
+			
 			//printDsQs(res_x,NULL,input->w,input->d,0);
 			for(i_w = 0 ; i_w < input->w ; i_w++){
 				int k_2 = input->k*input->k;
@@ -4525,13 +4529,12 @@ void pqnn_search(params* input) {
 					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 					//clock_t t11 = clock();
 					c_x[j] = centXA(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
+					dealloc_matrix(uj_x);
 					//t11 = clock() - t11;
 					//tot+=t11;
 				}	
 				//t11 = clock() - t11;
 				//tot+=t11;
-				
-				dealloc_matrix(uj_x); //capire se è necessario perchè sembra che perda molto tempo
 				//centroide più vicino associato al punto
 				C_i= label_w[i_w];
 				L_i = IL[C_i];
@@ -4587,11 +4590,14 @@ void pqnn_search(params* input) {
 			//oppure ogni volta che dobbiamo "resettarli")
 			dealloc_vector(k_nn);
 			dealloc_matrix(result_dist);
+			dealloc_vector(label_w);
+			dealloc_matrix(res_x);
 			c_max_heap=0;
 			pre_max_heap=0;
 			
 			//printf("\n x=%d 	y=%d	dist=%f\n",i,result,nn_dis);
 		}
+		dealloc_matrix(stored_distance);
 	}
 	else if(input->exaustive==0 && input->symmetric==1 && submod4 == true && dmod4 == false){
 		printf("PRE-calcolo delle distanze (SIMMETRICO) tra Cji e Cji\n");
@@ -4950,7 +4956,12 @@ void pqnn_search(params* input) {
 		//per ogni punto per query set
 		
 		int i,i_w,ind,result,sjump,sbucket;
-		c_x=alloc_vector(input->m);
+		//c_x=alloc_vector(input->m);
+		int * k_nn;
+		float * result_dist;
+		float tmp,nn_dis;
+		int C_i, z, t;
+		int* L_i;
 		for(i=0;i< input->nq;i++){
 			//printf("calcolo dei w centroidi più vicini alla query X = %d\n",i);
 			//printX(x_query,i,input->d);
@@ -4983,11 +4994,9 @@ void pqnn_search(params* input) {
 			//effettivamente funziona
 
 			//allocazioni per ottenere un MaxHeap che interagisca con il metodo max_heap
-			int * k_nn=alloc_vector(input->knn);
-			float * result_dist=alloc_matrix(input->knn,1);
-			float tmp,nn_dis = FLT_MAX;//DBL_MAX;
-			int C_i, z, t;
-			int* L_i;
+			k_nn=alloc_vector(input->knn);
+			result_dist=alloc_matrix(input->knn,1);
+			nn_dis = FLT_MAX;//DBL_MAX;
 			//printDsQs(res_x,NULL,input->w,input->d,0);
 			for(i_w = 0 ; i_w < input->w ; i_w++){		
 				//calcolare tutte le distanze d(Uj(r(x)),Cji)^2
@@ -5034,8 +5043,11 @@ void pqnn_search(params* input) {
 					//t11 = clock() - t11;
 					//tot+=t11;
 				}		
+		
+				dealloc_matrix(stored_distance);
 				
 			}
+
 			//printVectorfloat(Cc,input->kc*input->d);
 			
 			//salvarsi i k valori che minimizzano la distanza(con il MAXHEAP) non ordinato
@@ -5056,8 +5068,14 @@ void pqnn_search(params* input) {
 
 			//pulizia del max_heap (sarebbe buono capire se conviene deallocarli solo alla fine 
 			//oppure ogni volta che dobbiamo "resettarli")
+			//dealloc_vector(L_i);
 			dealloc_vector(k_nn);
 			dealloc_matrix(result_dist);
+			dealloc_matrix(res_x);
+			dealloc_vector(label_w);
+			dealloc_vector(c_x);
+			
+
 			c_max_heap=0;
 			pre_max_heap=0;
 			//printf("\n x=%d 	y=%d	dist=%f\n",i,result,nn_dis);
