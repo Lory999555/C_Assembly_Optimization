@@ -22,7 +22,7 @@ rowDistance64SdcA:
     mov r11,[rbp+subb]
     ;vprintreg r11
     
-    ;mov dword [distance],0                    ;distance=0
+    ;mov dword [distance],0              ;distance=0
       
     imul rcx,dim                        ;prendo j
     imul rcx,r11                        ;j*sub

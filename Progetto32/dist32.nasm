@@ -159,7 +159,7 @@ global dist32U
     ciclo2U:
         cmp esi, edi
         jg  resto2U
-        movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
+        movups xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
         movups xmm7, [ebx+4*esi]
         subps xmm0,xmm7
         mulps xmm0,xmm0
