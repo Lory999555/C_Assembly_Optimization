@@ -2,71 +2,145 @@
 
 section .data
 
-
-x		equ		8
-
-
-y   equ     12
-
-
-distance		equ		16
-
-d		equ		20
-
 dim equ 4
-
 
 section .bss
 
 section .text
 
-global dist64
+global dist64A
 
-dist64:
-    push		rbp				; salva il Base Pointer
-	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
-	pushaq						; salva i registri generali
+dist64A:
+    start
 
-    mov eax,[ebp+x]
-    mov ebx,[ebp+y]
+    vmovaps ymm1,[rdi] ;x[0]
+    vsubps ymm1,[rsi]  ;x[0]-y[0]
+    vmulps ymm1,ymm1     ;(..)^2
+    ;printregyps ymm1
+    mov r12,rcx         ;d
+    ;mov ecx,dim     ;4
+    sub r12,16     ;d-16
 
-    movaps xmm1,[eax] ;x[0]
-    subps xmm1,[ebx]  ;x[0]-y[0]
-    mulps xmm1,xmm1     ;(..)^2
-    ;printregps xmm1
-    mov edi,[ebp+d] ;d
-    mov ecx,dim     ;4
-    sub edi,ecx     ;d-4
-
-    mov esi,4       ;i=4
+    vxorps ymm2, ymm2
+    mov r10,8       ;i=4
 ciclo:
-    cmp esi,edi     ;(j>=d-4)?
-    jge fine
-    movaps xmm0,[eax+4*esi] ;x[i]
-    subps xmm0,[ebx+4*esi]  ;x[i]-y[i]
-    mulps xmm0,xmm0         ;(..)^2
-    ;printregps xmm0
-    addps xmm1,xmm0         ;distance+=(..)^2
-    ;printregps xmm1
-    add esi,4               ;avanzo di indice
+    cmp r10,r12     ;(j>=d-16)?
+    jg resto
+    vmovaps ymm0,[rdi+4*r10] ;x[i]
+    vsubps ymm0,[rsi+4*r10]  ;x[i]-y[i]
+    vmulps ymm0,ymm0         ;(..)^2
+    ;printregyps ymm0
+    vaddps ymm1,ymm0         ;distance+=(..)^2
+    ;printregyps ymm1
+    add r10,8               ;avanzo di indice
 
-    movaps xmm0,[eax+4*esi]
-    subps xmm0,[ebx+4*esi]
-    mulps xmm0,xmm0
-    ;printregps xmm0
-    addps xmm1,xmm0
-    ;printregps xmm1
-    add esi,4
+    vmovaps ymm0,[rdi+4*r10]
+    vsubps ymm0,[rsi+4*r10]
+    vmulps ymm0,ymm0
+    ;printregyps ymm0
+    vaddps ymm1,ymm0
+    ;printregyps ymm1
+    add r10,8
+
     jmp ciclo
-fine:
-    movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-    subps xmm0,[ebx+4*esi]
-    mulps xmm0,xmm0
-    haddps xmm1,xmm0        ;merge di tutte le somme
-    haddps xmm1,xmm1        ;|
-    haddps xmm1,xmm1        ;|
-    ;printregps xmm1        
+resto:
+    mov r12, rcx
+    sub r12, 8
+ciclo2:
+    cmp r10, r12
+    jg  fine
+    vmovaps ymm0,[rdi+4*r10] ;sommo gli ultimi elementi rimanenti
+    vsubps ymm0,[rsi+4*r10]
+    vmulps ymm0,ymm0
+    vaddps ymm2, ymm0
+    add r10, 8
+    jmp ciclo2
 
-    mov eax,[ebp+distance]
-    movss [eax],xmm1        ;carico il nuovo valore di distance
+fine:
+    vaddps ymm1,ymm2        ;merge di tutte le somme
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vperm2f128 ymm5,ymm1,ymm1,1
+    vaddss xmm1,xmm5
+    ;printregyps ymm1
+    vmovss  [rdx],xmm1
     stop
+
+global dist64U
+
+dist64U:
+    start
+
+    vmovups ymm1,[rdi] ;x[0]
+    vsubps ymm1,[rsi]  ;x[0]-y[0]
+    vmulps ymm1,ymm1     ;(..)^2
+    ;printregyps ymm1
+    mov r12,rcx         ;d
+    ;mov ecx,dim     ;4
+    sub r12,16     ;d-16
+
+    vxorps ymm2, ymm2
+    mov r10,8       ;i=4
+cicloU:
+    cmp r10,r12     ;(j>=d-16)?
+    jg restoU
+    vmovups ymm0,[rdi+4*r10] ;x[i]
+    vsubps ymm0,[rsi+4*r10]  ;x[i]-y[i]
+    vmulps ymm0,ymm0         ;(..)^2
+    ;printregyps ymm0
+    vaddps ymm1,ymm0         ;distance+=(..)^2
+    ;printregyps ymm1
+    add r10,8               ;avanzo di indice
+
+    vmovups ymm0,[rdi+4*r10]
+    vsubps ymm0,[rsi+4*r10]
+    vmulps ymm0,ymm0
+    ;printregyps ymm0
+    vaddps ymm1,ymm0
+    ;printregyps ymm1
+    add r10,8
+
+    jmp cicloU
+restoU:
+    mov r12, rcx
+    sub r12, 8
+ciclo2U:
+    cmp r10, r12
+    jg  resto2U
+    vmovups ymm0,[rdi+4*r10] ;sommo gli ultimi elementi rimanenti
+    vsubps ymm0,[rsi+4*r10]
+    vmulps ymm0,ymm0
+    vaddps ymm2, ymm0
+    ;printregyps ymm2
+    add r10, 8
+    jmp ciclo2U
+
+resto2U:
+    mov r12, rcx
+ciclo3U:
+    cmp r10, r12
+    je  fineU
+    vmovss xmm7,[rdi+4*r10] ;sommo gli ultimi elementi rimanenti
+    vsubss xmm7,[rsi+4*r10]
+    vmulss xmm7, xmm7
+    ;printregyps ymm7
+    vaddps ymm2, ymm7
+    ;printregyps ymm2
+    add r10, 1
+    jmp ciclo3U
+fineU:
+    vaddps ymm1,ymm2        ;merge di tutte le somme
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vperm2f128 ymm5,ymm1,ymm1,1
+    vaddss xmm1,xmm5
+    ;printregyps ymm1
+    vmovss  [rdx],xmm1
+    stop
+

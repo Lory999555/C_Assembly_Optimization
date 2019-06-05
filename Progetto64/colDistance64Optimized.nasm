@@ -8,16 +8,7 @@
 
 section .data			; Sezione contenente dati inizializzati
 
-dataset		equ		8
-
-c		equ		12
-
-distance		equ		16
-
-starti		equ		20
-startj		equ		24
-dimension		equ		28
-n			equ		32
+n			equ		16
 
 dim		equ		4
 p		equ		8
@@ -40,41 +31,43 @@ colDistance64OptimizedA:
 	pushaq						; salva i registri generali
 
 
-	mov		eax, [ebp+starti]	; i = starti
-	imul	eax, dim		; i= i*4
+	mov			r15,[rbp+n]		;n
+	
+	;mov		rcx, [rbp+starti]	; i = starti
+	imul	rcx, dim		; i= i*4
 
-	mov		ebx, [ebp+startj]		; j = startj
-	imul	ebx,dim		;j=j*4
+	;mov		r8, [rbp+startj]		; j = startj
+	imul	r8,dim		;j=j*4
 
-	mov 	edx,[ebp+dimension]		;d
-	imul	edx,dim		;d*4
+	mov 	r14,r9		;d
+	imul	r14,dim		;d*4
 
-	;movaps		xmm0, [C+eax+edi]	; c0 = C[i..i+p-1][j]  = C[dim*(i+j*n)..dim*(i+j*n+p-1)]		
-	mov		ecx, 0			; k = 0
+	;movaps		xmm0, [C+rcx+r10]	; c0 = C[i..i+p-1][j]  = C[dim*(i+j*n)..dim*(i+j*n+p-1)]		
+	mov		r13, 0			; k = 0
 
-	xorps xmm4,xmm4		; xmm2=0;
-	xorps xmm5,xmm5		; xmm2=0;
-	xorps xmm6,xmm6		; xmm2=0;
-	xorps xmm7,xmm7		; xmm2=0;
-	;xorps xmm7,xmm7
+	vxorps ymm4,ymm4		; xmm2=0;
+	vxorps ymm5,ymm5		; xmm2=0;
+	vxorps ymm6,ymm6		; xmm2=0;
+	vxorps ymm7,ymm7		; xmm2=0;
+	;vxorps xmm7,xmm7
 
 fork1:		
-	;printregps xmm7
-	mov 		esi,[ebp+c]		;centroids
-	mov 		edi,[ebp+dimension]		;d
-	imul		edi,ebx		; 4*j*d
-	add			esi, edi		; centroids + 4*j*d
-	movss		xmm3, [ecx+esi]	; C[j][k] = C[4*k+4*j*d]
 	
-	mov 		esi,[ebp+dataset]		;dataset
-	mov			edi,[ebp+n]		;n
-	imul		edi, ecx		; 4*k*n
-	add			esi, edi		;dataset + 4*k*n
+	mov 		r12,rsi		;centroids
+	mov 		r10,r9		;d
+	imul		r10,r8		; 4*j*d
+	add			r12, r10		; centroids + 4*j*d
+	vbroadcastss	ymm8, [r13+r12]	; C[j][k] = C[4*k+4*j*d]
+	
+	mov 		r12,rdi		;dataset
+	mov			r10,r15		;n
+	imul		r10, r13		; 4*k*n
+	add			r12, r10		;dataset + 4*k*n
 
-	movaps		xmm0, [eax+esi]	; DS[i..i+p-1][k] = DS[4*i+4*k*n..4*(i+*k*n+p-1)]
-	movaps		xmm1, [eax+esi+16]	;
-	movaps		xmm2, [eax+esi+32]	;
-	;movaps		xmm3, [eax+esi+48]	;
+	vmovaps		ymm0, [rcx+r12]	; DS[i..i+p-1][k] = DS[4*i+4*k*n..4*(i+*k*n+p-1)]
+	vmovaps		ymm1, [rcx+r12+32]	;
+	vmovaps		ymm2, [rcx+r12+64]	;
+	vmovaps		ymm3, [rcx+r12+96]	;
 
 
 
@@ -82,39 +75,39 @@ fork1:
 	
 
 
-	shufps		xmm3, xmm3, 0
+	;vshufps		ymm8, ymm8, 0
 	;printregps  xmm1
-	subps		xmm0, xmm3
-	subps		xmm1, xmm3
-	subps		xmm2, xmm3
-	;subps		xmm3, xmm3
+	vsubps		ymm0, ymm8
+	vsubps		ymm1, ymm8
+	vsubps		ymm2, ymm8
+	vsubps		ymm3, ymm8
 
-	mulps		xmm0, xmm0		;tmp[i..i+p-1] rispetto al j-esimo centroide
-	mulps		xmm1, xmm1
-	mulps		xmm2, xmm2
-	;mulps		xmm3, xmm3
+	vmulps		ymm0, ymm0		;tmp[i..i+p-1] rispetto al j-r12mo centroide
+	vmulps		ymm1, ymm1
+	vmulps		ymm2, ymm2
+	vmulps		ymm3, ymm3
 	;sqrtps		xmm0, xmm0
 
-	addps		xmm4, xmm0		; distance[i..i+p-1] += tmp
-	addps		xmm5, xmm1
-	addps		xmm6, xmm2
-	;addps		xmm7, xmm3
+	vaddps		ymm4, ymm0		; distance[i..i+p-1] += tmp
+	vaddps		ymm5, ymm1
+	vaddps		ymm6, ymm2
+	vaddps		ymm7, ymm3
 
-	movaps		xmm0, [eax+esi+48]	;
-	subps		xmm0, xmm3
-	mulps		xmm0, xmm0
-	addps		xmm7, xmm0
+	;movaps		xmm0, [rcx+r12+48]	;
+	;vsubps		xmm0, xmm3
+	;vmulps		xmm0, xmm0
+	;vaddps		xmm7, xmm0
 
-	add			ecx, dim		; k++
-	;addps   	xmm7,[inizio]
-	cmp			ecx, edx		; (k < dimension) ?
+	add			r13, dim		; k++
+	;vaddps   	xmm7,[inizio]
+	cmp			r13, r14		; (k < dimension) ?
 	jb			fork1
 	
-	mov			esi,[ebp+distance]
-	movaps		[esi], xmm4	; dist[i..i+p-1]  = distance[i..i+p-1] 
-	movaps		[esi+16],xmm5
-	movaps		[esi+32],xmm6
-	movaps		[esi+48],xmm7
+	;mov			r12,[rbp+distance]
+	vmovaps		[rdx], ymm4	; dist[i..i+p-1]  = distance[i..i+p-1] 
+	vmovaps		[rdx+32],ymm5
+	vmovaps		[rdx+64],ymm6
+	vmovaps		[rdx+96],ymm7
 
 
 	;printregps		xmm2
@@ -131,41 +124,43 @@ colDistance64OptimizedU:
 	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
 	pushaq						; salva i registri generali
 
-	mov		eax, [ebp+starti]	; i = starti
-	imul	eax, dim		; i= i*4
+	mov			r15,[rbp+n]		;n
 
-	mov		ebx, [ebp+startj]		; j = startj
-	imul	ebx,dim		;j=j*4
+	;mov		rcx, [rbp+starti]	; i = starti
+	imul	rcx, dim		; i= i*4
 
-	mov 	edx,[ebp+dimension]		;d
-	imul	edx,dim		;d*4
+	;mov		r8, [rbp+startj]		; j = startj
+	imul	r8,dim		;j=j*4
 
-	;movaps		xmm0, [C+eax+edi]	; c0 = C[i..i+p-1][j]  = C[dim*(i+j*n)..dim*(i+j*n+p-1)]		
-	mov		ecx, 0			; k = 0
+	mov 	r14,r9		;d
+	imul	r14,dim		;d*4
 
-	xorps xmm4,xmm4		; xmm2=0;
-	xorps xmm5,xmm5		; xmm2=0;
-	xorps xmm6,xmm6		; xmm2=0;
-	xorps xmm7,xmm7		; xmm2=0;
-	;xorps xmm7,xmm7
+	;movaps		xmm0, [C+rcx+r10]	; c0 = C[i..i+p-1][j]  = C[dim*(i+j*n)..dim*(i+j*n+p-1)]		
+	mov		r13, 0			; k = 0
+
+	vxorps ymm4,ymm4		; xmm2=0;
+	vxorps ymm5,ymm5		; xmm2=0;
+	vxorps ymm6,ymm6		; xmm2=0;
+	vxorps ymm7,ymm7		; xmm2=0;
+	;vxorps xmm7,xmm7
 
 forkk1:		
 	;printregps xmm7
-	mov 		esi,[ebp+c]		;centroids
-	mov 		edi,[ebp+dimension]		;d
-	imul		edi,ebx		; 4*j*d
-	add			esi, edi		; centroids + 4*j*d
-	movss		xmm3, [ecx+esi]	; C[j][k] = C[4*k+4*j*d]
+	mov 		r12,rsi		;centroids
+	mov 		r10,r9		;d
+	imul		r10,r8		; 4*j*d
+	add			r12, r10		; centroids + 4*j*d
+	vbroadcastss	ymm8, [r13+r12]	; C[j][k] = C[4*k+4*j*d]
 	
-	mov 		esi,[ebp+dataset]		;dataset
-	mov			edi,[ebp+n]		;n
-	imul		edi, ecx		; 4*k*n
-	add			esi, edi		;dataset + 4*k*n
+	mov 		r12,rdi		;dataset
+	mov			r10,r15		;n
+	imul		r10, r13		; 4*k*n
+	add			r12, r10		;dataset + 4*k*n
 
-	movups		xmm0, [eax+esi]	; DS[i..i+p-1][k] = DS[4*i+4*k*n..4*(i+*k*n+p-1)]
-	movups		xmm1, [eax+esi+16]	;
-	movups		xmm2, [eax+esi+32]	;
-	;movaps		xmm3, [eax+esi+48]	;
+	vmovups		ymm0, [rcx+r12]	; DS[i..i+p-1][k] = DS[4*i+4*k*n..4*(i+*k*n+p-1)]
+	vmovups		ymm1, [rcx+r12+32]	;
+	vmovups		ymm2, [rcx+r12+64]	;
+	vmovups		ymm3, [rcx+r12+96]	;
 
 
 
@@ -173,40 +168,39 @@ forkk1:
 	
 
 
-	shufps		xmm3, xmm3, 0
+	;vshufps		ymm4, ymm4, 0
 	;printregps  xmm1
-	subps		xmm0, xmm3
-	subps		xmm1, xmm3
-	subps		xmm2, xmm3
-	;subps		xmm3, xmm3
+	vsubps		ymm0, ymm8
+	vsubps		ymm1, ymm8
+	vsubps		ymm2, ymm8
+	vsubps		ymm3, ymm8
 
-	mulps		xmm0, xmm0		;tmp[i..i+p-1] rispetto al j-esimo centroide
-	mulps		xmm1, xmm1
-	mulps		xmm2, xmm2
-	;mulps		xmm3, xmm3
+	vmulps		ymm0, ymm0		;tmp[i..i+p-1] rispetto al j-r12mo centroide
+	vmulps		ymm1, ymm1
+	vmulps		ymm2, ymm2
+	vmulps		ymm3, ymm3
 	;sqrtps		xmm0, xmm0
 
-	addps		xmm4, xmm0		; distance[i..i+p-1] += tmp
-	addps		xmm5, xmm1
-	addps		xmm6, xmm2
-	;addps		xmm7, xmm3
+	vaddps		ymm4, ymm0		; distance[i..i+p-1] += tmp
+	vaddps		ymm5, ymm1
+	vaddps		ymm6, ymm2
+	vaddps		ymm7, ymm3
 
-	movups		xmm0, [eax+esi+48]	;
-	subps		xmm0, xmm3
-	mulps		xmm0, xmm0
-	addps		xmm7, xmm0
+	;movaps		xmm0, [rcx+r12+48]	;
+	;vsubps		xmm0, xmm3
+	;vmulps		xmm0, xmm0
+	;vaddps		xmm7, xmm0
 
-	add			ecx, dim		; k++
-	;addps   	xmm7,[inizio]
-	cmp			ecx, edx		; (k < dimension) ?
+	add			r13, dim		; k++
+	;vaddps   	xmm7,[inizio]
+	cmp			r13, r14		; (k < dimension) ?
 	jb			forkk1
 	
-	mov			esi,[ebp+distance]
-	movaps		[esi], xmm4	; dist[i..i+p-1]  = distance[i..i+p-1] 
-	movaps		[esi+16],xmm5
-	movaps		[esi+32],xmm6
-	movaps		[esi+48],xmm7
-
+	;mov			r12,[rbp+distance]
+	vmovaps		[rdx], ymm4	; dist[i..i+p-1]  = distance[i..i+p-1] 
+	vmovaps		[rdx+32],ymm5
+	vmovaps		[rdx+64],ymm6
+	vmovaps		[rdx+96],ymm7
 
 	;printregps		xmm2
 	popaq						; ripristina i registri generali

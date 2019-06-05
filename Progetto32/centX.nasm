@@ -493,7 +493,7 @@ dist32A:
         sub edi, 4
     ciclo2:
         cmp esi, edi
-        jg  resto2
+        jg  fineA
         movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
         subps xmm0,[ebx+4*esi]
         mulps xmm0,xmm0
@@ -501,17 +501,6 @@ dist32A:
         add esi, 4
         jmp ciclo2
 
-    resto2:
-        mov edi, [ebp+dddd]
-    ciclo3:
-        cmp esi, edi
-        je  fineA
-        movss xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-        subss xmm0,[ebx+4*esi]
-        mulss xmm0,xmm0
-        addss xmm2, xmm0
-        add esi, 1
-        jmp ciclo3
     fineA:
         haddps xmm1,xmm2        ;merge di tutte le somme
         haddps xmm1,xmm1        ;|

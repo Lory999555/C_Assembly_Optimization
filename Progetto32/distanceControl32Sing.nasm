@@ -37,19 +37,19 @@ distanceControl32Sing:
 		mov 	edx,[ebp+i]		;i
 		imul	edx,dim			;i*4
 
-		mov		ecx, 0			; k = 0
+		;mov		ecx, 0			; k = 0
 	
 		;printregps xmm7
 		mov 		esi,[ebp+distance]		;distance
 		
 
-		movaps		xmm0, [ecx+esi]	; distance[k..k+3]
+		movaps		xmm0, [esi]	; distance[k..k+3]
 		;printregps  xmm0
 
 
 		mov 		esi,[ebp+min_distance]		
 
-		movaps		xmm1, [ecx+esi]			; min_distance[k..k+3]
+		movaps		xmm1, [esi]			; min_distance[k..k+3]
 		;printregps	xmm1
 		movaps		xmm2,xmm0		;sarà la maschera
 		cmpnltps	xmm2,xmm1		;>= in modo da farmi dare 0 dove mi serve
@@ -59,8 +59,8 @@ distanceControl32Sing:
 		jne			if1
 
 		mov			esi,edx			;i*4
-		mov 		edi,ecx			;k*4
-		add 		esi,edi			;i*4+k*4
+		;mov 		edi,ecx			;k*4
+		;add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
 		mov			edi,[ebp+j]			;j
@@ -68,7 +68,7 @@ distanceControl32Sing:
 		extractps	eax,xmm0,0			;
 
 		mov			edi,[ebp+min_distance]		;min_distance
-		mov			[edi+ecx],eax				;min_distance+4+k*4
+		mov			[edi],eax				;min_distance+4+k*4
 
 if1:
 
@@ -79,8 +79,8 @@ if1:
 
 		;printregps	xmm2
 		mov			esi,edx			;i*4
-		mov 		edi,ecx			;k*4
-		add 		esi,edi			;i*4+k*4
+		;mov 		edi,ecx			;k*4
+		;add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
 		mov			edi,[ebp+j]			;j
@@ -92,7 +92,7 @@ if1:
 			
 		mov			edi,[ebp+min_distance]		;min_distance
 		add			edi,dim						;min_distance+4
-		mov			[edi+ecx],eax				;min_distance+4+k*4
+		mov			[edi],eax				;min_distance+4+k*4
 		;printregps	xmm2
 
 
@@ -104,8 +104,8 @@ if2:
 		
 		;printregps	xmm1
 		mov			esi,edx			;i*4
-		mov 		edi,ecx			;k*4
-		add 		esi,edi			;i*4+k*4
+		;mov 		edi,ecx			;k*4
+		;add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
 		mov			edi,[ebp+j]			;j
@@ -115,7 +115,7 @@ if2:
 
 		mov			edi,[ebp+min_distance]
 		add			edi,dim*2				;min_distance + (i+k+2)*4
-		mov			[edi+ecx],eax
+		mov			[edi],eax
 
 if3:
 		extractps	eax,xmm2,3
@@ -123,8 +123,8 @@ if3:
 		jne			fine
 		;printregps	xmm1
 		mov			esi,edx			;i*4
-		mov 		edi,ecx			;k*4
-		add 		esi,edi			;i*4+k*4
+		;mov 		edi,ecx			;k*4
+		;add 		esi,edi			;i*4+k*4
 		mov 		eax,[ebp+label]		
 		;mov			eax,[edi]		;label
 		mov			edi,[ebp+j]			;j
@@ -134,7 +134,7 @@ if3:
 
 		mov			edi,[ebp+min_distance]
 		add			edi,dim*3				;min_distance + (i+k+2)*4
-		mov			[edi+ecx],eax
+		mov			[edi],eax
 fine:	
 		
 		pop	edi									; ripristina i registri da preservare

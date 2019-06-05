@@ -32,10 +32,11 @@
 
 section .data			; Sezione contenente dati inizializzati
 
+n 			equ		5
 uno:		dd		1.0
 ;
-;align 32
-;inizio:		dd		1.0, 2.0, 3.0, 4.0
+align 32
+inizio:		dd		1.0, 2.0, 3.0, 4.0
 
 section .bss			; Sezione contenente dati non inizializzati
 

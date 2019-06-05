@@ -2,126 +2,215 @@
 
 section .data
 
-
-c		equ		8
-
-
-x   equ     12
-
-
-distance		equ		16
-
-i		equ		20
-j		equ		24
-k equ 28
-subb equ 32
+subb equ 16
 
 dim equ 4
-
 
 section .bss
 
 section .text
 
-global rowDistance32Adc
+global rowDistance64AdcA
 
-rowDistance32Adc:
+global rowDistance64AdcU
+
+rowDistance64AdcA:
 
     push		rbp				; salva il Base Pointer
-	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
-	pushaq						; salva i registri generali
-    
-    mov ecx,[ebp+c]
-    mov ebx,[ebp+k]
-    mov edi,[ebp+subb]
+    mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+    pushaq						; salva i registri generali
 
-    mov edx,[ebp+j]                     ;prendo j
-    imul edx,dim   
-    imul edx,edi                        ;j*sub
-    imul edx,ebx                        ;j*k*subb
-    ;printreg edx
+    mov r11,[rbp+subb]
+    ;vprintreg r11
 
-    mov ebx,[ebp+i]                     ;prendo i
-    imul ebx,dim
-    imul ebx,edi                        ;i*subb
-    add ebx,edx                         ;j*k*subb+i*subb
-    add ebx,ecx                         ;c[j*k*subb+i*subb]
+    imul r8,dim                        ;prendo j
+    ;vprintreg r8
+    imul r8,r11                        ;j*sub
+    ;vprintreg r8
+    imul r8,r9                        ;j*k*subb
+    ;vprintreg r8
 
-    mov eax,[ebp+x]                     ;prendo x
-    
-    
-    ;xorps xmm5,xmm5                     ;distance=0 
+    imul rcx,dim                        ;prendo i
+    ;vprintreg rcx
+    imul rcx,r11                        ;i*subb
+    add rcx,r8                          ;j*k*subb+i*subb
+    add rcx,rdi                         ;c[j*k*subb+i*subb]
+    ;vprintreg rdx
+    ;vprintreg rcx
+    ;vxorps xmm5,xmm5                     ;distance=0 
 
-    movaps xmm1,[eax]                   ;uj_x[0]
-    subps xmm1,[ebx]                    ;uj_x[0]-c[0*k*subb+i*subb]
-    mulps xmm1,xmm1                     ;(..)^2
-    ;printregps xmm1
-    mov edi,[ebp+subb]                     ;subb
-    mov ecx,dim
-    sub edi,ecx                          ;subb-4
+    vmovaps ymm1,[rsi]                   ;uj_x[0]
+    ;printregyps ymm1
+    vmovaps ymm3,[rcx]
+    ;printregyps ymm3
+    vsubps ymm1,ymm3                   ;uj_x[0]-c[0*k*subb+i*subb]
+    ;printregyps ymm1
+    vmulps ymm1,ymm1                     ;(..)^2
+    ;printregyps ymm1
+    ;mov r11,[rbp+subb]                     ;subb
+    sub r11,16                          ;subb-16
 
-    mov esi,4                            ;z=4
+    mov r12,8                            ;z=8
+    vxorps ymm2,ymm2
 ciclo:
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;movaps xmm0,[eax+4*esi]             ;uj_x[z] (prendo 4 elementi la volta)
-    ;printregps xmm0
+    cmp r12,r11
+    jg resto
 
-    ;movaps xmm1,[edx+4*esi]             ;c[j*k*subb+i*subb+z]  (prendo 4 elementi la volta)
-    
-    ;printregps xmm1
+    vmovaps ymm0,[rsi+4*r12]             ;uj_x[z]
+    ;printregps ymm0
+    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    ;printregps ymm0
+    vaddps ymm1,ymm0                     ;distance+=(..)^2
+    ;printregps ymm1
+    add r12,8                           ;avanzo di indice
 
-    ;subps xmm0,xmm1                     ;uj_x[z] - c[j*k*subb+i*subb+z]
-
-    ;mulps xmm0,xmm0                     ;(...)^2
-    
-    ;xorps xmm2,xmm2                     ;tmp_dist=0
-    ;movss xmm2,xmm5                     ;carico distance
-    ;printregps xmm2
-    ;haddps xmm2,xmm0                    ;sommo la nuova distanza con la vecchia distanza
-
-    ;haddps xmm2,xmm2
-
-    ;haddps xmm2,xmm2                    ;avrò un vettore con 4 valori uguali
-
-    ;movss xmm5,xmm2                     ;carico uno dei valori di xmm2 in xmm5
-
-    ;add esi,4
-    ;cmp esi,edi
-    ;jl ciclo
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    cmp esi,edi
-    jge fine
-
-    movaps xmm0,[eax+4*esi]             ;uj_x[z]
-    ;printregps xmm0
-    subps xmm0,[ebx+4*esi]              ;uj_x[z]- c[j*k*subb+i*subb+z]
-    ;printregps xmm0
-    mulps xmm0,xmm0                     ;(..)^2
-    ;printregps xmm0
-    addps xmm1,xmm0                     ;distance+=(..)^2
-    ;printregps xmm1
-    add esi,4                           ;avanzo di indice
-
-    movaps xmm0,[eax+4*esi]
-    ;printregps xmm0
-    subps xmm0,[ebx+4*esi]
-    ;printregps xmm0
-    mulps xmm0,xmm0
-    ;printregps xmm0
-    addps xmm1,xmm0                     ;distance+=(..)^2
-    ;printregps xmm1
-    add esi,4
+    vmovaps ymm0,[rsi+4*r12]             ;uj_x[z]
+    ;printregps ymm0
+    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    ;printregps ymm0
+    vaddps ymm1,ymm0                     ;distance+=(..)^2
+    ;printregps ymm1
+    add r12,8                           ;avanzo di indice
 
     jmp ciclo
+resto:
+    mov r11,[rbp+subb]                 ;subb
+    sub r11,8                          ;subb-4
+    ;vprintreg r11
+ciclo2:
+    cmp r12, r11
+    jg fine
+    vmovaps ymm0,[rsi+4*r12]             ;uj_x[z]
+    ;printregyps ymm0
+    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregyps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    ;printregyps ymm0
+    vaddps ymm2,ymm0                     ;distance+=(..)^2
+    ;printregyps ymm2
+    add r12,8                           ;avanzo di indice
+    jmp ciclo2
 fine:
-    movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-    subps xmm0,[ebx+4*esi]
-    mulps xmm0,xmm0
-    haddps xmm1,xmm0        ;merge di tutte le somme
-    haddps xmm1,xmm1        ;|
-    haddps xmm1,xmm1        ;|
+    vaddps ymm1,ymm2        ;merge di tutte le somme
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vperm2f128 ymm5,ymm1,ymm1,1
+    vaddss xmm1,xmm5
+    ;printregyps ymm1
+    vmovss  [rdx],xmm1
+    stop
 
-    mov eax,[ebp+distance]
-    movss  [eax],xmm1
+rowDistance64AdcU:
 
+    push		rbp				; salva il Base Pointer
+    mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+    pushaq						; salva i registri generali
+
+    mov r11,[rbp+subb]
+    ;vprintreg r11
+
+    imul r8,dim                        ;prendo j
+    ;vprintreg r8
+    imul r8,r11                        ;j*sub
+    ;vprintreg r8
+    imul r8,r9                        ;j*k*subb
+    ;vprintreg r8
+
+    imul rcx,dim                        ;prendo i
+    ;vprintreg rcx
+    imul rcx,r11                        ;i*subb
+    add rcx,r8                          ;j*k*subb+i*subb
+    add rcx,rdi                         ;c[j*k*subb+i*subb]
+    ;vprintreg rdx
+    ;vprintreg rcx
+    ;vxorps xmm5,xmm5                     ;distance=0 
+
+    vmovups ymm1,[rsi]                   ;uj_x[0]
+    ;printregyps ymm1
+    vmovups ymm3,[rcx]
+    ;printregyps ymm3
+    vsubps ymm1,ymm3                   ;uj_x[0]-c[0*k*subb+i*subb]
+    ;printregyps ymm1
+    vmulps ymm1,ymm1                     ;(..)^2
+    ;printregyps ymm1
+    ;mov r11,[rbp+subb]                     ;subb
+    sub r11,16                          ;subb-16
+
+    mov r12,8                            ;z=8
+    vxorps ymm2,ymm2
+cicloU:
+    cmp r12,r11
+    jge restoU
+
+    vmovups ymm0,[rsi+4*r12]             ;uj_x[z]
+    ;printregps ymm0
+    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    ;printregps ymm0
+    vaddps ymm1,ymm0                     ;distance+=(..)^2
+    ;printregps ymm1
+    add r12,8                           ;avanzo di indice
+
+    vmovups ymm0,[rsi+4*r12]             ;uj_x[z]
+    ;printregps ymm0
+    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    ;printregps ymm0
+    vaddps ymm1,ymm0                     ;distance+=(..)^2
+    ;printregps ymm1
+    add r12,8                           ;avanzo di indice
+
+    jmp cicloU
+restoU:
+    mov r11,[rbp+subb]                 ;subb
+    sub r11,8                          ;subb-4
+    ;vprintreg r11
+ciclo2U:
+    cmp r12, r11
+    jg resto2U
+    vmovups ymm0,[rsi+4*r12]             ;uj_x[z]
+    ;printregyps ymm0
+    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregyps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    ;printregyps ymm0
+    vaddps ymm2,ymm0                     ;distance+=(..)^2
+    ;printregyps ymm2
+    add r12,8                           ;avanzo di indice
+    jmp ciclo2U                       
+resto2U:
+    mov r11, [rbp+subb]
+ciclo3U:
+    cmp r12, r11
+    je  fineU
+    vmovss xmm7,[rsi+4*r12]             ;uj_x[z]
+    ;printregps ymm0
+    vsubss xmm7,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregps ymm0
+    vmulss xmm7,xmm7                     ;(..)^2
+    ;printregps ymm0
+    vaddps ymm2,ymm7                     ;distance+=(..)^2
+    ;printregps ymm1
+    add r12,1                           ;avanzo di indice
+    jmp ciclo3U
+fineU:
+    vaddps ymm1,ymm2        ;merge di tutte le somme
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vperm2f128 ymm5,ymm1,ymm1,1
+    vaddss xmm1,xmm5
+    ;printregyps ymm1
+    vmovss  [rdx],xmm1
     stop
