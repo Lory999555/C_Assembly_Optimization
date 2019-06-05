@@ -335,106 +335,7 @@ section .data
 
     section .bss
     section .text
-
-    dist32U:
-        ;printreg [ebp+y]
-        ;printreg [ebp+distance]
-        ;printreg [ebp+dddd]
-        push ebp
-        mov ebp, esp
-        mov eax,[ebp+x]
-        mov ebx,[ebp+y]
-        xorps xmm1, xmm1
-        movaps xmm1,[eax] ;x[0]
-        movaps xmm7, [ebx]
-        subps xmm1,xmm7  ;x[0]-y[0]
-        mulps xmm1,xmm1     ;(..)^2
-        ;printregps xmm1
-        mov edi,[ebp+dddd] ;d
-        ;mov ecx,dim     ;4
-        sub edi,16     ;d-16
-        xorps xmm2, xmm2
-        mov esi,4       ;i=4
-    cicloU:
-        cmp esi,edi     ;(j>=d-16)?
-        jg restoU
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0edxedx
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        jmp cicloU
-    restoU:
-        mov edi, [ebp+dddd]
-        sub edi, 4
-    ciclo2U:
-        cmp esi, edi
-        jg  resto2U
-        movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7
-        mulps xmm0,xmm0
-        addps xmm2, xmm0
-        add esi, 4
-        jmp ciclo2U
-
-    resto2U:
-        mov edi, [ebp+dddd]
-    ciclo3U:
-        cmp esi, edi
-        je  fineU
-        movss xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-        subss xmm0,[ebx+4*esi]
-        mulss xmm0,xmm0
-        addss xmm2, xmm0
-        add esi, 1
-        jmp ciclo3U
-    fineU:
-        haddps xmm1,xmm2        ;merge di tutte le somme
-        haddps xmm1,xmm1        ;|
-        haddps xmm1,xmm1        ;|       
-
-        mov eax,[ebp+distance]
-        movss [eax],xmm1        ;carico il nuovo valore di distance        pop     edi
-        pop     ebp
-        ret
-
-
-
-
-
-
+    
 
 dist32A:
         push ebp
@@ -511,3 +412,105 @@ dist32A:
         movss [eax],xmm1        ;carico il nuovo valore di distance
         pop     ebp
         ret
+
+ 
+
+    dist32U:
+        ;printreg [ebp+y]
+        ;printreg [ebp+distance]
+        ;printreg [ebp+dddd]
+        push ebp
+        mov ebp, esp
+        mov eax,[ebp+x]
+        mov ebx,[ebp+y]
+        xorps xmm1, xmm1
+        movups xmm1,[eax] ;x[0]
+        movups xmm7, [ebx]
+        subps xmm1,xmm7  ;x[0]-y[0]
+        mulps xmm1,xmm1     ;(..)^2
+        ;printregps xmm1
+        mov edi,[ebp+dddd] ;d
+        ;mov ecx,dim     ;4
+        sub edi,16     ;d-16
+        xorps xmm2, xmm2
+        mov esi,4       ;i=4
+    cicloU:
+        cmp esi,edi     ;(j>=d-16)?
+        jg restoU
+        movups xmm0,[eax+4*esi] ;x[i]
+        movups xmm7, [ebx+4*esi]
+        subps xmm0,xmm7  ;x[i]-y[i]
+        mulps xmm0,xmm0         ;(..)^2
+        ;printregps xmm0edxedx
+        addps xmm1,xmm0         ;distance+=(..)^2
+        ;printregps xmm1
+        add esi,4               ;avanzo di indice
+
+        movups xmm0,[eax+4*esi] ;x[i]
+        movups xmm7, [ebx+4*esi]
+        subps xmm0,xmm7  ;x[i]-y[i]
+        mulps xmm0,xmm0         ;(..)^2
+        ;printregps xmm0
+        addps xmm1,xmm0         ;distance+=(..)^2
+        ;printregps xmm1
+        add esi,4               ;avanzo di indice
+
+        movups xmm0,[eax+4*esi] ;x[i]
+        movups xmm7, [ebx+4*esi]
+        subps xmm0,xmm7  ;x[i]-y[i]
+        mulps xmm0,xmm0         ;(..)^2
+        ;printregps xmm0
+        addps xmm1,xmm0         ;distance+=(..)^2
+        ;printregps xmm1
+        add esi,4               ;avanzo di indice
+
+        movups xmm0,[eax+4*esi] ;x[i]
+        movups xmm7, [ebx+4*esi]
+        subps xmm0,xmm7  ;x[i]-y[i]
+        mulps xmm0,xmm0         ;(..)^2
+        ;printregps xmm0
+        addps xmm1,xmm0         ;distance+=(..)^2
+        ;printregps xmm1
+        add esi,4               ;avanzo di indice
+
+        jmp cicloU
+    restoU:
+        mov edi, [ebp+dddd]
+        sub edi, 4
+    ciclo2U:
+        cmp esi, edi
+        jg  resto2U
+        movups xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
+        movups xmm7, [ebx+4*esi]
+        subps xmm0,xmm7
+        mulps xmm0,xmm0
+        addps xmm2, xmm0
+        add esi, 4
+        jmp ciclo2U
+
+    resto2U:
+        mov edi, [ebp+dddd]
+    ciclo3U:
+        cmp esi, edi
+        je  fineU
+        movss xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
+        subss xmm0,[ebx+4*esi]
+        mulss xmm0,xmm0
+        addss xmm2, xmm0
+        add esi, 1
+        jmp ciclo3U
+    fineU:
+        haddps xmm1,xmm2        ;merge di tutte le somme
+        haddps xmm1,xmm1        ;|
+        haddps xmm1,xmm1        ;|       
+
+        mov eax,[ebp+distance]
+        movss [eax],xmm1        ;carico il nuovo valore di distance        pop     edi
+        pop     ebp
+        ret
+
+
+
+
+
+

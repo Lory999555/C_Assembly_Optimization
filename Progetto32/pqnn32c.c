@@ -3949,7 +3949,7 @@ int * w_near_centroidsU(MATRIX x,MATRIX centroids,int n,int d,int w){
 	float * result_dist=alloc_matrix(w,1);
 	float tmp=0;
 	float max=0;
-
+	int new_i;
 	//riempo i primi w posti con i primi w centroidi e le relative distanze
 	//printf("riempo i primi w posti\n");
 	for(i = 0; i < w; i++)
@@ -3971,7 +3971,7 @@ int * w_near_centroidsU(MATRIX x,MATRIX centroids,int n,int d,int w){
 		}
 	}
 
-	int new_i;
+	
 	//	float new_max;
 	//	bool trovato;
 	//n qui simboleggia il numero dei centroidi
@@ -4170,7 +4170,7 @@ float* pre_adcU(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 			//printf("\ncalcolo della distanza U_x[%d] e C[%d][%d] = %f\n",j,j,i,result[j][i]);
 
 		}
-
+		dealloc_matrix(uj_x);
 		//dis += pow(dist(uj_x, & centroids[j][labels[j][y]*d/m],d/m),2);
 	}
 	return result;
@@ -4504,7 +4504,7 @@ void pqnn_index(params* input) {
 		NE_k_means_colU(input->ds,input->n,input->d,input->kc,input->eps,Cc_index,Cc,input->tmin,input->tmax,input->nr);
 		//t1 = clock() - t1;
 
-		printVector(Cc_index,input->n);
+		//printVector(Cc_index,input->n);
 		//tot+=t1;
 		//printCentroids(Cc,Cc_index,input->n,input->d,input->kc);
 		
@@ -5123,7 +5123,7 @@ void pqnn_search(params* input) {
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 					//clock_t t11 = clock();
-					c_x[j] = centXA(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
+					c_x[j] = centXU(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
 					//t11 = clock() - t11;
 					//tot+=t11;
 					dealloc_matrix(uj_x);
@@ -6294,7 +6294,7 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 16015,505);
 	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
@@ -6304,7 +6304,7 @@ int main(int argc, char** argv) {
 		input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 16015,505);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
@@ -6313,7 +6313,6 @@ int main(int argc, char** argv) {
 	//printDsQs(input->ds,input->qs,input->n,input->d, input->nq);
 	int nmodul= input->n % 4;
 	int dmodul= input->d % 4;
-	int nmodulnoex= input->nr % 4;
 	int submodul = (input->d/input->m) % 4;
 
 
@@ -6321,8 +6320,6 @@ int main(int argc, char** argv) {
 		nmod4=true;
 	if(dmodul == 0)
 		dmod4=true;
-	if(nmodulnoex == 0)
-		nmod4noex=true;
 	if(submodul == 0)
 		submod4=true;
 
