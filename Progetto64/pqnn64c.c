@@ -3808,7 +3808,7 @@ int* NE_productQuantA(MATRIX ds,int n,int d,int m,int k,float* centroids,float e
 			//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
 			//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
 			NE_k_means_colA(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max,nr);
-			//dealloc_matrix(tmp); // da testare
+			dealloc_matrix(tmp); // da testare
 		}else
 		{
 			NE_k_means_colA(ds,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max,nr);
@@ -6203,7 +6203,7 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,808);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
 	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
@@ -6215,7 +6215,7 @@ int main(int argc, char** argv) {
 
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,808);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 	
 	//input->nq=input->nq/2;
