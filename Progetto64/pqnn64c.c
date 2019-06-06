@@ -758,7 +758,8 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//queste variabili sono da liberare alla fine del metodo!!!
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
-
+	float calc;
+	t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -1197,7 +1198,20 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -1239,7 +1253,8 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	printf("\n--------ALIGNED------------------\n");
 	//stampe=0;
 
-
+	float calc;
+	t = 1-t;
 	/* output cluster label for each data point */
 	//int * labels = alloc_vector(n);
 	//t=pow(t,2);
@@ -1798,7 +1813,20 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -2094,7 +2122,8 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//queste variabili sono da liberare alla fine del metodo!!!
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
-
+	float calc;
+	t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -2658,7 +2687,20 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -2706,7 +2748,8 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//queste variabili sono da liberare alla fine del metodo!!!
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
-
+	float calc;
+	t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -3270,7 +3313,20 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -6203,8 +6259,8 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
-	//input->ds = load_data_col(fname, &input->n, &input->d);
+	//input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
+	input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
@@ -6215,8 +6271,8 @@ int main(int argc, char** argv) {
 
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
-	//input->qs = load_data_row(fname, &input->nq, &input->d);
+	//input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
+	input->qs = load_data_row(fname, &input->nq, &input->d);
 	
 	//input->nq=input->nq/2;
 

@@ -751,6 +751,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	printf("\n--------ALIGNED------------------\n");
 	//stampe=0;
 
+	
 
 	/* output cluster label for each data point */
 	//int * labels = alloc_vector(n);
@@ -759,7 +760,8 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//queste variabili sono da liberare alla fine del metodo!!!
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
-
+	float calc;
+	t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -1130,11 +1132,26 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		//printf("\nC time = %0.10f secs\n", ((float)t_1)/CLOCKS_PER_SEC);
 		tot+=t_1;
 		*/
-		
-		
-		
-		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	//clock_t t11 = clock();
+	
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	
+	/*printf("\n %f \n",fabs(error-old_error));
+	printf("\n %f \n",t);
+	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));*/
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -1181,7 +1198,8 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//queste variabili sono da liberare alla fine del metodo!!!
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
-
+	float calc;
+	t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -1668,7 +1686,20 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
 
 	for (; i <= n-size; i+=size){  	//per ogni punto del ds
 			//identify the closest cluster
@@ -2009,7 +2040,8 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//queste variabili sono da liberare alla fine del metodo!!!
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
-
+	float calc;
+	t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -2508,7 +2540,20 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -2555,7 +2600,8 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//queste variabili sono da liberare alla fine del metodo!!!
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
-
+	float calc;
+	t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -3054,7 +3100,20 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	}while (!(t_min <= iter && ((t_max < iter) || fabs(error-old_error) <= t)));
+	if(error > old_error){
+		calc = 1 - (fabs(error-old_error)/error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}else{
+		calc = 1 - (fabs(error-old_error)/old_error);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
+	}
+
+	//t11 = clock() - t11;
+	//tot+=t11;
+	
+	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -6281,8 +6340,8 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
-	//input->ds = load_data_col(fname, &input->n, &input->d);
+	//input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,500);
+	input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
@@ -6291,8 +6350,8 @@ int main(int argc, char** argv) {
 		input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
-	//input->qs = load_data_row(fname, &input->nq, &input->d);
+	//input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,500);
+	input->qs = load_data_row(fname, &input->nq, &input->d);
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
