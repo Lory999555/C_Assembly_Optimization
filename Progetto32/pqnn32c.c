@@ -459,13 +459,12 @@ extern void rowDistance32SdcU(float* c,float* distance,int i,int j,int j_d,int k
 extern void colDistance32Sing(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void colDistance32U(float * ds,float* c,float* distance,int i,int j,int d,int n);
 extern void colDistance32A(float * ds,float* c,float* distance,int i,int j,int d,int n);
-extern void colDistance32Block(float * ds,float* c,float* distance,int i,int j,int d,int n,int b);
+//extern void colDistance32Block(float * ds,float* c,float* distance,int i,int j,int d,int n,int b);
 extern void	colDistance32OptimizedU(float* data,float* centroids,float* distance,int i,int j,int d,int n);
 extern void	colDistance32OptimizedA(float* data,float* centroids,float* distance,int i,int j,int d,int n);
-
 extern void distanceControl32Sing(float * distance,float * min_distance,int *labels,int j,int i);
 extern void distanceControl32(float * distance,float * min_distance,int *labels,int j,int i);
-extern void distanceControl32Block(float * distance,float * min_distance,int *labels,int j,int i);
+//extern void distanceControl32Block(float * distance,float * min_distance,int *labels,int j,int i);
 
 extern void updateCentroid(float* c,float* c1,float* counts,int k,int d);
 extern void clearCentroids(float* counts,float* c1,int k,int d);
@@ -476,7 +475,7 @@ extern void extr_col(float* ds, int n, int d, int nr, int divi, float* result);
 extern void dist32A(float * x,float * y,float* distance, int d);
 extern void dist32U(float * x,float * y,float* distance, int d);
 
-extern void mapping32(int i, int j, int n, int * indice, int index);
+//extern void mapping32(int i, int j, int n, int * indice, int index);
 
 extern void cent_XA(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
 extern void cent_XU(float* cent, float* xx, int k, int dd, float* tmp, int* park, float* dis);
@@ -2250,7 +2249,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 
 
 			
-			clock_t t11 = clock();
+			
 			
 			for (j = 0; j < k; j++){ // per ogni centroide
 
