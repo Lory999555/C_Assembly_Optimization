@@ -6281,8 +6281,8 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	//input->ds = load_data_col_p(fname, &input->n, &input->d, 16015,505);
-	input->ds = load_data_col(fname, &input->n, &input->d);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,808);
+	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
@@ -6291,8 +6291,8 @@ int main(int argc, char** argv) {
 		input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 16015,505);
-	input->qs = load_data_row(fname, &input->nq, &input->d);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,808);
+	//input->qs = load_data_row(fname, &input->nq, &input->d);
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
 	
@@ -6322,10 +6322,6 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
-	if (input->exaustive==0 && input->k > input->nr || input->kc > input->nr) {
-		printf(" A lot of centroids compared on dataset \n");
-		exit(1);
-	}
 	if (input->exaustive==0 && input->k > input->nr || input->kc > input->nr) {
 		printf(" A lot of centroids compared on dataset \n");
 		exit(1);
