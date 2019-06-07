@@ -759,7 +759,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -1198,12 +1198,14 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -1211,7 +1213,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -1254,7 +1256,7 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//stampe=0;
 
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	/* output cluster label for each data point */
 	//int * labels = alloc_vector(n);
 	//t=pow(t,2);
@@ -1813,12 +1815,14 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -1826,7 +1830,7 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -2123,7 +2127,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -2687,12 +2691,14 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -2700,7 +2706,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -2749,7 +2755,7 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -3313,12 +3319,14 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -3326,7 +3334,7 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -4134,6 +4142,7 @@ float* pre_adcA(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 	int i,j;
 	float distance;
 	MATRIX uj_x;
+	//#pragma omp parallel for
 	for(j=0; j<m; j++){
 		//clock_t t11 = clock();
 		uj_x = Uj_x( x, j, m, 1, d);
@@ -4174,8 +4183,9 @@ float* pre_adcU(MATRIX x, float* centroids,int d,int m, int k, int sub ){
 	float* result= alloc_matrix(m,k);
 	//int sub=d/m;
 	int i,j;
-	float distance,distance2;
+	float distance;
 	MATRIX uj_x;
+	//#pragma omp parallel for
 	for(j=0; j<m; j++){
 		//clock_t t11 = clock();
 		uj_x = Uj_x( x, j, m, 1, d);
@@ -4724,9 +4734,10 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
+				#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
-					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
+					float* uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 					//clock_t t11 = clock();
 					c_x[j] = centXA(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
 					dealloc_matrix(uj_x);
@@ -4856,9 +4867,10 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
+				#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
-					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
+					float* uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 					//clock_t t11 = clock();
 					c_x[j] = centXA(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
 					//t11 = clock() - t11;
@@ -4990,9 +5002,10 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
+				#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
-					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
+					float* uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 					//clock_t t11 = clock();
 					c_x[j] = centXU(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
 					//t11 = clock() - t11;
@@ -5109,9 +5122,10 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
+				#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
-					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
+					float * uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 					//clock_t t11 = clock();
 					c_x[j] = centXU(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
 					//t11 = clock() - t11;
@@ -5721,8 +5735,9 @@ void pqnn_search(params* input) {
 			k_nn = alloc_vector(input->knn);	
 			result_dist=alloc_matrix(input->knn,1);
 			//clock_t t11 = clock();
+			#pragma omp parallel for
 			for(int j=0;j<input->m;j++){
-				uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
+				float* uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centXA(&centroids[j*input->k*input->sub], uj_x, input->k, input->sub);
 				dealloc_matrix(uj_x);
 			}	
@@ -5810,8 +5825,9 @@ void pqnn_search(params* input) {
 			k_nn = alloc_vector(input->knn);	
 			result_dist=alloc_matrix(input->knn,1);
 			//clock_t t11 = clock();
+			#pragma omp parallel for
 			for(int j=0;j<input->m;j++){
-				uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
+				float * uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centXU(&centroids[j*input->k*input->sub], uj_x, input->k, input->sub);
 				dealloc_matrix(uj_x);
 			}	

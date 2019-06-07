@@ -761,7 +761,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -1134,12 +1134,14 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		*/
 	//clock_t t11 = clock();
 	
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -1147,7 +1149,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 	
 	/*printf("\n %f \n",fabs(error-old_error));
 	printf("\n %f \n",t);
@@ -1199,7 +1201,7 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -1686,12 +1688,14 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -1699,7 +1703,7 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
 	for (; i <= n-size; i+=size){  	//per ogni punto del ds
 			//identify the closest cluster
@@ -2041,7 +2045,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -2540,12 +2544,14 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -2553,7 +2559,7 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 
@@ -2601,7 +2607,7 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//float* min_distance = alloc_matrix(size,1);
 	//float* distance = alloc_matrix(size,1);
 	float calc;
-	t = 1-t;
+	//t = 1-t;
 	float* min_distance = alloc_matrix(size,1);
 	float* distance = alloc_matrix(size,1);
 	float offset;
@@ -3100,12 +3106,14 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	if(error > old_error){
-		calc = 1 - (fabs(error-old_error)/error);
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
+		calc = (fabs(error-old_error)/error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}else{
-		calc = 1 - (fabs(error-old_error)/old_error);
+		calc = (fabs(error-old_error)/old_error);
 		//printf("\n %f \n",calc);
 		//printf("\n %f \n",t);
 	}
@@ -3113,7 +3121,7 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	//t11 = clock() - t11;
 	//tot+=t11;
 	
-	}while (!(t_min <= iter && ((t_max < iter) || calc > t)));
+	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
 	//printf("\nTOT time = %0.10f secs\n", ((float)tot)/CLOCKS_PER_SEC);
 

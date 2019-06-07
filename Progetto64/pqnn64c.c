@@ -792,6 +792,7 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 	do {
 		iter++;
 		/* save error from last step */
+		//printf("\n %f \n %f \n",old_error,error);
 		old_error = error, error = 0;
 		
 		
@@ -1197,15 +1198,16 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-		
-	if(error > old_error){
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
 		calc = (fabs(error-old_error)/error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}else{
 		calc = (fabs(error-old_error)/old_error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}
 
 	//t11 = clock() - t11;
@@ -1813,14 +1815,16 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	if(error > old_error){
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
 		calc = (fabs(error-old_error)/error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}else{
 		calc = (fabs(error-old_error)/old_error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+	//	printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}
 
 	//t11 = clock() - t11;
@@ -2687,14 +2691,16 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-	if(error > old_error){
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
 		calc = (fabs(error-old_error)/error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}else{
 		calc = (fabs(error-old_error)/old_error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}
 
 	//t11 = clock() - t11;
@@ -3313,14 +3319,16 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-	if(error > old_error){
+	if(error == old_error)
+		calc=0;
+	else if(error > old_error){
 		calc = (fabs(error-old_error)/error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}else{
 		calc = (fabs(error-old_error)/old_error);
-		printf("\n %f \n",calc);
-		printf("\n %f \n",t);
+		//printf("\n %f \n",calc);
+		//printf("\n %f \n",t);
 	}
 
 	//t11 = clock() - t11;
