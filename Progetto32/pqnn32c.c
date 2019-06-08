@@ -6200,7 +6200,7 @@ int main(int argc, char** argv) {
 	//input->kc = 8192;
 	input->kc = 256;
 	//input->w = 16;
-	input->w=10;
+	input->w=8;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;

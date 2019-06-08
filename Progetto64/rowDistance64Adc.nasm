@@ -57,24 +57,18 @@ ciclo:
     jg resto
 
     vmovaps ymm0,[rsi+4*r12]             ;uj_x[z]
+    vmovaps ymm7,[rsi+4*r12+32]             ;uj_x[z]
+    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z
     ;printregps ymm0
-    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
-    ;printregps ymm0
-    vmulps ymm0,ymm0                     ;(..)^2
-    ;printregps ymm0
-    vaddps ymm1,ymm0                     ;distance+=(..)^2
-    ;printregps ymm1
-    add r12,8                           ;avanzo di indice
-
-    vmovaps ymm0,[rsi+4*r12]             ;uj_x[z]
-    ;printregps ymm0
-    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    vsubps ymm7,[rcx+4*r12+32]              ;uj_x[z]- c[j*k*subb+i*subb+z]
     ;printregps ymm0
     vmulps ymm0,ymm0                     ;(..)^2
+    vmulps ymm7,ymm7                     ;(..)^2
     ;printregps ymm0
     vaddps ymm1,ymm0                     ;distance+=(..)^2
+    vaddps ymm1,ymm7                     ;distance+=(..)^2
     ;printregps ymm1
-    add r12,8                           ;avanzo di indice
+    add r12,16                           ;avanzo di indice
 
     jmp ciclo
 resto:
@@ -150,24 +144,18 @@ cicloU:
     jge restoU
 
     vmovups ymm0,[rsi+4*r12]             ;uj_x[z]
+    vmovups ymm7,[rsi+4*r12+32]             ;uj_x[z]
     ;printregps ymm0
     vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    vsubps ymm7,[rcx+4*r12+32]              ;uj_x[z]- c[j*k*subb+i*subb+z]
     ;printregps ymm0
     vmulps ymm0,ymm0                     ;(..)^2
+    vmulps ymm7,ymm7                     ;(..)^2
     ;printregps ymm0
     vaddps ymm1,ymm0                     ;distance+=(..)^2
+    vaddps ymm1,ymm7                     ;distance+=(..)^2
     ;printregps ymm1
-    add r12,8                           ;avanzo di indice
-
-    vmovups ymm0,[rsi+4*r12]             ;uj_x[z]
-    ;printregps ymm0
-    vsubps ymm0,[rcx+4*r12]              ;uj_x[z]- c[j*k*subb+i*subb+z]
-    ;printregps ymm0
-    vmulps ymm0,ymm0                     ;(..)^2
-    ;printregps ymm0
-    vaddps ymm1,ymm0                     ;distance+=(..)^2
-    ;printregps ymm1
-    add r12,8                           ;avanzo di indice
+    add r12,16                          ;avanzo di indice
 
     jmp cicloU
 restoU:

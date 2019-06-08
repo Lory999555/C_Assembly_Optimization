@@ -630,15 +630,19 @@ float dist(float * x,float * y, int d){
 }*/
 
 int centXA(float * centroids, float * x, int k, int d){	
-	/*float dis;
-	int park = 0;
+	float dis2=0;
+	int park2 = 0;
 	//float* tmp = alloc_matrix(unroll,1);
-	float tmp = 0;
-	cent_XA(centroids,x,k,d,&tmp,&park,&dis);*/
-	/**
+	float tmp2 = 0;
+	int k2=k;
+	int d2=d;
+	cent_XA(centroids,x,k2,d2,&tmp2,&park2,&dis2);
+		/**
 	 * discommentare sopra e commentare fino 
 	 * a prima della return
 	 * */
+	/*
+	printf("nasm: %d \n",park2);
 	float dis;
 	int park = 0;
 	float tmp = 0;
@@ -653,31 +657,44 @@ int centXA(float * centroids, float * x, int k, int d){
 		}
 		//printf(".......%d\n",park);
 	}
-	return park;
+
+	printf("C: %d\n",park);
+	*/
+	return park2;
 }
 int centXU(float * centroids, float * x, int k, int d){	
-	/*float dis;
-	int park = 0;
-	float* tmp = alloc_matrix(unroll,1);
-	cent_XU(centroids,x,k,d,tmp,&park,&dis);
-	dealloc_matrix(tmp);*/
-	/**
+	float dis2;
+	int park2 = 0;
+	//float* tmp = alloc_matrix(unroll,1);
+	float tmp2 = 0;
+	int k2=k;
+	int d2=d;
+	//printf("k %d \n",k2);
+	cent_XU(centroids,x,k2,d2,&tmp2,&park2,&dis2);
+		/**
 	 * discommentare sopra e commentare fino 
 	 * a prima della return
 	 * */
+	/*
+	printf("nasm: %d \n",park2);
 	float dis;
 	int park = 0;
 	float tmp = 0;
 	dist64U(x,centroids,&dis,d);
+	//printf("\nsssssss %f\n", dis);
 	for( int i=0; i<k; i++){
  		dist64U(x, &centroids[i*d], &tmp, d);
-		
+		//printf("\nsssssss %f\n", tmp);
 		if( tmp < dis){
 			dis = tmp;
 			park = i;
 		}
+		//printf(".......%d\n",park);
 	}
-	return park;
+
+	printf("C: %d\n",park);
+	*/
+	return park2;
 }
 
 
@@ -4862,6 +4879,7 @@ void pqnn_search(params* input) {
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
 					//clock_t t11 = clock();
+					printf("-----------------------\n");
 					c_x[j] = centXA(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
 					//t11 = clock() - t11;
 					//tot+=t11;
@@ -6119,7 +6137,7 @@ int main(int argc, char** argv) {
 	//input->kc = 8192;
 	input->kc = 256;
 	//input->w = 16;
-	input->w=10;
+	input->w=8;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -6372,6 +6390,7 @@ int main(int argc, char** argv) {
 	//
 	// Salva gli ANN
 	//
+
 	
  	if (input->ANN != NULL & stampe==1)
  	{
