@@ -26,19 +26,19 @@ dist64A:
 ciclo:
     cmp r10,r12     ;(j>=d-16)?
     jg resto
-    vmovaps ymm0,[rdi+4*r10] ;x[i]
+    vmovaps ymm0,[rdi+4*r10]
+    vmovaps ymm7,[rdi+4*r10+32] ;x[i]
     vsubps ymm0,[rsi+4*r10]  ;x[i]-y[i]
+    vsubps ymm7,[rsi+4*r10+32]
     vmulps ymm0,ymm0         ;(..)^2
+    vmulps ymm7,ymm7
     ;printregyps ymm0
     vaddps ymm1,ymm0         ;distance+=(..)^2
+    vaddps ymm1,ymm7
     ;printregyps ymm1
     add r10,8               ;avanzo di indice
 
-    vmovaps ymm0,[rdi+4*r10]
-    vsubps ymm0,[rsi+4*r10]
-    vmulps ymm0,ymm0
     ;printregyps ymm0
-    vaddps ymm1,ymm0
     ;printregyps ymm1
     add r10,8
 
@@ -88,18 +88,18 @@ cicloU:
     cmp r10,r12     ;(j>=d-16)?
     jg restoU
     vmovups ymm0,[rdi+4*r10] ;x[i]
+    vmovups ymm7,[rdi+4*r10+32]
     vsubps ymm0,[rsi+4*r10]  ;x[i]-y[i]
+    vsubps ymm7,[rsi+4*r10+32]
     vmulps ymm0,ymm0         ;(..)^2
+    vmulps ymm7,ymm7
     ;printregyps ymm0
     vaddps ymm1,ymm0         ;distance+=(..)^2
+    vaddps ymm1,ymm7
     ;printregyps ymm1
     add r10,8               ;avanzo di indice
 
-    vmovups ymm0,[rdi+4*r10]
-    vsubps ymm0,[rsi+4*r10]
-    vmulps ymm0,ymm0
     ;printregyps ymm0
-    vaddps ymm1,ymm0
     ;printregyps ymm1
     add r10,8
 

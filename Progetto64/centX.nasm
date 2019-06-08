@@ -18,17 +18,17 @@ cent_XA:
     sub     rdx, 4      ;k-4
     mov     rax,rdi
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64A
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     
     vxorps   xmm3, xmm3
@@ -46,17 +46,17 @@ foriA:
     mov     rax,rdi
     add     rax,r13            ;cent[4*i*d]
     ;vprintreg rax
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64A
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -77,17 +77,17 @@ avanti1A:
     add     rax,r13            ;cent[4*i*d]
     ;vprintreg rax
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64A
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -105,17 +105,17 @@ avanti2A:
     add     rax,r13            ;cent[4*i*d]
     ;vprintreg rax
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64A
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -134,17 +134,17 @@ avanti3A:
     add     rax,r13            ;cent[4*i*d]
    ;vprintreg rax
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64A
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -169,17 +169,17 @@ cent_XU:
     sub     rdx, 4      ;k-4
     mov     rax,rdi
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64U
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     
     vxorps   xmm3, xmm3
@@ -197,17 +197,17 @@ foriU:
     mov     rax,rdi
     add     rax,r13            ;cent[4*i*d]
     ;vprintreg rax
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64U
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -228,17 +228,17 @@ avanti1U:
     add     rax,r13            ;cent[4*i*d]
     ;vprintreg rax
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64U
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -256,17 +256,17 @@ avanti2U:
     add     rax,r13            ;cent[4*i*d]
     ;vprintreg rax
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64U
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -285,17 +285,17 @@ avanti3U:
     add     rax,r13            ;cent[4*i*d]
    ;vprintreg rax
 
-    pushaq
-    ;push    rax
-    ;push    r13
-    ;push    r12
-    ;push    r10
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
     call    dist64U
-    ;pop     r10
-    ;pop     r12
-    ;pop     r13
-    ;pop     rax
-    popaq
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
     ;vxorps   xmm4, xmm4      
     vmovss   xmm4, [r14]     ;dis
@@ -334,21 +334,16 @@ ciclo:
     cmp r10,r12     ;(j>=d-16)?
     jg resto
     vmovaps ymm0, [rsi+4*r10] ;x[i]
+    vmovaps ymm7, [rsi+4*r10+32]
     vsubps ymm0,[rax+4*r10]  ;x[i]-y[i]
+    vsubps ymm7,[rax+4*r10+32]
     vmulps ymm0,ymm0         ;(..)^2
+    vmulps ymm7,ymm7
     ;printregyps ymm0
     vaddps ymm1,ymm0         ;distance+=(..)^2
+    vaddps ymm1,ymm7
     ;printregyps ymm1
-    add r10,8               ;avanzo di indice
-
-    vmovaps ymm0, [rsi+4*r10]
-    vsubps ymm0,[rax+4*r10]
-    vmulps ymm0,ymm0
-    ;printregyps ymm0
-    vaddps ymm1,ymm0
-    ;printregyps ymm1
-    add r10,8
-
+    add r10,16
     jmp ciclo
 resto:
     mov r12, rcx
@@ -392,20 +387,16 @@ cicloU:
     cmp r10,r12     ;(j>=d-16)?
     jg restoU
     vmovups ymm0, [rsi+4*r10] ;x[i]
+    vmovups ymm7, [rsi+4*r10+32]
     vsubps ymm0,[rax+4*r10]  ;x[i]-y[i]
+    vsubps ymm7,[rax+4*r10+32]
     vmulps ymm0,ymm0         ;(..)^2
+    vmulps ymm7,ymm7
     ;printregyps ymm0
     vaddps ymm1,ymm0         ;distance+=(..)^2
+    vaddps ymm1,ymm7
     ;printregyps ymm1
-    add r10,8               ;avanzo di indice
-
-    vmovups ymm0, [rsi+4*r10]
-    vsubps ymm0,[rax+4*r10]
-    vmulps ymm0,ymm0
-    ;printregyps ymm0
-    vaddps ymm1,ymm0
-    ;printregyps ymm1
-    add r10,8
+    add r10,16
 
     jmp cicloU
 restoU:

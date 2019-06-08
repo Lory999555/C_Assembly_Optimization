@@ -55,23 +55,18 @@ ciclo:
 
     vmovaps ymm0,[rdx+4*r12]             ;c[j*k*sub+i*sub+z]
     ;printregyps ymm0
-    vsubps ymm0,[r8+4*r12]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
-    ;printregyps ymm0
-    vmulps ymm0,ymm0                     ;(..)^2
-    ;printregyps ymm0
-    vaddps ymm1,ymm0                     ;distance+=(..)^2
-    ;printregyps ymm1
-    add r12,8                           ;avanzo di indice
-
-    vmovaps ymm0,[rdx+4*r12]             ;c[j*k*sub+i*sub+z]
+    vmovaps ymm7,[rdx+4*r12+32]             ;c[j*k*sub+i*sub+z]
     ;printregyps ymm0
     vsubps ymm0,[r8+4*r12]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
+    vsubps ymm7,[r8+4*r12+32]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
     ;printregyps ymm0
     vmulps ymm0,ymm0                     ;(..)^2
+    vmulps ymm7,ymm7                     ;(..)^2
     ;printregyps ymm0
     vaddps ymm1,ymm0                     ;distance+=(..)^2
+    vaddps ymm1,ymm7                     ;distance+=(..)^2
     ;printregyps ymm1
-    add r12,8                           ;avanzo di indicee
+    add r12,16                           ;avanzo di indicee
 
     jmp ciclo
 resto:
@@ -149,23 +144,18 @@ cicloU:
 
     vmovups ymm0,[rdx+4*r12]             ;c[j*k*sub+i*sub+z]
     ;printregyps ymm0
-    vsubps ymm0,[r8+4*r12]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
-    ;printregyps ymm0
-    vmulps ymm0,ymm0                     ;(..)^2
-    ;printregyps ymm0
-    vaddps ymm1,ymm0                     ;distance+=(..)^2
-    ;printregyps ymm1
-    add r12,8                           ;avanzo di indice
-
-    vmovups ymm0,[rdx+4*r12]             ;c[j*k*sub+i*sub+z]
+    vmovups ymm7,[rdx+4*r12+32]             ;c[j*k*sub+i*sub+z]
     ;printregyps ymm0
     vsubps ymm0,[r8+4*r12]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
+    vsubps ymm7,[r8+4*r12+32]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
     ;printregyps ymm0
     vmulps ymm0,ymm0                     ;(..)^2
+    vmulps ymm7,ymm7                     ;(..)^2
     ;printregyps ymm0
     vaddps ymm1,ymm0                     ;distance+=(..)^2
+    vaddps ymm1,ymm7                     ;distance+=(..)^2
     ;printregyps ymm1
-    add r12,8                           ;avanzo di indice
+    add r12,16                           ;avanzo di indice
     jmp cicloU
 restoU:
     mov r11,[rbp+subb]                 ;subb
