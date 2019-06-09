@@ -68,44 +68,26 @@ global rowDistance32SdcA
         jg resto
 
         movaps xmm0,[ebx+4*esi]             ;c[j*k*sub+i*sub+z]
-        ;printregps xmm0
+        movaps xmm3,[ebx+4*esi+16]
+        movaps xmm4,[ebx+4*esi+32]
+        movaps xmm5,[ebx+4*esi+48]
+
         subps xmm0,[eax+4*esi]              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
+        subps xmm3,[eax+4*esi+16]
+        subps xmm4,[eax+4*esi+32]
+        subps xmm5,[eax+4*esi+48]
         ;printregps xmm0
         mulps xmm0,xmm0                     ;(..)^2
+        mulps xmm3,xmm3
+        mulps xmm4,xmm4
+        mulps xmm5,xmm5
         ;printregps xmm0
         addps xmm1,xmm0                     ;distance+=(..)^2
+        addps xmm1,xmm3                     ;distance+=(..)^2
+        addps xmm1,xmm4                     ;distance+=(..)^2
+        addps xmm1,xmm5                     ;distance+=(..)^2
         ;printregps xmm1
-        add esi,4                           ;avanzo di indice
-
-        movaps xmm0,[ebx+4*esi]
-        ;printregps xmm0
-        subps xmm0,[eax+4*esi]
-        ;printregps xmm0
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0                     ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4
-
-        movaps xmm0,[ebx+4*esi]
-        ;printregps xmm0
-        subps xmm0,[eax+4*esi]
-        ;printregps xmm0
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0                     ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4
-
-        movaps xmm0,[ebx+4*esi]
-        ;printregps xmm0
-        subps xmm0,[eax+4*esi]
-        ;printregps xmm0
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0                     ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4
+        add esi,16
 
         jmp ciclo
     resto:
@@ -171,9 +153,6 @@ global rowDistance32SdcU
         add eax,edx                         ;j*k*subb+j_d*subb
         add eax,ecx                         ;c[j*k*subb+j_d*subb]
         
-        ;printreg ebx
-        ;printreg eax
-        ;printregps xmm1
         movups xmm1,[ebx]                   ;c[j*k*sub+i*sub+0]
         ;printregps xmm1
         movups xmm5, [eax]
@@ -192,48 +171,35 @@ global rowDistance32SdcU
         jg restoU
 
         movups xmm0,[ebx+4*esi]             ;c[j*k*sub+i*sub+z]
-        ;printregps xmm0
-        movups xmm5, [eax+4*esi]
-        subps xmm0,xmm5              ;c[j*k*sub+i*sub+z] - c[j*k*sub+j_d*sub+z]
+        movups xmm3,[ebx+4*esi+16]
+        movups xmm4,[ebx+4*esi+32]
+        movups xmm5,[ebx+4*esi+48]
+
+        movups xmm6,[eax+4*esi]             ;uj_x[z]
+        movups xmm7,[eax+4*esi+16]
+        
+
+        subps xmm0,xmm6              ;uj_x[z]- c[j*k*subb+i*subb+z]
+        subps xmm3,xmm7
+
+        movups xmm6,[eax+4*esi+32]
+        movups xmm7,[eax+4*esi+48]
+
+        subps xmm4,xmm6
+        subps xmm5,xmm7
+
         ;printregps xmm0
         mulps xmm0,xmm0                     ;(..)^2
+        mulps xmm3,xmm3
+        mulps xmm4,xmm4
+        mulps xmm5,xmm5
         ;printregps xmm0
         addps xmm1,xmm0                     ;distance+=(..)^2
+        addps xmm1,xmm3                     ;distance+=(..)^2
+        addps xmm1,xmm4                     ;distance+=(..)^2
+        addps xmm1,xmm5                     ;distance+=(..)^2
         ;printregps xmm1
-        add esi,4                           ;avanzo di indice
-
-        movups xmm0,[ebx+4*esi]
-        ;printregps xmm0
-        movups xmm5, [eax+4*esi]
-        subps xmm0,xmm5
-        ;printregps xmm0
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0                     ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4
-
-        movups xmm0,[ebx+4*esi]
-        ;printregps xmm0
-        movups xmm5, [eax+4*esi]
-        subps xmm0,xmm5
-        ;printregps xmm0
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0                     ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4
-
-        movups xmm0,[ebx+4*esi]
-        ;printregps xmm0
-        movups xmm5, [eax+4*esi]
-        subps xmm0,xmm5
-        ;printregps xmm0
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0                     ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4
+        add esi,16
 
         jmp cicloU
     restoU:
@@ -243,8 +209,8 @@ global rowDistance32SdcU
         cmp esi, edi
         jg resto2U
         movups xmm0,[ebx+4*esi] ;sommo gli ultimi elementi rimanenti
-        movups xmm5, [eax+4*esi]
-        subps xmm0,xmm5
+        movups xmm7, [eax+4*esi]
+        subps xmm0,xmm7
         mulps xmm0,xmm0
         addps xmm2,xmm0
         ;printregps xmm1

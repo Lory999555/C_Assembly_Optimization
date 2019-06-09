@@ -56,6 +56,8 @@ section .data
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
             mov     edx, [ebp+ddd]
+            
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -69,6 +71,8 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
+            
 
             ;xorps   xmm4, xmm4      
             movss   xmm4, [ecx]
@@ -84,6 +88,7 @@ section .data
             imul    ebx, edi            ;i*d
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -97,6 +102,7 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
 
             ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
             movss   xmm4, [ecx]
@@ -112,6 +118,7 @@ section .data
             imul    ebx, edi            ;i*d
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -125,6 +132,7 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
 
             ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
             movss   xmm4, [ecx]
@@ -141,6 +149,7 @@ section .data
             imul    ebx, edi            ;i*d
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -154,6 +163,7 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
 
             ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
             movss   xmm4, [ecx]
@@ -211,6 +221,7 @@ section .data
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
             mov     edx, [ebp+ddd]
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -224,6 +235,7 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
 
             ;xorps   xmm4, xmm4      
             movss   xmm4, [ecx]
@@ -239,6 +251,7 @@ section .data
             imul    ebx, edi            ;i*d
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -252,6 +265,7 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
 
             ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
             movss   xmm4, [ecx]
@@ -267,6 +281,7 @@ section .data
             imul    ebx, edi            ;i*d
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -280,6 +295,7 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
 
             ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
             movss   xmm4, [ecx]
@@ -296,6 +312,7 @@ section .data
             imul    ebx, edi            ;i*d
             imul    ebx, dim1           ;4*i*d
             add     ebx, [ebp+cent]     ;cent + 4*i*d
+            vpush xmm3
             push    eax
             push    ebx
             push    ecx
@@ -309,6 +326,7 @@ section .data
             pop     ecx
             pop     ebx
             pop     eax
+            vpop xmm3
 
             ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
             movss   xmm4, [ecx]
@@ -357,36 +375,26 @@ dist32A:
         cmp esi,edi     ;(j>=d-16)?
         jg resto
         movaps xmm0,[eax+4*esi] ;x[i]
+        movaps xmm3,[eax+4*esi+16]
+        movaps xmm4,[eax+4*esi+32]
+        movaps xmm5,[eax+4*esi+48]
+
         subps xmm0,[ebx+4*esi]  ;x[i]-y[i]
+        subps xmm3,[ebx+4*esi+16]
+        subps xmm4,[ebx+4*esi+32]
+        subps xmm5,[ebx+4*esi+48]
+
         mulps xmm0,xmm0         ;(..)^2
+        mulps xmm3,xmm3
+        mulps xmm4,xmm4
+        mulps xmm5,xmm5
         ;printregps xmm0
         addps xmm1,xmm0         ;distance+=(..)^2
+        addps xmm1,xmm3
+        addps xmm1,xmm4
+        addps xmm1,xmm5
         ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        movaps xmm0,[eax+4*esi]
-        subps xmm0,[ebx+4*esi]
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0
-        ;printregps xmm1
-        add esi,4
-
-        movaps xmm0,[eax+4*esi]
-        subps xmm0,[ebx+4*esi]
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0
-        ;printregps xmm1
-        add esi,4
-
-        movaps xmm0,[eax+4*esi]
-        subps xmm0,[ebx+4*esi]
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0
-        ;printregps xmm1
-        add esi,4
+        add esi,16
 
         jmp ciclo
     resto:
@@ -438,40 +446,31 @@ dist32A:
         cmp esi,edi     ;(j>=d-16)?
         jg restoU
         movups xmm0,[eax+4*esi] ;x[i]
-        movups xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0edxedx
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
+        movups xmm3,[eax+4*esi+16] ;x[i]
+        movups xmm4,[eax+4*esi+32] ;x[i]
+        movups xmm5,[eax+4*esi+48] ;x[i]
 
-        movups xmm0,[eax+4*esi] ;x[i]
-        movups xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
+        movups xmm6, [ebx+4*esi]
+        movups xmm7, [ebx+4*esi+16]
+        subps xmm0,xmm6  ;x[i]-y[i]
+        subps xmm3,xmm7  ;x[i]-y[i]
+
+        movups xmm6, [ebx+4*esi+32]
+        movups xmm7, [ebx+4*esi+48]
+        subps xmm4,xmm6  ;x[i]-y[i]
+        subps xmm5,xmm7  ;x[i]-y[i]
+
         mulps xmm0,xmm0         ;(..)^2
+        mulps xmm3,xmm3         ;(..)^2
+        mulps xmm4,xmm4         ;(..)^2
+        mulps xmm5,xmm5         ;(..)^2
         ;printregps xmm0
         addps xmm1,xmm0         ;distance+=(..)^2
+        addps xmm1,xmm3         ;distance+=(..)^2
+        addps xmm1,xmm4         ;distance+=(..)^2
+        addps xmm1,xmm5         ;distance+=(..)^2
         ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        movups xmm0,[eax+4*esi] ;x[i]
-        movups xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        movups xmm0,[eax+4*esi] ;x[i]
-        movups xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
+        add esi,16               ;avanzo di indice
 
         jmp cicloU
     restoU:

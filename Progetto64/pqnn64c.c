@@ -6137,7 +6137,7 @@ int main(int argc, char** argv) {
 	//input->kc = 8192;
 	input->kc = 256;
 	//input->w = 16;
-	input->w=8;
+	input->w=10;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -6285,8 +6285,8 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	//input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
-	input->ds = load_data_col(fname, &input->n, &input->d);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
+	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
@@ -6297,8 +6297,8 @@ int main(int argc, char** argv) {
 
 
 	sprintf(fname, "%s.qs", input->filename);
-	//input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
-	input->qs = load_data_row(fname, &input->nq, &input->d);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
+	//input->qs = load_data_row(fname, &input->nq, &input->d);
 	
 	//input->nq=input->nq/2;
 
