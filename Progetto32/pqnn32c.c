@@ -6348,7 +6348,7 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,808);
 	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
@@ -6358,7 +6358,7 @@ int main(int argc, char** argv) {
 		input->nr = input->n/20;
 
 	sprintf(fname, "%s.qs", input->filename);
-	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,808);
 	//input->qs = load_data_row(fname, &input->nq, &input->d);
 
 	//creazione di una matrice temporanea che ospita un sottogruppo di dimensioni del dataset (n*sub dimensionale)
