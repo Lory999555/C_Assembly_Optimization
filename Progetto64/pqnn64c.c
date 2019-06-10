@@ -3840,21 +3840,23 @@ int* productQuantA(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,
 	int sub=d/m;
 	//int** result = (int**) get_block(sizeof(int*),m);
 	int* result = alloc_vector(m*n);
+	MATRIX tmp;
 	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
 		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		if(m!=1){
-			MATRIX tmp = Uj_col(ds,j,m,n,d);
+			tmp = Uj_col(ds,j,m,n,d);
 			//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
 			//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
 			k_means_colA(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
-			dealloc_matrix(tmp); // da testare
+			
 		}else
 		{
 			k_means_colA(ds,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
 		}
 	}
+	dealloc_matrix(tmp); // da testare
 	return result;
 }
 
@@ -3863,21 +3865,23 @@ int* NE_productQuantA(MATRIX ds,int n,int d,int m,int k,float* centroids,float e
 	int sub=d/m;
 	//int** result = (int**) get_block(sizeof(int*),m);
 	int* result = alloc_vector(m*n);
+	MATRIX tmp;
 	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
 		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		if(m!=1){
-			MATRIX tmp = Uj_col(ds,j,m,n,d);
+			tmp = Uj_col(ds,j,m,n,d);
 			//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
 			//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
 			NE_k_means_colA(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max,nr);
-			dealloc_matrix(tmp); // da testare
+			
 		}else
 		{
 			NE_k_means_colA(ds,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max,nr);
 		}
 	}
+	dealloc_matrix(tmp); // da testare
 	return result;
 }
 
@@ -3886,21 +3890,23 @@ int* productQuantU(MATRIX ds,int n,int d,int m,int k,float* centroids,float eps,
 	int sub=d/m;
 	//int** result = (int**) get_block(sizeof(int*),m);
 	int* result = alloc_vector(m*n);
+	MATRIX tmp;
 	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
 		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		if(m!=1){
-			MATRIX tmp = Uj_col(ds,j,m,n,d);
+			tmp = Uj_col(ds,j,m,n,d);
 			//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
 			//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
 			k_means_colU(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
-			dealloc_matrix(tmp); // da testare
+			
 		}else
 		{
 			k_means_colU(ds,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max);
 		}
 	}
+	dealloc_matrix(tmp); // da testare
 	return result;
 }
 
@@ -3909,21 +3915,23 @@ int* NE_productQuantU(MATRIX ds,int n,int d,int m,int k,float* centroids,float e
 	int sub=d/m;
 	//int** result = (int**) get_block(sizeof(int*),m);
 	int* result = alloc_vector(m*n);
+	MATRIX tmp;
 	//centroids = (float**) get_block(sizeof(MATRIX),m);
 	for( j = 0; j < m; j++)
 	{
 		//printf("\nCalcolo del %d sotto-gruppo di centroidi\n",j);
 		if(m!=1){
-			MATRIX tmp = Uj_col(ds,j,m,n,d);
+			tmp = Uj_col(ds,j,m,n,d);
 			//centroids[j]=alloc_matrix(k,sub);//////////////////////////////////////////////////////
 			//result[j]=k_means(tmp,n,sub,k,eps,&centroids[j*sub*k],t_min,t_max);
 			NE_k_means_colU(tmp,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max,nr);
-			dealloc_matrix(tmp); // da testare
+			
 		}else
 		{
 			NE_k_means_colU(ds,n,sub,k,eps,&result[j*n],&centroids[j*sub*k],t_min,t_max,nr);
 		}
 	}
+	dealloc_matrix(tmp); // da testare
 	return result;
 }
 
@@ -5773,6 +5781,7 @@ void pqnn_search(params* input) {
 			if(c_max_heap == input->knn)
 				for(int i=0; i<input->knn; i++){
 					input->ANN[x*input->knn+i]=k_nn[i];
+					//printf("\n %d	[dist = %f]	",k_nn[i],result_dist[i]);
 				}
 			else
 			{
@@ -5861,6 +5870,7 @@ void pqnn_search(params* input) {
 			if(c_max_heap == input->knn)
 				for(int i=0; i<input->knn; i++){
 					input->ANN[x*input->knn+i]=k_nn[i];
+					//printf("\n %d	[dist = %f]	",k_nn[i],result_dist[i]);
 				}
 			else
 			{
@@ -6119,7 +6129,7 @@ int main(int argc, char** argv) {
 	//input->kc = 8192;
 	input->kc = 256;
 	//input->w = 16;
-	input->w=10;
+	input->w=8;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -6267,8 +6277,8 @@ int main(int argc, char** argv) {
 	}
 	
 	sprintf(fname, "%s.ds", input->filename);
-	//input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,1000);
-	input->ds = load_data_col(fname, &input->n, &input->d);
+	input->ds = load_data_col_p(fname, &input->n, &input->d, 20000,808);
+	//input->ds = load_data_col(fname, &input->n, &input->d);
 	//input->ds = load_data_row(fname, &input->n, &input->d);
 	input->sub=input->d/input->m;
 	//input->n = input->n/2 + 2;
@@ -6279,8 +6289,8 @@ int main(int argc, char** argv) {
 
 
 	sprintf(fname, "%s.qs", input->filename);
-	//input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,1000);
-	input->qs = load_data_row(fname, &input->nq, &input->d);
+	input->qs = load_data_row_p(fname, &input->nq, &input->d, 20000,808);
+	//input->qs = load_data_row(fname, &input->nq, &input->d);
 	
 	//input->nq=input->nq/2;
 

@@ -4734,7 +4734,7 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
-				#pragma omp parallel for
+				//#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 					float* uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
@@ -4867,7 +4867,7 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
-				#pragma omp parallel for
+				//#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 					float* uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
@@ -5002,7 +5002,7 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
-				#pragma omp parallel for
+				//#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 					float* uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
@@ -5122,7 +5122,7 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 				//printf("SDC: scorrimento della Inverted List: %d\n",i_w);
 				//clock_t t11 = clock();
-				#pragma omp parallel for
+				//#pragma omp parallel for
 				for(int j=0;j<input->m;j++){
 					//uj_x = Uj( &x_query[i*input->d], j, input->m,1,input->d);
 					float * uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
@@ -5735,7 +5735,7 @@ void pqnn_search(params* input) {
 			k_nn = alloc_vector(input->knn);	
 			result_dist=alloc_matrix(input->knn,1);
 			//clock_t t11 = clock();
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for(int j=0;j<input->m;j++){
 				float* uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centXA(&centroids[j*input->k*input->sub], uj_x, input->k, input->sub);
@@ -5786,6 +5786,7 @@ void pqnn_search(params* input) {
 			if(c_max_heap == input->knn)
 				for(int i=0; i<input->knn; i++){
 					input->ANN[x*input->knn+i]=k_nn[i];
+					//printf("\n %d	[dist = %f]	",k_nn[i],result_dist[i]);
 				}
 			else
 			{
@@ -5825,7 +5826,7 @@ void pqnn_search(params* input) {
 			k_nn = alloc_vector(input->knn);	
 			result_dist=alloc_matrix(input->knn,1);
 			//clock_t t11 = clock();
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for(int j=0;j<input->m;j++){
 				float * uj_x = Uj_x( &input->qs[x*input->d], j, input->m,1,input->d);
 				c_x[j] = centXU(&centroids[j*input->k*input->sub], uj_x, input->k, input->sub);
@@ -5875,6 +5876,7 @@ void pqnn_search(params* input) {
 			if(c_max_heap == input->knn)
 				for(int i=0; i<input->knn; i++){
 					input->ANN[x*input->knn+i]=k_nn[i];
+					//printf("\n %d	[dist = %f]	",k_nn[i],result_dist[i]);
 				}
 			else
 			{
@@ -6133,7 +6135,7 @@ int main(int argc, char** argv) {
 	//input->kc = 8192;
 	input->kc = 256;
 	//input->w = 16;
-	input->w=10;
+	input->w=8;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
