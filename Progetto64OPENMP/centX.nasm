@@ -1,513 +1,468 @@
-%include "sseutils.nasm"
+%include "sseutils64.nasm"
 
 section .data
-	
 
-    cent	equ		8
-    xx      equ     12
-    k       equ     16
-    ddd     equ     20
-    tmp     equ     24  ;risultato di dist
-    park    equ     28  ;risultato di centX
-    dis     equ     32  ;dis temporanea
-    dim1    equ     4
+dis     equ     16  ;dis temporanea
+dim1    equ     4
 
-    section .bss
-    section .text
+section .bss
+section .text
 
-    global cent_XA
+global cent_XA
 
-        cent_XA:
-            start
-            mov     eax, [ebp+xx]   ;x            
-            mov     ebx, [ebp+cent] ;cent
-            mov     ecx, [ebp+ddd]  ;d
-            mov     edx, [ebp+dis]  ;dis
-            mov     edi,    0
-            mov     esi, [ebp+k]
-            sub     esi, 4
-        
+cent_XA:
+    start
+    mov     r14, [rbp+dis]  ;dis
 
-            push    eax
-            push    ebx
-            push    edx
-            push    ecx
-            push    esi
-            push    edi
-            call    dist32A
-            pop     edi
-            pop     esi
-            pop     ecx
-            pop     edx
-            pop     ebx
-            pop     eax
-            
-            xorps   xmm3, xmm3
-            movss   xmm3, [edx]
-            mov     ecx, [ebp+tmp]      ;tmp
-            
+    mov     r11, 0
+    sub     rdx, 4      ;k-4
+    mov     rax,rdi
 
-        foriA: 
-            cmp     edi, esi            ; i> k-4
-            jg      fine_A
-            
-            mov     ebx, [ebp+ddd]
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            mov     edx, [ebp+ddd]
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32A
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64A
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
-            ;xorps   xmm4, xmm4      
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti1A
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
-        avanti1A:
-            add     edi, 1
+    
+    vxorps   xmm3, xmm3
+    vmovss   xmm3, [r14]         ;dis
+foriA: 
+    cmp     r11, rdx            ; i> k-4
+    jg      fine_A
+    ;vprintreg r11
 
-            mov     ebx, edx
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32A
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+    mov     r13, rcx            ;d
+    imul    r13,r11             ;i*d
+    imul    r13,dim1            ;4*i*d
+    ;vprintreg rax
+    ;vprintreg r13
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+    ;vprintreg rax
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64A
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
-            ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti2A
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
-        avanti2A:
-            add     edi, 1
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti1A
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
 
-            mov     ebx, edx
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32A
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+avanti1A:
+    add     r11, 1
 
-            ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti3A
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
+    ;vprintreg r13
+    ;vprintreg rax
+    mov     r13, rcx            ;d
+    imul    r13,r11             ;4*i*d
+    imul    r13,dim1
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+    ;vprintreg rax
 
-        avanti3A:
-            add     edi, 1
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64A
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
-            mov     ebx, edx
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32A
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti2A
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
+avanti2A:
+    add     r11, 1
 
-            ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti4A
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
-        avanti4A:
-            add     edi, 1         
-            jmp     foriA
-        fine_A:
-            stop
+    mov     r13,rcx            ;d
+    imul    r13,r11             ;4*i*d
+    imul    r13,dim1
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+    ;vprintreg rax
+
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64A
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
+
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti3A
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
+
+avanti3A:
+    add     r11, 1
+
+    mov     r13, rcx            ;d
+    imul    r13,r11             ;4*i*d
+    imul    r13,dim1
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+   ;vprintreg rax
+
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64A
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
+
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti4A
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
+avanti4A:
+    add     r11, 1         
+    jmp     foriA
+fine_A:
+    stop
 
 
-    global cent_XU
+global cent_XU
 
-        cent_XU:
-            start
-            mov     eax, [ebp+xx]   ;x            
-            mov     ebx, [ebp+cent] ;cent
-            mov     ecx, [ebp+ddd]  ;d
-            mov     edx, [ebp+dis]  ;dis
-            mov     edi,    0
-            mov     esi, [ebp+k]
-            sub     esi, 4
-        
+cent_XU:
+    start
+    mov     r14, [rbp+dis]  ;dis
 
-            push    eax
-            push    ebx
-            push    edx
-            push    ecx
-            push    esi
-            push    edi
-            call    dist32U
-            pop     edi
-            pop     esi
-            pop     ecx
-            pop     edx
-            pop     ebx
-            pop     eax
-            
-            xorps   xmm3, xmm3
-            movss   xmm3, [edx]
-            mov     ecx, [ebp+tmp]      ;tmp
-            
+    mov     r11, 0
+    sub     rdx, 4      ;k-4
+    mov     rax,rdi
 
-        foriU: 
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64U
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
-            cmp     edi, esi            ; i> k-4
-            jg      fine_U
-            
-            mov     ebx, [ebp+ddd]
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            mov     edx, [ebp+ddd]
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32U
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+    
+    vxorps   xmm3, xmm3
+    vmovss   xmm3, [r14]         ;dis
+foriU: 
+    cmp     r11, rdx            ; i> k-4
+    jg      fine_U
+    ;vprintreg r11
 
-            ;xorps   xmm4, xmm4      
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti1U
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
-        avanti1U:
-            add     edi, 1
+    mov     r13, rcx            ;d
+    imul    r13,r11             ;i*d
+    imul    r13,dim1            ;4*i*d
+    ;vprintreg rax
+    ;vprintreg r13
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+    ;vprintreg rax
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64U
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
-            mov     ebx, edx
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32U
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti1U
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
 
-            ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti2U
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
-        avanti2U:
-            add     edi, 1
+avanti1U:
+    add     r11, 1
 
-            mov     ebx, edx
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32U
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+    ;vprintreg r13
+    ;vprintreg rax
+    mov     r13, rcx            ;d
+    imul    r13,r11             ;4*i*d
+    imul    r13,dim1
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+    ;vprintreg rax
 
-            ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti3U
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64U
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
-        avanti3U:
-            add     edi, 1
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti2U
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
+avanti2U:
+    add     r11, 1
 
-            mov     ebx, edx
-            imul    ebx, edi            ;i*d
-            imul    ebx, dim1           ;4*i*d
-            add     ebx, [ebp+cent]     ;cent + 4*i*d
-            push    eax
-            push    ebx
-            push    ecx
-            push    edx
-            push    esi
-            push    edi
-            call    dist32U
-            pop     edi
-            pop     esi
-            pop     edx
-            pop     ecx
-            pop     ebx
-            pop     eax
+    mov     r13,rcx            ;d
+    imul    r13,r11             ;4*i*d
+    imul    r13,dim1
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+    ;vprintreg rax
 
-            ;xorps   xmm4, xmm4          ;;;;;;;;;;;;;;;;;;;;;;;;
-            movss   xmm4, [ecx]
-            comiss  xmm3, xmm4
-            jb      avanti4U
-            movss   xmm3, xmm4
-            mov     ebx, [ebp+park]
-            mov     [ebx], edi
-        avanti4U:
-            add     edi, 1         
-            jmp     foriU
-        fine_U:
-            stop
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64U
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
 
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti3U
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
 
+avanti3U:
+    add     r11, 1
 
+    mov     r13, rcx            ;d
+    imul    r13,r11             ;4*i*d
+    imul    r13,dim1
+    mov     rax,rdi
+    add     rax,r13            ;cent[4*i*d]
+   ;vprintreg rax
+
+    ;pushaq
+    push    rax
+    push    r13
+    push    r12
+    push    r10
+    call    dist64U
+    pop     r10
+    pop     r12
+    pop     r13
+    pop     rax
+    ;popaq
+
+    ;vxorps   xmm4, xmm4      
+    vmovss   xmm4, [r14]     ;dis
+    vcomiss  xmm3, xmm4      ;tmp<dis?
+    jb      avanti4U
+    vmovss   xmm3, xmm4      ;dis=tmp
+    mov     [r9], r11       ;park=i
+avanti4U:
+    add     r11, 1         
+    jmp     foriU
+fine_U:
+    stop
 
 section .data
-    x		    equ		28
-    y           equ     24
-    distance	equ		20
-    dddd        equ		16
-    dim         equ     4
 
-    section .bss
-    section .text
+dim equ 4
 
-    dist32U:
-        ;printreg [ebp+y]
-        ;printreg [ebp+distance]
-        ;printreg [ebp+dddd]
-        push ebp
-        mov ebp, esp
-        mov eax,[ebp+x]
-        mov ebx,[ebp+y]
-        xorps xmm1, xmm1
-        movaps xmm1,[eax] ;x[0]
-        movaps xmm7, [ebx]
-        subps xmm1,xmm7  ;x[0]-y[0]
-        mulps xmm1,xmm1     ;(..)^2
-        ;printregps xmm1
-        mov edi,[ebp+dddd] ;d
-        ;mov ecx,dim     ;4
-        sub edi,16     ;d-16
-        xorps xmm2, xmm2
-        mov esi,4       ;i=4
-    cicloU:
-        cmp esi,edi     ;(j>=d-16)?
-        jg restoU
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0edxedx
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
+section .bss
 
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
+section .text
 
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
+dist64A:
+    start
 
-        movaps xmm0,[eax+4*esi] ;x[i]
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
+    vmovaps ymm1,[rsi] ;x[0]
+    vsubps ymm1,[rax]  ;x[0]-y[0]
+    vmulps ymm1,ymm1     ;(..)^2
+    ;printregyps ymm1
+    mov r12,rcx         ;d
+    ;mov rcx,dim     ;4
+    sub r12,32     ;d-16
 
-        jmp cicloU
-    restoU:
-        mov edi, [ebp+dddd]
-        sub edi, 4
-    ciclo2U:
-        cmp esi, edi
-        jg  resto2U
-        movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-        movaps xmm7, [ebx+4*esi]
-        subps xmm0,xmm7
-        mulps xmm0,xmm0
-        addps xmm2, xmm0
-        add esi, 4
-        jmp ciclo2U
+    vxorps ymm2, ymm2
+    mov r10,8       ;j=8
+ciclo:
+    cmp r10,r12     ;(j>=d-16)?
+    jg resto
 
-    resto2U:
-        mov edi, [ebp+dddd]
-    ciclo3U:
-        cmp esi, edi
-        je  fineU
-        movss xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-        subss xmm0,[ebx+4*esi]
-        mulss xmm0,xmm0
-        addss xmm2, xmm0
-        add esi, 1
-        jmp ciclo3U
-    fineU:
-        haddps xmm1,xmm2        ;merge di tutte le somme
-        haddps xmm1,xmm1        ;|
-        haddps xmm1,xmm1        ;|       
+    vmovaps ymm0,[rsi+4*r10]             ;uj_x[z]
+    vmovaps ymm7,[rsi+4*r10+32]             ;uj_x[z]
+    vmovaps ymm8,[rsi+4*r10+64]             ;uj_x[z]
+    vmovaps ymm9,[rsi+4*r10+96]             ;uj_x[z]
 
-        mov eax,[ebp+distance]
-        movss [eax],xmm1        ;carico il nuovo valore di distance        pop     edi
-        pop     ebp
-        ret
+    vsubps ymm0,[rax+4*r10]              ;uj_x[z]- c[j*k*subb+i*subb+z
+    vsubps ymm7,[rax+4*r10+32]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    vsubps ymm8,[rax+4*r10+64]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    vsubps ymm9,[rax+4*r10+96]              ;uj_x[z]- c[j*k*subb+i*subb+z]
+    ;printregps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    vmulps ymm7,ymm7                     ;(..)^2
+    vmulps ymm8,ymm8                     ;(..)^2
+    vmulps ymm9,ymm9                     ;(..)^2
+    ;printregps ymm0
+    vaddps ymm1,ymm0                     ;distance+=(..)^2
+    vaddps ymm1,ymm7                     ;distance+=(..)^2
+    vaddps ymm1,ymm8                     ;distance+=(..)^2
+    vaddps ymm1,ymm9                     ;distance+=(..)^2
+    ;printregps ymm1
+    add r10,32                           ;avanzo di indice
 
+    jmp ciclo
+resto:
+    mov r12, rcx
+    sub r12, 8
+ciclo2:
+    cmp r10, r12
+    jg  fine
+    vmovaps ymm0, [rsi+4*r10] ;sommo gli ultimi elementi rimanenti
+    vsubps ymm0,[rax+4*r10]
+    vmulps ymm0,ymm0
+    vaddps ymm2, ymm0
+    add r10, 8
+    jmp ciclo2
+fine:
+    vaddps ymm1,ymm2        ;merge di tutte le somme
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vperm2f128 ymm5,ymm1,ymm1,1
+    vaddss xmm1,xmm5
+    ;printregyps ymm1
+    vmovss  [r14],xmm1
+    stop
 
+dist64U:
+    start
 
+    vmovups ymm1,[rsi] ;x[0]
+    vsubps ymm1,[rax]  ;x[0]-y[0]
+    vmulps ymm1,ymm1     ;(..)^2
+    ;printregyps ymm1
+    mov r12,rcx         ;d
+    ;mov rcx,dim     ;4
+    sub r12,32     ;d-16
 
+    vxorps ymm2, ymm2
+    mov r10,8       ;i=4
+cicloU:
+    cmp r10,r12     ;(j>=d-16)?
+    jg restoU
 
+    vmovups ymm0,[rsi+4*r10]             ;x[i]
+    vmovups ymm7,[rsi+4*r10+32]           
+    vmovups ymm8,[rsi+4*r10+64]           
+    vmovups ymm9,[rsi+4*r10+96]           
 
+    vmovups ymm10,[rax+4*r10]             
+    vmovups ymm11,[rax+4*r10+32]           
+    vmovups ymm12,[rax+4*r10+64]           
+    vmovups ymm13,[rax+4*r10+96]           
 
-dist32A:
-        push ebp
-        mov ebp, esp
+    vsubps ymm0,ymm10                   ;x[i]-y[i]
+    vsubps ymm7,ymm11              
+    vsubps ymm8,ymm12              
+    vsubps ymm9,ymm13              
+    ;printregps ymm0
+    vmulps ymm0,ymm0                     ;(..)^2
+    vmulps ymm7,ymm7                     ;(..)^2
+    vmulps ymm8,ymm8                     ;(..)^2
+    vmulps ymm9,ymm9                     ;(..)^2
+    ;printregps ymm0
+    vaddps ymm1,ymm0                     ;distance+=(..)^2
+    vaddps ymm1,ymm7                     ;distance+=(..)^2
+    vaddps ymm1,ymm8                     ;distance+=(..)^2
+    vaddps ymm1,ymm9                     ;distance+=(..)^2
+    ;printregps ymm1
+    add r10,32                           ;avanzo di indice
 
-        mov eax,[ebp+x]
-        mov ebx,[ebp+y]
+    jmp cicloU
+restoU:
+    mov r12, rcx
+    sub r12, 8
+ciclo2U:
+    cmp r10, r12
+    jg  resto2U
+    vmovups ymm0, [rsi+4*r10] ;sommo gli ultimi elementi rimanenti
+    vsubps ymm0,[rax+4*r10]
+    vmulps ymm0,ymm0
+    vaddps ymm2, ymm0
+    ;printregyps ymm2
+    add r10, 8
+    jmp ciclo2U
 
-        movaps xmm1,[eax] ;x[0]
-        subps xmm1,[ebx]  ;x[0]-y[0]
-        mulps xmm1,xmm1     ;(..)^2
-        ;printregps xmm1
-        mov edi,[ebp+dddd] ;d
-        ;mov ecx,dim     ;4
-        sub edi,16     ;d-16
-        xorps xmm2, xmm2
-        mov esi,4       ;i=4
-    ciclo:
-        cmp esi,edi     ;(j>=d-16)?
-        jg resto
-        movaps xmm0,[eax+4*esi] ;x[i]
-        subps xmm0,[ebx+4*esi]  ;x[i]-y[i]
-        mulps xmm0,xmm0         ;(..)^2
-        ;printregps xmm0
-        addps xmm1,xmm0         ;distance+=(..)^2
-        ;printregps xmm1
-        add esi,4               ;avanzo di indice
-
-        movaps xmm0,[eax+4*esi]
-        subps xmm0,[ebx+4*esi]
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0
-        ;printregps xmm1
-        add esi,4
-
-        movaps xmm0,[eax+4*esi]
-        subps xmm0,[ebx+4*esi]
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0
-        ;printregps xmm1
-        add esi,4
-
-        movaps xmm0,[eax+4*esi]
-        subps xmm0,[ebx+4*esi]
-        mulps xmm0,xmm0
-        ;printregps xmm0
-        addps xmm1,xmm0
-        ;printregps xmm1
-        add esi,4
-
-        jmp ciclo
-    resto:
-        mov edi, [ebp+dddd]
-        sub edi, 4
-    ciclo2:
-        cmp esi, edi
-        jg  fineA
-        movaps xmm0,[eax+4*esi] ;sommo gli ultimi elementi rimanenti
-        subps xmm0,[ebx+4*esi]
-        mulps xmm0,xmm0
-        addps xmm2, xmm0
-        add esi, 4
-        jmp ciclo2
-
-    fineA:
-        haddps xmm1,xmm2        ;merge di tutte le somme
-        haddps xmm1,xmm1        ;|
-        haddps xmm1,xmm1        ;|
-        ;printregps xmm1        
-
-        mov eax,[ebp+distance]
-        movss [eax],xmm1        ;carico il nuovo valore di distance
-        pop     ebp
-        ret
+resto2U:
+    mov r12, rcx
+ciclo3U:
+    cmp r10, r12
+    je  fineU
+    vmovss xmm7, [rsi+4*r10] ;sommo gli ultimi elementi rimanenti
+    vsubss xmm7,[rax+4*r10]
+    vmulss xmm7, xmm7
+    ;printregyps ymm7
+    vaddps ymm2, ymm7
+    ;printregyps ymm2
+    add r10, 1
+    jmp ciclo3U
+fineU:
+    vaddps ymm1,ymm2        ;merge di tutte le somme
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vhaddps ymm1,ymm1        ;|
+    ;printregyps ymm1
+    vperm2f128 ymm5,ymm1,ymm1,1
+    vaddss xmm1,xmm5
+    ;printregyps ymm1
+    vmovss  [r14],xmm1
+    stop
