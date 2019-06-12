@@ -2796,7 +2796,6 @@ void pqnn_search(params* input) {
 				int k_2 = input->k*input->k;
 					for(int j=0;j<input->m;j++){
 					uj_x = Uj_x( &res_x[i_w*input->d], j, input->m,1,input->d);
-							printf("-----------------------\n");
 					c_x[j] = centXA(&Cp[j*input->sub*input->k], uj_x, input->k, input->sub);
 					
 					dealloc_matrix(uj_x);
