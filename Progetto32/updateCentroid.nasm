@@ -54,6 +54,8 @@ updateCentroid:
 
 		mov		ebx, 0			; i = 0
 fori:		
+		cmp		edx,p			;d < 8
+		jb		forjj1
 		mov		ecx, 0			; j = 0
 forjj:		
 		;attenzione ad esi che viene usato dopo quindi se lo si modifica potrebbe non funzionare
@@ -101,12 +103,64 @@ else:
 
 iter:
 		mov 	esi,edx			;d
+		sub 	esi,p			;d-p
 		imul	esi,dim			;d*4
 
 		add		ecx, dim*p		; j+=p
-		cmp		ecx, esi		; (j < d) ?
-		jb		forjj
+		cmp		ecx, esi		; (j <= d-p) ?
+		jle		forjj
 		
+forjj1:
+		mov         esi,[ebp+counts]    ;counts
+		movss		xmm1,[esi+ebx]		;counts + i*4
+        comiss      xmm1,[zero]           ; counts + i*4 != 0
+        jz         else1
+
+		;printregps	xmm7
+		;addps		xmm7,[uno]
+
+        ;movss       xmm1,[esi+ebx]      ;espando il counts[i] su xmm1
+		;movss       xmm1,[esi+ebx]
+        ;shufps      xmm1,xmm1,0   ;counts[i] ripetuto 4 volte
+		;printregps	xmm1
+        
+      	mov 		esi,[ebp+centroids_1]		;centroids_1
+		mov			edi,edx		;d
+		imul		edi, ebx		; 4*i*d
+		add			esi, edi		;centroids_1 + 4*i*d
+        movss      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
+
+        divss       xmm0,xmm1       ;c1[i*d+j..i+*d+j+p-1]/counts[i]
+		;addps		xmm6,[uno]
+		;printregps	xmm6
+
+        mov         esi,[ebp+centroids]         ;centroids
+        add         esi,edi         ;centroids + 4*i*d
+		movss		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j <- xmm0
+        jmp iter1
+else1:
+		;printregps	xmm6
+		;addps		xmm6,[due]
+
+        mov 		esi,[ebp+centroids_1]		;centroids_1
+		mov			edi,edx		;d
+		imul		edi, ebx		; 4*i*d
+		add			esi, edi		;centroids_1 + 4*i*d
+        movss      xmm0,[ecx+esi]      ;centroids_1 + 4*i*d + 4*j. prendo 4 elementi (e dimensioni)
+
+
+        mov         esi,[ebp+centroids]         ;centroids
+        add         esi,edi         ;centroids + 4*i*d
+        movss		[ecx+esi], xmm0	        ; centroids + 4*i*d + 4*j = xmm0
+
+iter1:
+		mov 	esi,edx			;d
+		imul	esi,dim			;d*4
+
+		add		ecx, dim		; j+=1
+		cmp		ecx, esi		; (j < d) ?
+		jb		forjj1
+
 		add		ebx, dim		; i ++
 		cmp		ebx, eax		; (i < k) ?
 		jb		fori

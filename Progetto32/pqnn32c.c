@@ -83,6 +83,8 @@ bool  nmod4=false;
 bool  dmod4=false;
 bool  nmod4noex=false;
 bool submod4=false;
+bool nrmod4=false;
+
 
 
 //variabili utili per l'algoritmo esaustivo
@@ -166,7 +168,7 @@ void dealloc_matrix(MATRIX mat) {
  */
 
 //salvataggio matrice per colonne personalizzato
-MATRIX load_data_col_p(char* filename, int *n, int *d, int nn, int dd) {	
+MATRIX load_data_col_p1(char* filename, int *n, int *d, int nn, int dd) {	
 	FILE* fp;
 	int rows, cols, status, i, cnt;
 	
@@ -197,6 +199,41 @@ MATRIX load_data_col_p(char* filename, int *n, int *d, int nn, int dd) {
 	}
 	return data;
 }
+
+MATRIX load_data_col_p(char* filename, int *n, int *d, int nn, int dd) {	
+	FILE* fp;
+	int rows, cols, status, i, cnt,j,z;
+	
+	fp = fopen(filename, "rb");
+	
+	if (fp == NULL) {
+		printf("'%s' : bad data file name!\n", filename);
+		exit(0);
+	}
+	
+	status = fread(&cols, sizeof(int), 1, fp);
+	status = fread(&rows, sizeof(int), 1, fp);
+	rows = nn;
+	cols = dd;
+		
+	MATRIX data1 = alloc_matrix(rows,cols);
+	status = fread(data1, sizeof(float), rows*cols, fp);
+	fclose(fp);
+	
+	*n = rows+rows;
+	*d = cols+cols;
+
+	MATRIX data = alloc_matrix(rows*2,cols*2);
+	for(j=0; j<cols; j++){
+		for(z=0; z<rows; z++){
+			data[z+j*rows] = data1[z*cols+j];
+			data[z*2+j*rows*2] = data1[z*cols+j];
+		}
+	}
+
+	return data;
+}
+
 
 
 //salvataggio matrice per colonne
@@ -230,7 +267,7 @@ MATRIX load_data_col(char* filename, int *n, int *d) {
 	return data;
 }
 
-MATRIX load_data_row_p(char* filename, int *n, int *d, int nn, int dd) {	
+MATRIX load_data_row_p1(char* filename, int *n, int *d, int nn, int dd) {	
 	FILE* fp;
 	int rows, cols, status, i;
 	
@@ -252,6 +289,41 @@ MATRIX load_data_row_p(char* filename, int *n, int *d, int nn, int dd) {
 	
 	*n = rows;
 	*d = cols;
+
+	return data;
+}
+
+MATRIX load_data_row_p(char* filename, int *n, int *d, int nn, int dd) {	
+	FILE* fp;
+	int rows, cols, status, i,j,z;
+	
+	fp = fopen(filename, "rb");
+	
+	if (fp == NULL) {
+		printf("'%s' : bad data file name!\n", filename);
+		exit(0);
+	}
+	
+	status = fread(&cols, sizeof(int), 1, fp);
+	status = fread(&rows, sizeof(int), 1, fp);
+	rows = nn;
+	cols = dd; 
+		
+	MATRIX data1 = alloc_matrix(rows,cols);
+	status = fread(data1, sizeof(float), rows*cols, fp);
+	fclose(fp);
+
+	MATRIX data = alloc_matrix(rows*2,cols*2);
+	for(z=0; z<rows; z++){
+		for(j=0; j<cols; j++){
+			data[z*cols+j] = data1[z*cols+j];
+			data[2*z*cols+j*2] = data1[z*cols+j];
+		}
+	}
+
+	*n = rows*2;
+	*d = cols*2;
+	
 
 	return data;
 }
@@ -554,7 +626,13 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		iter++;
 		/* save error from last step */
 		old_error = error, error = 0;
-		clearCentroids(counts,c1,k,d);
+		//clearCentroids(counts,c1,k,d);
+		for (i = 0; i < k;i++) {
+			counts[i] = 0;
+			for (j = 0; j < d; j++){
+				c1[i*d+j] = 0;
+			}
+		}
 		printf("identify the closest cluster in %d iteration\n",iter);
 
 		for (i = 0; i <= n-size; i+=size){  
@@ -659,14 +737,15 @@ void k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		updateCentroid(c,c1,counts,k,d);
 	
-		if(error == old_error)
+		if(error == old_error){
 			calc=0;
-		else if(error > old_error){
-			calc = (fabs(error-old_error)/error);
 		}else{
-			calc = (fabs(error-old_error)/old_error);
+			calc = (fabs(old_error-error)/old_error);
 		}
 		
+
+
+
 	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 	
 
@@ -713,7 +792,13 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 	
-		clearCentroids(counts,c1,k,d);
+		//clearCentroids(counts,c1,k,d);
+		for (i = 0; i < k;i++) {
+			counts[i] = 0;
+			for (j = 0; j < d; j++){
+				c1[i*d+j] = 0;
+			}
+		}
 			
 		printf("identify the closest cluster in %d iteration\n",iter);
 		
@@ -872,13 +957,12 @@ void NE_k_means_colA(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		updateCentroid(c,c1,counts,k,d);
 		
 	
-	if(error == old_error)
-		calc=0;
-	else if(error > old_error){
-		calc = (fabs(error-old_error)/error);
-	}else{
-		calc = (fabs(error-old_error)/old_error);
-	}
+	if(error == old_error){
+			calc=0;
+		}else{
+			calc = (fabs(old_error-error)/old_error);
+		}
+		
 	
 	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
 
@@ -968,7 +1052,13 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		
 		
 		
-		clearCentroids(counts,c1,k,d);
+		//clearCentroids(counts,c1,k,d);
+		for (i = 0; i < k;i++) {
+			counts[i] = 0;
+			for (j = 0; j < d; j++){
+				c1[i*d+j] = 0;
+			}
+		}
 		
 
 		
@@ -1121,23 +1211,14 @@ void k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MATRIX
 		}
 
 
-		
-		
-
-		
-		
-	
-		
 		updateCentroid(c,c1,counts,k,d);
 		
-		if(error == old_error)
+		if(error == old_error){
 			calc=0;
-		else if(error > old_error){
-			calc = (fabs(error-old_error)/error);
 		}else{
-			calc = (fabs(error-old_error)/old_error);
+			calc = (fabs(old_error-error)/old_error);
 		}
-
+		
 		
 	
 	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
@@ -1188,7 +1269,13 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		
 		
 		
-		clearCentroids(counts,c1,k,d);
+		//clearCentroids(counts,c1,k,d);
+		for (i = 0; i < k;i++) {
+			counts[i] = 0;
+			for (j = 0; j < d; j++){
+				c1[i*d+j] = 0;
+			}
+		}
 		
 
 		
@@ -1204,14 +1291,6 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 				distanceControl32(distance,min_distance,labels,j,i);
 				
 			}
-			
-			
-			
-		
-			
-			
-
-			
 			
 	
 			for (j = 0; j < d; j++){
@@ -1285,14 +1364,7 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 
 			}
 			
-			
-			
 		
-			
-			
-
-			
-			
 			for (j = 0; j < d; j++){
 				c1[labels[i]*d+j] += data[i+j*n];
 				c1[labels[i+1]*d+j] += data[i+1+j*n];
@@ -1334,14 +1406,7 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 					
 			}
 			
-			
-			
-		
-			
-			
-
-			
-			
+	
 			for (j = 0; j < d; j++){
 				c1[labels[i]*d+j] += data[i+j*n];
 
@@ -1359,14 +1424,12 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 		updateCentroid(c,c1,counts,k,d);
 	
 			
-		if(error == old_error)
+		if(error == old_error){
 			calc=0;
-		else if(error > old_error){
-			calc = (fabs(error-old_error)/error);
 		}else{
-			calc = (fabs(error-old_error)/old_error);
+			calc = (fabs(old_error-error)/old_error);
 		}
-
+		
 		
 		
 	}while (!(t_min <= iter && ((t_max < iter) || calc <= t)));
@@ -1379,14 +1442,7 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 				colDistance32OptimizedU(data,centroids,distance,i,j,d,n);		
 				distanceControl32(distance,min_distance,labels,j,i);
 			}
-			
-			
-			
 		
-			
-			
-
-			
 		}
 		for (; i <= n-p; i+=p){  	//per ogni punto del ds
 			
@@ -1415,9 +1471,6 @@ void NE_k_means_colU(MATRIX data, int n, int d, int k, float t, int* labels, MAT
 	
 			}
 			
-			
-			
-
 		}
 
 
@@ -1726,7 +1779,7 @@ void pqnn_index(params* input) {
 	int i,j;
 
 	
-	if(input->exaustive == 0 && nmod4==true){
+	if(input->exaustive == 0 && nrmod4==true && nmod4==true){
 
 
 		Cc= alloc_matrix(input->kc,input->d);
@@ -1779,7 +1832,7 @@ void pqnn_index(params* input) {
 
 	}
 	
-	else if(input->exaustive == 0 && nmod4==false){
+	else if(input->exaustive == 0){
 
 		Cc= alloc_matrix(input->kc,input->d);
 		Cc_index = alloc_vector(input->n);
@@ -2712,11 +2765,12 @@ int main(int argc, char** argv) {
 	input->filename = NULL;
 	input->exaustive = 1;
 	input->symmetric = 1;
-	input->knn = 4;
-	input->m = 5;
+	input->knn = 1;
+	input->m = 8;
 	input->k = 256;
+	//input->kc = 8192;
 	input->kc = 256;
-	input->w=8;
+	input->w=16;
 	input->eps = 0.01;
 	input->tmin = 10;
 	input->tmax = 100;
@@ -2848,6 +2902,8 @@ int main(int argc, char** argv) {
 	
 	sprintf(fname, "%s.ds", input->filename);
 	input->ds = load_data_col(fname, &input->n, &input->d);
+	//input->ds = load_data_col_p(fname, &input->n, &input->d,20000,1000);
+
 	input->sub=input->d/input->m;
 
 	if(input->nr == 0)
@@ -2855,16 +2911,20 @@ int main(int argc, char** argv) {
 
 	sprintf(fname, "%s.qs", input->filename);
 	input->qs = load_data_row(fname, &input->nq, &input->d);
+	//input->qs = load_data_row_p(fname, &input->nq, &input->d,20000,1000);
 
 	
 
 	int nmodul= input->n % 4;
+	int nrmodul= input->nr % 4;
 	int dmodul= input->d % 4;
 	int submodul = (input->d/input->m) % 4;
 
 
 	if(nmodul == 0)
 		nmod4=true;
+	if(nrmodul == 0)
+		nrmod4=true;
 	if(dmodul == 0)
 		dmod4=true;
 	if(submodul == 0)
@@ -2874,16 +2934,29 @@ int main(int argc, char** argv) {
 
 
 	if (input->d % input->m != 0) {
-		printf(" Dimensions are not divisible by m \n");
+		printf(" Dimensions are not divisible by m !\n");
 		exit(1);
 	}
-	if (input->k > input->n || input->kc > input->n) {
-		printf(" A lot of centroids compared on dataset \n");
+	if (input->exaustive==0 && input->w > input->kc) {
+		printf(" w is bigger than kc !\n");
+		exit(1);
+	}
+	if (input->d < input->m) {
+		printf(" m is bigger than d !\n");
+		exit(1);
+	}
+	if (input->exaustive==1 && input->k > input->n ) {
+		printf(" A lot of centroids compared to dataset !\n");
 		exit(1);
 	}
 
-	if (input->exaustive==0 && input->k > input->nr || input->kc > input->nr) {
-		printf(" A lot of centroids compared on dataset \n");
+	if (input->exaustive==0 && (input->k > input->nr || input->kc > input->nr)) {
+		printf(" A lot of centroids compared to dataset !\n");
+		exit(1);
+	}
+
+	if (input->knn > input->n) {
+		printf(" knn is bigger than n ! \n");
 		exit(1);
 	}
 	
